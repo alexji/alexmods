@@ -24,5 +24,6 @@ handler.setFormatter(logging.Formatter(
 logger.addHandler(handler)
 
 # Import base level things
+from . import (specutils)
+from .specutils import Spectrum1D
 from .helloworld import hello
-
