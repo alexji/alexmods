@@ -2,6 +2,9 @@
 
 """ Misc utility functions """
 
+from __future__ import (division, print_function, absolute_import,
+                        unicode_literals)
+
 from six import string_types
 
 def vac2air(lamvac):

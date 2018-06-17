@@ -1,8 +1,9 @@
 # coding: utf-8
 
-""" Utility functions for Spectroscopy Made Hard """
+""" Utility functions from Spectroscopy Made Hard """
 
-__author__ = "Andy Casey <andy@astrowizici.st>"
+from __future__ import (division, print_function, absolute_import,
+                        unicode_literals)
 
 # Standard library
 import os
@@ -17,10 +18,6 @@ from collections import Counter
 
 from six import string_types
 
-## Py2
-#from commands import getstatusoutput
-## Py3
-from subprocess import getstatusoutput
 from hashlib import sha1 as sha
 from random import choice
 from socket import gethostname, gethostbyname
@@ -69,10 +66,9 @@ common_molecule_species2elems = {
     840: ["Zr", "O"]
     }
 
-__all__ = ["element_to_species", "element_to_atomic_number", "species_to_element", "get_common_letters", \
-    "elems_isotopes_ion_to_species", "species_to_elems_isotopes_ion", \
-    "find_common_start", "extend_limits", "get_version", \
-    "approximate_stellar_jacobian", "approximate_sun_hermes_jacobian"]
+__all__ = ["element_to_species", "element_to_atomic_number", "species_to_element", "get_common_letters",
+           "elems_isotopes_ion_to_species", "species_to_elems_isotopes_ion",
+           "find_common_start", "extend_limits"]
 
 logger = logging.getLogger(__name__)
 
@@ -95,142 +91,6 @@ def mkstemp(**kwargs):
 def random_string(N=10):
     return ''.join(choice(string.ascii_uppercase + string.digits) for _ in range(N))
 
-
-def equilibrium_state(transitions, columns=("expot", "rew"), group_by="species",
-    ycolumn="abundance", yerr_column=None):
-    """
-    Perform linear fits to the abundances provided in the transitions table
-    with respect to x-columns.
-
-    :param transitions:
-        A table of atomic transitions with measured equivalent widths and
-        abundances.
-
-    :param x: [optional]
-        The names of the columns to make fits against.
-
-    :param group_by: [optional]
-        The name of the column in `transitions` to calculate states.
-    """
-
-    lines = {}
-    transitions = transitions.group_by(group_by)
-    for i, start_index in enumerate(transitions.groups.indices[:-1]):
-        end_index = transitions.groups.indices[i + 1]
-
-        # Do excitation potential first.
-        group_lines = {}
-        for x_column in columns:
-            x = transitions[x_column][start_index:end_index]
-            y = transitions["abundance"][start_index:end_index]
-
-            if yerr_column is not None:
-                try:
-                    yerr = transitions[yerr_column][start_index:end_index]
-
-                except KeyError:
-                    logger.exception("Cannot find yerr column '{}':".format(
-                        yerr_column))
-                    
-                    yerr = np.ones(len(y))
-            
-            else:
-                yerr = np.ones(len(y))
-
-            # Only use finite values.
-            finite = np.isfinite(x * y * yerr)
-            try: # fix for masked arrays
-                finite = finite.filled(False)
-            except:
-                pass
-            if not np.any(finite):
-                #group_lines[x_column] = (np.nan, np.nan, np.nan, np.nan, 0)
-                continue
-
-            x, y, yerr = np.array(x[finite]), np.array(y[finite]), np.array(yerr[finite])
-
-            A = np.vstack((np.ones_like(x), x)).T
-            C = np.diag(yerr**2)
-            try:
-                cov = np.linalg.inv(np.dot(A.T, np.linalg.solve(C, A)))
-                b, m = np.dot(cov, np.dot(A.T, np.linalg.solve(C, y)))
-
-            except np.linalg.LinAlgError:
-                #group_lines[x_column] \
-                #    = (np.nan, np.nan, np.median(y), np.std(y), len(x))
-                None
-
-            else:
-                group_lines[x_column] = (m, b, np.median(y), np.std(y), len(x))
-
-        identifier = transitions[group_by][start_index]
-        if group_lines:
-            lines[identifier] = group_lines
-
-    return lines
-
-
-def spectral_model_conflicts(spectral_models, line_list):
-    """
-    Identify abundance conflicts in a list of spectral models.
-
-    :param spectral_models:
-        A list of spectral models to check for conflicts.
-
-    :param line_list:
-        A table of energy transitions.
-
-    :returns:
-        A list containing tuples of spectral model indices where there is a
-        conflict about which spectral model to use for the determination of
-        stellar parameters and/or composition.
-    """
-
-    line_list_hashes = line_list.compute_hashes()
-
-    transition_hashes = {}
-    for i, spectral_model in enumerate(spectral_models):
-        for transition in spectral_model.transitions:
-            transition_hash = line_list.hash(transition)
-            transition_hashes.setdefault(transition_hash, [])
-            transition_hashes[transition_hash].append(i)
-
-    # Which of the transition_hashes appear more than once?
-    conflicts = []
-    for transition_hash, indices in transition_hashes.iteritems():
-        if len(indices) < 2: continue
-
-        # OK, what element is this transition?
-        match = (line_list_hashes == transition_hash)
-        element = line_list["element"][match][0].split()[0]
-
-        # Of the spectral models that use this spectral hash, what are they
-        # measuring?
-        conflict_indices = []
-        for index in indices:
-            if element not in spectral_models[index].metadata["elements"]:
-                # This transition is not being measured in this spectral model.
-                continue
-
-            else:
-                # This spectral model is modeling this transition. 
-                # Does it say this should be used for the determination of
-                # stellar parameters or composition?
-                if spectral_models[index].use_for_stellar_parameter_inference \
-                or spectral_models[index].use_for_stellar_composition_inference:
-                    conflict_indices.append(index)
-
-        if len(conflict_indices) > 1:
-            conflicts.append(conflict_indices)
-    
-    return conflicts
-
-
-
-
-
-
-
 # List the periodic table here so that we can use it outside of a single
 # function scope (e.g., 'element in utils.periodic_table')
 
@@ -249,53 +109,6 @@ periodic_table = periodic_table.replace(" Ba ", " Ba " + lanthanoids + " ") \
     .replace(" Ra ", " Ra " + actinoids + " ").split()
 del actinoids, lanthanoids
 
-
-
-def approximate_stellar_jacobian(stellar_parameters, *args):
-    """ Approximate the Jacobian of the stellar parameters and
-    minimisation parameters, based on calculations from the Sun """
-
-    logger.info("Updated approximation of the Jacobian")
-
-    teff, vt, logg, feh = stellar_parameters[:4]
-
-    # This is the black magic.
-    full_jacobian = np.array([
-        [ 5.4393e-08*teff - 4.8623e-04, -7.2560e-02*vt + 1.2853e-01,  1.6258e-02*logg - 8.2654e-02,  1.0897e-02*feh - 2.3837e-02],
-        [ 4.2613e-08*teff - 4.2039e-04, -4.3985e-01*vt + 8.0592e-02, -5.7948e-02*logg - 1.2402e-01, -1.1533e-01*feh - 9.2341e-02],
-        [-3.2710e-08*teff + 2.8178e-04,  3.8185e-03*vt - 1.6601e-02, -1.2006e-02*logg - 3.5816e-03, -2.8592e-05*feh + 1.4257e-03],
-        [-1.7822e-08*teff + 1.8250e-04,  3.5564e-02*vt - 1.1024e-01, -1.2114e-02*logg + 4.1779e-02, -1.8847e-02*feh - 1.0949e-01]
-    ])
-    return full_jacobian.T
-
-
-def approximate_sun_hermes_jacobian(stellar_parameters, *args):
-    """
-    Approximate the Jacobian of the stellar parameters and
-    minimisation parameters, based on calculations using the Sun
-    and the HERMES atomic line list, after equivalent widths
-    were carefully inspected.
-    """
-
-#    logger.info("Updated approximation of the Jacobian")
-
-    teff, vt, logg, feh = stellar_parameters[:4]
-
-#    full_jacobian = np.array([
-#        [ 4.4973e-08*teff - 4.2747e-04, -1.2404e-03*vt + 2.4748e-02,  1.6481e-02*logg - 5.1979e-02,  1.0470e-02*feh - 8.5645e-03],
-#        [-9.3371e-08*teff + 6.9953e-04,  5.0115e-02*vt - 3.0106e-01, -6.0800e-02*logg + 6.7056e-02, -4.1281e-02*feh - 6.2085e-02],
-#        [-2.1326e-08*teff + 1.9121e-04,  1.0508e-03*vt + 1.1099e-03, -6.1479e-03*logg - 1.7401e-02,  3.4172e-03*feh + 3.7851e-03],
-#        [-9.4547e-09*teff + 1.1280e-04,  1.0033e-02*vt - 3.6439e-02, -9.5015e-03*logg + 3.2700e-02, -1.7947e-02*feh - 1.0383e-01]
-#    ])
-
-    # After culling abundance outliers,..
-    full_jacobian = np.array([
-        [ 4.5143e-08*teff - 4.3018e-04, -6.4264e-04*vt + 2.4581e-02,  1.7168e-02*logg - 5.3255e-02,  1.1205e-02*feh - 7.3342e-03],
-        [-1.0055e-07*teff + 7.5583e-04,  5.0811e-02*vt - 3.1919e-01, -6.7963e-02*logg + 7.3189e-02, -4.1335e-02*feh - 6.0225e-02],
-        [-1.9097e-08*teff + 1.8040e-04, -3.8736e-03*vt + 7.6987e-03, -6.4754e-03*logg - 2.0095e-02, -4.1837e-03*feh - 4.1084e-03],
-        [-7.3958e-09*teff + 1.0175e-04,  6.5783e-03*vt - 3.6509e-02, -9.7692e-03*logg + 3.2322e-02, -1.7391e-02*feh - 1.0502e-01]
-    ])
-    return full_jacobian.T
 
 
 def element_to_species(element_repr):
@@ -520,16 +333,3 @@ def extend_limits(values, fraction=0.10, tolerance=1e-2):
     return np.array(new_limits)
 
 
-def get_version():
-    """ Retrieves the version of Spectroscopy Made Hard based on the
-    git version """
-  
-    if getstatusoutput("which git")[0] == 0:
-        git_commands = ("git rev-parse --abbrev-ref HEAD", "git log --pretty=format:'%h' -n 1")
-        return "0.1dev:" + ":".join([getstatusoutput(command)[1] for command in git_commands])
-    else:
-        return "Unknown"
-
-
-
-    

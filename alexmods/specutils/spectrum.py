@@ -17,6 +17,7 @@ from hashlib import md5
 
 from astropy.io import fits
 from scipy import interpolate, ndimage, polyfit, poly1d, optimize as op
+from ..robust_polyfit import polyfit as rpolyfit
 
 logger = logging.getLogger(__name__)
 
@@ -715,6 +716,19 @@ class Spectrum1D(object):
     
 
 
+    def fit_rpoly_continuum(self, order=3, getsnr=False, getcont=False):
+        """
+        Use robust polyfit to get normalized spectrum.
+        If getcont=True, return continuum rather than normalized spectrum
+        """
+        dispersion = self.dispersion.copy()
+        flux = self.flux.copy()
+        coeff, rms = rpolyfit(dispersion, flux, order)
+        cont = np.poly1d(coeff)(dispersion)
+        if getsnr: return np.median(cont)/rms
+        if getcont: return cont
+        return self.__class__(dispersion, flux/cont, cont*cont*self.ivar, self.metadata)
+
     def fit_continuum(self, knot_spacing=200, low_sigma_clip=1.0, \
         high_sigma_clip=0.2, max_iterations=3, order=3, exclude=None, \
         include=None, additional_points=None, function='spline', scale=1.0,
@@ -750,7 +764,7 @@ class Spectrum1D(object):
             4310 A to 4340 A will always be excluded when determining the continuum
             regions.
 
-        function: only 'spline' or 'poly', 'leg', 'cheb'
+        function: only 'spline', 'poly', 'leg', 'cheb'
 
         scale : float
             A scaling factor to apply to the normalised flux levels.
@@ -1022,11 +1036,15 @@ class Spectrum1D(object):
         return normalized_spectrum
 
 
+    def cut_wavelength(self, wlmin, wlmax):
+        ii = np.logical_and(self.dispersion > wlmin, self.dispersion < wlmax)
+        return self.__class__(self.dispersion[ii], self.flux[ii], self.ivar[ii], self.metadata)
+
     def add_noise(self, seed=None):
         if seed is not None:
             np.random.seed(seed)
         noise = np.sqrt(1./self.ivar) * np.random.randn(len(self.flux))
-        return Spectrum1D(self.dispersion, self.flux + noise, self.ivar)
+        return self.__class__(self.dispersion, self.flux + noise, self.ivar, self.metadata)
 
 
 def compute_dispersion(aperture, beam, dispersion_type, dispersion_start,

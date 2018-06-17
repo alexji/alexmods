@@ -24,5 +24,6 @@ handler.setFormatter(logging.Formatter(
 logger.addHandler(handler)
 
 # Import base level things
-from . import (specutils, robust_polyfit)
+from . import (specutils, robust_polyfit, plot_spectrum)
 from .specutils import Spectrum1D
+
