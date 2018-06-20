@@ -6,6 +6,14 @@ from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
 
 from six import string_types
+import numpy as np
+
+def struct2array(x):
+    """ Convert numpy structured array of simple type to normal numpy array """
+    Ncol = len(x.dtype)
+    type = x.dtype[0].type
+    assert np.all([x.dtype[i].type == type for i in range(Ncol)])
+    return x.view(type).reshape((-1,Ncol))
 
 def vac2air(lamvac):
     """
