@@ -144,7 +144,9 @@ def calculate_snr(*args, **kwargs):
     return SNR
 
 
-def find_resolution(multispec_fname, initial_fwhm=.05, usepercentile=True, percentiles=[60, 80, 95], Rguess=None, full_output=False, useclip=True, findpeak=False, makeplot=False):
+def find_resolution(multispec_fname, initial_fwhm=.05, usepercentile=True, percentiles=[60, 80, 95], Rguess=None, full_output=False, useclip=True, findpeak=False, makeplot=True):
+    """
+    """
     from .spectrum import Spectrum1D
     from astropy.stats import sigma_clip, biweight
     from ..robust_polyfit import gaussfit
@@ -179,7 +181,7 @@ def find_resolution(multispec_fname, initial_fwhm=.05, usepercentile=True, perce
             except:
                 pass
             else:
-                if popt[0] > 0:
+                if popt[0] > 0 and abs(popt[1]-lc) < .05:
                     linefits.append(popt)
         alllinefits.append(linefits)
         A, w, s = np.array(linefits).T
