@@ -10,7 +10,7 @@ __all__ = ["calculate_fractional_overlap", "find_overlaps"]
 
 import numpy as np
 import time
-
+import os, sys
 
 def calculate_fractional_overlap(interest_range, comparison_range):
     """
@@ -142,3 +142,78 @@ def calculate_snr(*args, **kwargs):
     kwargs["full_output"] = True
     noise, S, SNR = calculate_noise(*args, **kwargs)
     return SNR
+
+
+def find_resolution(multispec_fname, initial_fwhm=.05, usepercentile=True, percentiles=[60, 80, 95], Rguess=None, full_output=False, useclip=True, findpeak=False, makeplot=False):
+    from .spectrum import Spectrum1D
+    from astropy.stats import sigma_clip, biweight
+    from ..robust_polyfit import gaussfit
+    from ..utils import find_distribution_peak
+    import time
+    arcs = Spectrum1D.read(multispec_fname, flux_ext=4)
+    line_centers = np.loadtxt(os.path.dirname(__file__)+"/../data/linelists/thar_list", usecols=0)
+    
+    start = time.time()
+
+    alllinefits = []
+    allRmed = []
+    allRerr = []
+    allwmid = []
+    allR = []
+    for i, arc in enumerate(arcs):
+        linefits = []
+        wave = arc.dispersion
+        flux = arc.flux
+        wmin, wmax = wave[0], wave[-1]
+        wmid = (wmin+wmax)/2.
+        lcs = line_centers[(line_centers > wmin) & (line_centers < wmax)]
+        for lc in lcs:
+            fwhm = initial_fwhm
+            # get subpiece of arc
+            ii = (wave > lc - 5*fwhm) & (wave < lc + 5*fwhm)
+            _x, _y = wave[ii], flux[ii]
+            # guess amplitude, center, sigma
+            p0 = [np.max(_y), lc, fwhm/2.355]
+            try:
+                popt = gaussfit(_x, _y, p0)
+            except:
+                pass
+            else:
+                if popt[0] > 0:
+                    linefits.append(popt)
+        alllinefits.append(linefits)
+        A, w, s = np.array(linefits).T
+        R = w/(s*2.355)
+        if useclip: R = sigma_clip(R)
+        if findpeak:
+            if Rguess is None: Rguess = np.nanmedian(R)
+            try:
+                Rmed = find_distribution_peak(R, Rguess)
+            except (ValueError, RuntimeError):
+                print("--Could not find peak for arc {:02}".format(i))
+                print("--{}".format(sys.exc_info()))
+                Rmed = np.median(R)
+        elif usepercentile:
+            assert len(percentiles) == 3
+            Rlo, Rmed, Rhi = np.percentile(R, percentiles)
+            #Rerr = max(Rhi-Rmed, Rmed-Rlo)
+            Rerr = (Rmed-Rlo, Rhi-Rmed)
+        else:
+            Rmed = biweight.biweight_location(R)
+            Rerr = biweight.biweight_scale(R)
+        allR.append(R); allRmed.append(Rmed); allRerr.append(Rerr); allwmid.append(wmid)
+    if usepercentile:
+        allRerr = np.array(allRerr).T
+    
+    if makeplot:
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        ax.errorbar(allwmid, allRmed, yerr=allRerr, fmt='o')
+        plt.show()
+
+    if full_output:
+        return allRmed, allRerr, allwmid, allR, arcs, alllinefits
+    return allRmed, allRerr, allwmid
+
+
+
