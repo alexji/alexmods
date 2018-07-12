@@ -183,8 +183,13 @@ def find_resolution(multispec_fname, initial_fwhm=.05, usepercentile=True, perce
             else:
                 if popt[0] > 0 and abs(popt[1]-lc) < .05:
                     linefits.append(popt)
+        try:
+            A, w, s = np.array(linefits).T
+        except ValueError:
+            print("This order did not have any good lines I guess")
+            #allR.append(np.nan); allRmed.append(np.nan); allRerr.append(np.nan); allwmid.append(wmid)
+            continue
         alllinefits.append(linefits)
-        A, w, s = np.array(linefits).T
         R = w/(s*2.355)
         if useclip: R = sigma_clip(R)
         if findpeak:
