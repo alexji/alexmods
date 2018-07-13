@@ -1,0 +1,109 @@
+J/ApJ/787/10    Solar s-process contributions with GCE model   (Bisterzo+, 2014)
+================================================================================
+Galactic chemical evolution and solar s-process abundances: dependence
+on the ^13^C-pocket structure.
+    Bisterzo S., Travaglio C., Gallino R., Wiescher M., Kappeler F.
+   <Astrophys. J., 787, 10 (2014)>
+   =2014ApJ...787...10B    (SIMBAD/NED BibCode)
+================================================================================
+ADC_Keywords: Models, evolutionary ; Sun ; Abundances ; Solar system
+Keywords: stars: AGB and post-AGB - Galaxy: evolution - Sun: abundances
+
+Abstract:
+    We study the s-process abundances (A>~90) at the epoch of the solar
+    system formation. Asymptotic giant branch yields are computed with an
+    updated neutron capture network and updated initial solar abundances.
+    We confirm our previous results obtained with a Galactic chemical
+    evolution (GCE) model: (1) as suggested by the s-process spread
+    observed in disk stars and in presolar meteoritic SiC grains, a
+    weighted average of s-process strengths is needed to reproduce the
+    solar s distribution of isotopes with A>130; and (2) an additional
+    contribution (of about 25%) is required in order to represent the
+    solar s-process abundances of isotopes from A=90 to 130. Furthermore,
+    we investigate the effect of different internal structures of the
+    ^13^C pocket, which may affect the efficiency of the ^13^C({alpha},n)^16^O
+    reaction, the major neutron source of the s process. First, keeping
+    the same ^13^C profile adopted so far, we modify by a factor of two
+    the mass involved in the pocket; second, we assume a flat ^13^C
+    profile in the pocket, and we test again the effects of the variation
+    of the mass of the pocket. We find that GCE s predictions at the epoch
+    of the solar system formation marginally depend on the size and shape
+    of the ^13^C pocket once a different weighted range of ^13^C-pocket
+    strengths is assumed. We obtain that, independently of the internal
+    structure of the ^13^C pocket, the missing solar system s-process
+    contribution in the range from A=90 to 130 remains essentially the same.
+
+Description:
+    The general structure of the GCE model adopted in this work is the
+    same described by Travaglio et al. (2004ApJ...601..864T). The GCE
+    model follows the composition of stars, stellar remnants, interstellar
+    matter (atomic and molecular gas), and their mutual interaction, in
+    the three main zones of the Galaxy, halo, thick disk, and thin disk.
+    We concentrate on the chemical evolution inside the solar annulus,
+    located 8.5 kpc from the Galactic center. The thin disk is divided
+    into independent concentric annuli, and we neglect any dependence on
+    Galactocentric radius.
+
+File Summary:
+--------------------------------------------------------------------------------
+ FileName      Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe            80        .   This file
+table1.dat        76      207   Solar s-process contributions for isotopes from
+                                Kr to Bi obtained with GCE model
+--------------------------------------------------------------------------------
+
+See also:
+ J/MNRAS/418/284 : s-process in low-metallicity stars. II. (Bisterzo+, 2011)
+ J/A+A/586/A49   : r- and s- process elements in Milky Way disk
+                                                             (Battistini+, 2016)
+
+Byte-by-byte Description of file: table1.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units  Label    Explanations
+--------------------------------------------------------------------------------
+   1-  7  A7    ---    Isotope  Isotope identifier
+       9  A1    ---  f_Isotope  [bc] Flag on Isotope (1)
+  11- 15  F5.1  %      Main-s   Bisterzo et al. (2011, J/MNRAS/418/284)
+                                 main-s contribution (2)
+      17  A1    ---  f_Main-s   [cd] Flag on Main-s (3)
+  19- 22  F4.1  %    e_Main-s   ? Uncertainty in Main-s (4)
+  24- 29  F6.2  %      T04-LMS  Travaglio et al. (2004ApJ...601..864T) LMS
+                                 Solar s-process distribution
+      31  A1    ---  f_T04-LMS  [d] Flag on T04-LMS (3)
+  33- 37  F5.2  %      T04-IMS  Travaglio et al. (2004ApJ...601..864T) IMS
+                                 Solar s-process distribution
+  39- 43  F5.1  %      T04+     Travaglio et al. (2004ApJ...601..864T) LMS+IMS
+                                 Solar s-process distribution
+  45- 46  A2    ---  f_T04+     [cd ] Flag on T04+ (3)
+  47- 49  F3.1  %    e_T04+     ? Uncertainty in T04+ (4)
+  51- 55  F5.2  %      TW-LMS   This work LMS Solar s-process distribution
+      57  A1    ---  f_TW-LMS   [cd] Flag on LMS (3)
+  59- 62  F4.2  %      TW-IMS   This work IMS Solar s-process distribution
+  64- 69  F6.2  %      TW+      This work LMS+IMS Solar s-process distribution
+      71  A1    ---  f_TW+      [d] Flag on TW+ (3)
+  73- 76  F4.1  %    e_TW+      ? Uncertainty in TW+ (4)
+--------------------------------------------------------------------------------
+Note (1): Flag as follows:
+  b = Note that massive stars may produce a consistent amount of Kr-Rb-Sr-Y-Zr,
+      and in minor quantity up to Te-Xe (Pignatari et al. 2010ApJ...710.1557P;
+      2013ApJ...762...31P).
+  c = An isotope that receives an additional contribution from p-process
+      (Travaglio et al. 2011ApJ...739...93T).
+Note (2): The main-s component, which is reproduced as an average between AGB
+          models of M=1.5 and 3 M_{sun}_ and half solar metallicity, as in
+          Arlandini et al. (1999ApJ...525..886A), is also listed for comparison.
+Note (3): Flag as follows:
+  c = Overabundance with respect to solar (in percentage).
+  d = Percentages include the s-contribution (<=1%) by r-only isotopes not
+      included in this table (^124^Sn, ^130^Te, ^136^Xe, ^150^Nd).
+Note (4): Uncertainties refer to solar abundances by Anders & Grevesse
+          (1989GeCoA..53..197A; T04+) and Lodders et al. (2009, LanB, 4, 44;
+          Main-s and TW+).
+--------------------------------------------------------------------------------
+
+History:
+    From electronic version of the journal
+
+================================================================================
+(End)            Prepared by [AAS], Tiphaine Pouvreau [CDS]          03-Aug-2017

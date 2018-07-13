@@ -1,0 +1,56 @@
+Table 2
+C and N Abundances for the 38 Program Stars
+
+Star	A(C)	[C/Fe]	A(N)	[N/Fe]	
+(1)	(2)	(3)	(4)	(5)	
+52972-1213-507	8.26	2.82	 sdotsdotsdot	 sdotsdotsdot	
+53327-2044-515^a	5.56	1.13	 sdotsdotsdot	 sdotsdotsdot	
+53327-2044-515^b	5.91	1.57	 sdotsdotsdot	 sdotsdotsdot	
+53436-1996-093	<6.56	<1.66	 sdotsdotsdot	 sdotsdotsdot	
+54142-2667-094	<6.86	<1.39	 sdotsdotsdot	 sdotsdotsdot	
+BS 16545-089	<6.76	<1.77	 sdotsdotsdot	 sdotsdotsdot	
+CS 30336-049	<4.56	<0.23	4.7	0.97	
+HE 0049-3948	<6.56	<1.81	<6.55	<2.40	
+HE 0057-5959	5.21	0.86	5.9	2.15	
+HE 0102-1213	<6.46	<1.31	 sdotsdotsdot	 sdotsdotsdot	
+HE 0146-1548	5.81	0.84	 sdotsdotsdot	 sdotsdotsdot	
+HE 0207-1423	7.86	2.38	 sdotsdotsdot	 sdotsdotsdot	
+HE 0228-4047^a	<6.56	<1.88	 sdotsdotsdot	 sdotsdotsdot	
+HE 0228-4047^b	<6.66	<1.98	 sdotsdotsdot	 sdotsdotsdot	
+HE 0231-6025	<6.96	<1.64	 sdotsdotsdot	 sdotsdotsdot	
+HE 0253-1331	<7.06	<1.64	 sdotsdotsdot	 sdotsdotsdot	
+HE 0314-1739	<7.06	<1.49	 sdotsdotsdot	 sdotsdotsdot	
+HE 0355-3728^a	<7.16	<2.14	 sdotsdotsdot	 sdotsdotsdot	
+HE 0355-3728^b	<7.36	<2.34	 sdotsdotsdot	 sdotsdotsdot	
+HE 0945-1435^a	<6.36	<1.70	 sdotsdotsdot	 sdotsdotsdot	
+HE 0945-1435^b	<6.46	<1.81	 sdotsdotsdot	 sdotsdotsdot	
+HE 1055+0104^a	<6.76	<1.20	 sdotsdotsdot	 sdotsdotsdot	
+HE 1055+0104^b	<6.96	<1.42	 sdotsdotsdot	 sdotsdotsdot	
+HE 1116-0054^a	<6.66	<1.72	<7.25	<2.91	
+HE 1116-0054^b	<6.86	<1.92	<7.25	<2.91	
+HE 1142-1422	<7.16	<1.57	<7.50	<2.51	
+HE 1201-1512^d	5.71	1.14	<5.20	<1.23	
+HE 1201-1512^d	6.11	1.6	<5.20	<1.29	
+HE 1204-0744	<7.26	<1.55	 sdotsdotsdot	 sdotsdotsdot	
+HE 1207-3108	<5.46	< -0.27	5.55	0.42	
+HE 1320-2952	<5.26	<0.52	<5.00	<0.86	
+HE 1346-0427^a	<5.96	<1.10	 sdotsdotsdot	 sdotsdotsdot	
+HE 1346-0427^b	<6.16	<1.31	 sdotsdotsdot	 sdotsdotsdot	
+HE 1402-0523^a	<6.76	<1.50	<6.50	<1.84	
+HE 1402-0523^b	<6.86	<1.62	<6.60	<1.96	
+HE 1506-0113	6.36	1.47	4.9	0.61	
+HE 2020-5228	<7.16	<1.66	<7.20	<2.30	
+HE 2032-5633	<7.16	<2.36	<6.80	<2.60	
+HE 2047-5612	<6.66	<1.37	<6.60	<1.91	
+HE 2135-1924	<6.86	<1.74	 sdotsdotsdot	 sdotsdotsdot	
+HE 2136-6030	<7.26	<1.71	 sdotsdotsdot	 sdotsdotsdot	
+HE 2139-5432	7.01	2.59	5.9	2.08	
+HE 2141-0726	<7.26	<1.55	 sdotsdotsdot	 sdotsdotsdot	
+HE 2142-5656	6.51	0.95	5.5	0.54	
+HE 2202-4831	8.06	2.41	 sdotsdotsdot	 sdotsdotsdot	
+HE 2246-2410	<6.86	<1.39	<7.15	<2.28	
+HE 2247-7400	6.26	0.7	 sdotsdotsdot	 sdotsdotsdot	
+
+Notes.
+a For this set of results, a dwarf gravity is assumed (see Section 2.1 for details).
+b For this set of results, a subgiant gravity is assumed (see Section 2.1 for details).
