@@ -247,7 +247,7 @@ def XH_from_XFe(df):
 #########################
 # Load halo data tables #
 #########################
-def load_jinabase(key=None,p=1,load_eps=True,load_ul=True,load_XH=True,load_XFe=True,load_aux=False,
+def load_jinabase(key=None,p=1,load_eps=True,load_ul=True,load_XH=True,load_XFe=True,load_aux=True,
                   name_as_index=False):
     """
     Load our local copy of jinabase (http://jinabase.pythonanywhere.com/, Abohalima and Frebel 2018)
