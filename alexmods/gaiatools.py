@@ -96,7 +96,8 @@ def create_samples(Nsamp,mu,cov):
     for i in range(Nstars):
         i1 = Nsamp*i
         i2 = Nsamp*(i+1)
-        output[i1:i2,:] = np.random.multivariate_normal(mu,cov,Nsamp)
+        output[i1:i2,:] = np.random.multivariate_normal(mu[i,:],cov[i,:,:],Nsamp)
+    output = output.reshape(Nstars, Nsamp, Nparams)
     return output
 
 def get_gc_frame():
