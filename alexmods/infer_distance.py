@@ -4,11 +4,14 @@ from scipy import special
 import time
 import pandas as pd
 import emcee
+#import corner
 from astropy import units as u
 
 from pyia import GaiaData
 from importlib import reload
 import gaiatools as gtool; reload(gtool)
+
+default_L = 0.5
 
 #######################
 # Likelihood and prior
@@ -19,8 +22,8 @@ def lnlkhd(parallax, pmra, pmdec, cov, d, vtan, phi):
     icov = np.linalg.inv(cov)
     arg = -0.5 * xmu.dot(icov.dot(xmu.T))
     return arg - np.log((2*np.pi)**1.5) - 0.5*np.log(np.linalg.det(cov))
-def lnprior_d(d,L=5.):
-    """ Expotentially declining prior. d, L in kpc (default L=5) """
+def lnprior_d(d,L=default_L):
+    """ Expotentially declining prior. d, L in kpc (default L=0.5) """
     if d < 0: return -np.inf
     return -np.log(2) - 3*np.log(L) + 2*np.log(d) - d/L
 ## TODO: do a prior with an input distance and error
@@ -32,11 +35,11 @@ def lnprior_vtan(vtan,vmax=1500.,alpha=2.,beta=8.):
 def lnprior_phi(phi):
     """ flat prior in velocity angle """
     return -1.8378770664093464
-def lnprior(d,vtan,phi):
-    return lnprior_d(d) + lnprior_vtan(vtan) + lnprior_phi(phi)
-def lnprob(theta, x, cov):
+def lnprior(d,vtan,phi,L=default_L):
+    return lnprior_d(d,L=L) + lnprior_vtan(vtan) + lnprior_phi(phi)
+def lnprob(theta, x, cov, L=default_L):
     d, vtan, phi = theta
-    lp = lnprior(d,vtan,phi)
+    lp = lnprior(d,vtan,phi,L=L)
     if not np.isfinite(lp): return -np.inf
     parallax, pmra, pmdec = x
     return lp + lnlkhd(parallax, pmra, pmdec, cov, d, vtan, phi)
@@ -119,13 +122,14 @@ def guess_dist_vtan(gdat, default_dist=10., default_parallax_snr=1.0,
 def sample_distance_vtan(gdat, verbose=True, full_output=False,
                          use_gdat_init=True, default_distance_guess=10.,
                          dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.5,
-                         n_walkers=100, n_burn=100, n_chain=1000, n_keep=None):
+                         n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L):
     """ Run MCMC for a single star """
     x = gdat.parallax.value[0], gdat.pmra.value[0], gdat.pmdec.value[0]
     cov = gdat.get_cov()[0,2:5,2:5]
     ndim = 3
     
-    sampler = emcee.EnsembleSampler(n_walkers, ndim, lnprob, args=(x, cov))
+    probfn = lambda *args: lnprob(*args, L=L)
+    sampler = emcee.EnsembleSampler(n_walkers, ndim, probfn, args=(x, cov))
     if verbose: print("{} walkers".format(n_walkers))
     
     ## Initial guess
