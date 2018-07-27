@@ -9,7 +9,7 @@ from astropy import units as u
 
 from pyia import GaiaData
 from importlib import reload
-import .gaiatools as gtool; reload(gtool)
+from . import gaiatools as gtool; reload(gtool)
 
 default_L = 0.5
 
