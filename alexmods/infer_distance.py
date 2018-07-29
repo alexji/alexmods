@@ -26,14 +26,14 @@ def lnprior_d(d,L=default_L):
     """ Expotentially declining prior. d, L in kpc (default L=0.5) """
     if d < 0: return -np.inf
     return -np.log(2) - 3*np.log(L) + 2*np.log(d) - d/L
-## TODO: do a prior with an input distance and error
 def lnprior_vtan(vtan,vmax=1500.,alpha=2.,beta=8.):
     """ broad velocity prior. Peaks at ~180 km/s with a tail """
     if vtan > vmax or vtan < 0: return -np.inf
     return -special.betaln(alpha,beta) + (alpha-1.)*np.log(vtan/vmax) + (beta-1.)*np.log(1-vtan/vmax)
-    raise NotImplementedError
 def lnprior_phi(phi):
     """ flat prior in velocity angle """
+    # TODO right now I just let phi float to anywhere
+    # This makes chain convergence tests difficult
     return -1.8378770664093464
 def lnprior(d,vtan,phi,L=default_L):
     return lnprior_d(d,L=L) + lnprior_vtan(vtan) + lnprior_phi(phi)
@@ -185,7 +185,11 @@ def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
             print("Guessing d={:.1f} +/- {:.1f}, vtan={:.1f} +/- {:.1f}".format(
                     dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1]))
     
-    theta0 = np.array([dv_init[0], dv_init[1], np.arctan2(x[1],x[2])])
+    phi0 = np.arctan2(x[1],x[2])
+    print("Initializing with d={:.1f} +/- {:.1f}, vtan={:.1f} +/- {:.1f}, phi={:.0f}deg".format(
+           dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1],phi0*180/np.pi))
+
+    theta0 = np.array([dv_init[0], dv_init[1], phi0])
     cov0 = np.array([[dv_err_init[0]**2, dv_err_init[0]*dv_err_init[1]*dv_corr_init, 0],
                      [dv_err_init[0]*dv_err_init[1]*dv_corr_init, dv_err_init[1]**2, 0],
                      [0, 0, (np.pi/2.)**2]])
