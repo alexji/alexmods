@@ -120,7 +120,7 @@ def guess_dist_vtan(gdat, default_dist=10., default_parallax_snr=1.0,
 
 def sample_distance_vtan(gdat, verbose=True, full_output=False,
                          use_gdat_init=True, default_distance_guess=10.,
-                         dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.5,
+                         dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.8,
                          n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L):
     x = np.array([gdat.parallax.value[0], gdat.pmra.value[0], gdat.pmdec.value[0]])
     
@@ -143,7 +143,7 @@ def sample_distance_vtan(gdat, verbose=True, full_output=False,
 
 def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
                                init_from_data=True, default_distance_guess=10.,
-                               dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.5,
+                               dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.8,
                                n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L):
     """ 
     Run MCMC for a single star. 
@@ -186,8 +186,8 @@ def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
                     dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1]))
     
     phi0 = np.arctan2(x[1],x[2])
-    print("Initializing with d={:.1f} +/- {:.1f}, vtan={:.1f} +/- {:.1f}, phi={:.0f}deg".format(
-           dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1],phi0*180/np.pi))
+    print("Initializing with d={:.1f} +/- {:.1f}, vtan={:.1f} +/- {:.1f}, phi={:.0f}deg, dvcorr={:.2f}".format(
+           dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1],phi0*180/np.pi, dv_corr_init))
 
     theta0 = np.array([dv_init[0], dv_init[1], phi0])
     cov0 = np.array([[dv_err_init[0]**2, dv_err_init[0]*dv_err_init[1]*dv_corr_init, 0],
