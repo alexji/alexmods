@@ -123,22 +123,67 @@ def sample_distance_vtan(gdat, verbose=True, full_output=False,
                          use_gdat_init=True, default_distance_guess=10.,
                          dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.5,
                          n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L):
-    """ Run MCMC for a single star """
-    x = gdat.parallax.value[0], gdat.pmra.value[0], gdat.pmdec.value[0]
+    x = np.array([gdat.parallax.value[0], gdat.pmra.value[0], gdat.pmdec.value[0]])
+    
     cov = gdat.get_cov()[0,2:5,2:5]
+    if use_gdat_init:
+        dv_init, dv_err_init = guess_dist_vtan(gdat, default_dist=default_distance_guess)
+        if verbose:
+            print("Guessing d={:.1f} +/- {:.1f}, vtan={:.1f} +/- {:.1f}".format(
+                    dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1]))
+        init_from_data=False
+    return sample_distance_vtan_mucov(x, cov,
+                                      verbose=verbose, full_output=full_output,
+                                      init_from_data=~(use_gdat_init),
+                                      default_distance_guess=default_distance_guess,
+                                      dv_init=dv_init, dv_err_init=dv_err_init, 
+                                      dv_corr_init=dv_corr_init,
+                                      n_walkers=n_walkers, n_burn=n_burn, n_chain=n_chain, 
+                                      n_keep=n_keep, L=L)
+
+def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
+                               init_from_data=True, default_distance_guess=10.,
+                               dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.5,
+                               n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L):
+    """ 
+    Run MCMC for a single star. 
+    x, cov are mean and covariance matrix in order of [parallax, pmra, pmdec]
+    """
     ndim = 3
+    assert len(x) == ndim
+    assert cov.shape[0] == ndim
+    assert cov.shape[1] == ndim
     
     probfn = lambda *args: lnprob(*args, L=L)
     sampler = emcee.EnsembleSampler(n_walkers, ndim, probfn, args=(x, cov))
     if verbose: print("{} walkers".format(n_walkers))
     
     ## Initial guess
-    if use_gdat_init:
-        dv_init, dv_err_init = guess_dist_vtan(gdat, default_dist=default_distance_guess)
+    if init_from_data:
+        default_dist = 10.
+        default_parallax_snr = 1.0
+        min_derr = 0.2
+        if x[0] > 0:
+            dist0 = 1./x[0]
+            parallax_over_error = dist0/np.sqrt(cov[0,0])
+        else: # default values for negative parallax
+            print("Warning: negative parallax, using default values for initialization")
+            dist0 = default_dist
+            parallax_over_error = default_parallax_snr
+        derr0 = max(dist0/parallax_over_error, min_derr)
+        vtan0 = dist0 * 4.74047 * np.sqrt(np.sum(x[1:3]**2))
+        
+        eig = np.linalg.eigvals(cov)
+        verr0a = dist0 * 4.74047 * np.sqrt(np.sum(eig))
+        verr0b = derr0 * 4.74047 * np.sqrt(np.sum(x[1:3]**2))
+        verr0 = np.sqrt(verr0a**2 + verr0b**2)
+        
+        dv_init = [dist0, vtan0]
+        dv_err_init = [derr0, verr0]
         if verbose:
             print("Guessing d={:.1f} +/- {:.1f}, vtan={:.1f} +/- {:.1f}".format(
                     dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1]))
-                   
+    
     theta0 = np.array([dv_init[0], dv_init[1], np.arctan2(x[1],x[2])])
     cov0 = np.array([[dv_err_init[0]**2, dv_err_init[0]*dv_err_init[1]*dv_corr_init, 0],
                      [dv_err_init[0]*dv_err_init[1]*dv_corr_init, dv_err_init[1]**2, 0],
