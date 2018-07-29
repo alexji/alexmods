@@ -514,3 +514,25 @@ def load_arlandini(model="stellar"):
     rpat = np.log10(rarr[iisort])
     return rpat
 
+#######################
+# Load NearbyGalaxies #
+#######################
+def load_galdata():
+    fname = datapath+"/mcconnachie_plus/NearbyGalaxies.dat"
+    
+    names = ["Galaxy","RA","Dec","EB-V","m-M","m-M_e1","m-M_e2","vh","vh_e1","vh_e2","Vmag","Vmag_e1","Vmag_e2","PA","PA_e1","PA_e2","ell","ell_e1","ell_e2","muVo","muVo_e1","muVo_e2","rh","rh_e1","rh_e2","sigma_s","sigma_s_e1","sigma_s_e2","vrot_s","vrot_s_e1","vrot_s_e2","MHI","sigma_g","sigma_g_e1","sigma_g_e2","vrot_g","vrot_g_e1","vrot_g_e2","[Fe/H]","[Fe/H]_e1","[Fe/H]_e2","F","References"]
+    col_starts = [0,19,30,40,46,52,57,62,69,74,79,84,88,92,98,103,108,113,118,123,128,132,136,143,149,155,160,165,170,175,180,185,190,195,200,205,211,216,221,227,232,237,239]
+    col_ends   = [x-1 for x in col_starts[1:]] + [280]
+    tab = ascii.read("NearbyGalaxies.dat",
+                     format='fixed_width_no_header',
+                     names=names,
+                     col_starts=col_starts,
+                     col_ends  =col_ends)
+    good_gals = np.array(map(lambda x: False if x[0]=="*" else True, tab["Galaxy"]))
+    gals_to_remove = ["LMC","SMC","Pisces II","Willman 1","Sagittarius dSph"]
+    good_gals = np.logical_and(good_gals, map(lambda x: False if x in gals_to_remove else True, tab["Galaxy"]))
+    good = tab[good_gals]
+    df = good.to_pandas()
+    df["VMag"] = df["Vmag"] - df["m-M"]
+    df["logLsun"] = ((df["VMag"]-4.8)/-2.5)+.012
+    return df
