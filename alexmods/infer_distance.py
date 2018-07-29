@@ -117,7 +117,6 @@ def guess_dist_vtan(gdat, default_dist=10., default_parallax_snr=1.0,
     dv_init = [dist0, vtan0]
     dv_err_init = [derr0, verr0]
     return dv_init, dv_err_init
-    
 
 def sample_distance_vtan(gdat, verbose=True, full_output=False,
                          use_gdat_init=True, default_distance_guess=10.,
@@ -131,10 +130,11 @@ def sample_distance_vtan(gdat, verbose=True, full_output=False,
         if verbose:
             print("Guessing d={:.1f} +/- {:.1f}, vtan={:.1f} +/- {:.1f}".format(
                     dv_init[0], dv_err_init[0], dv_init[1], dv_err_init[1]))
-        init_from_data=False
+    # If use_gdat_init, already inferred from data
+    init_from_data = np.logical_not(use_gdat_init)
     return sample_distance_vtan_mucov(x, cov,
                                       verbose=verbose, full_output=full_output,
-                                      init_from_data=~(use_gdat_init),
+                                      init_from_data=init_from_data,
                                       default_distance_guess=default_distance_guess,
                                       dv_init=dv_init, dv_err_init=dv_err_init, 
                                       dv_corr_init=dv_corr_init,
@@ -150,6 +150,7 @@ def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
     x, cov are mean and covariance matrix in order of [parallax, pmra, pmdec]
     """
     ndim = 3
+    x = np.array(x)
     assert len(x) == ndim
     assert cov.shape[0] == ndim
     assert cov.shape[1] == ndim
@@ -165,7 +166,7 @@ def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
         min_derr = 0.2
         if x[0] > 0:
             dist0 = 1./x[0]
-            parallax_over_error = dist0/np.sqrt(cov[0,0])
+            parallax_over_error = x[0]/np.sqrt(cov[0,0])
         else: # default values for negative parallax
             print("Warning: negative parallax, using default values for initialization")
             dist0 = default_dist
