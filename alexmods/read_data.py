@@ -538,6 +538,32 @@ def load_galdata():
     good_gals = np.logical_and(good_gals, list(map(lambda x: False if x in gals_to_remove else True, tab["Galaxy"])))
     good = tab[good_gals]
     df = good.to_pandas()
+    #e1 is plus error, e2 is minus error
     df["VMag"] = df["Vmag"] - df["m-M"]
+    df["VMag_e1"] = df["Vmag_e1"] + df["m-M_e1"]
+    df["VMag_e2"] = df["Vmag_e2"] + df["m-M_e2"]
     df["logLsun"] = ((df["VMag"]-4.8)/-2.5)+.012
+    df["distance"] = 0.01 * 10**(df["m-M"]/5.)
+    df["distance_e1"] = 0.01 * 10**((df["m-M"]+df["m-M_e2"])/5.) - df["distance"]
+    df["distance_e2"] = df["distance"] - 0.01 * 10**((df["m-M"]-df["m-M_e1"])/5.)
+    df["rh_pc"] = 1000.*df["distance"]*(np.array(df["rh"])*u.arcmin).to(u.radian).value
+    df["rh_pc_e1"] = 1000.*df["distance_e1"]*(np.array(df["rh"])*u.arcmin).to(u.radian).value + 1000.*df["distance"]*(np.array(df["rh_e1"])*u.arcmin).to(u.radian).value
+    df["rh_pc_e2"] = 1000.*df["distance_e2"]*(np.array(df["rh"])*u.arcmin).to(u.radian).value + 1000.*df["distance"]*(np.array(df["rh_e2"])*u.arcmin).to(u.radian).value
+    df["Mdyn"] = 580. * df["rh_pc"] * df["sigma_s"]**2 
+    df["Mdyn_e1"] = 580. * (df["rh_pc"]+df["rh_pc_e1"]) * (df["sigma_s"]+df["sigma_s_e1"])**2 - df["Mdyn"]
+    df["Mdyn_e2"] = df["Mdyn"] - 580. * (df["rh_pc"]-df["rh_pc_e2"]) * (df["sigma_s"]-df["sigma_s_e2"])**2
+    return df
+
+def load_gcdata():
+    gcdir = datapath+"/globular_clusters"
+    df1 = ascii.read(gcdir+"/mwgc1.dat").to_pandas()
+    df1.index = df1.pop("ID")
+    df2 = ascii.read(gcdir+"/mwgc2.dat").to_pandas()
+    df2.index = df2.pop("ID")
+    df3 = ascii.read(gcdir+"/mwgc3.dat").to_pandas()
+    df3.index = df3.pop("ID")
+    df = pd.concat([df1,df2,df3], axis=1)
+    df["rc_pc"] = 1000.*df["R_Sun"]*(np.array(df["r_c"])*u.arcmin).to(u.radian).value
+    df["rh_pc"] = 1000.*df["R_Sun"]*(np.array(df["r_h"])*u.arcmin).to(u.radian).value
+    df["Mdyn"] = 580. * df["rh_pc"] * df["sig_v"]**2
     return df
