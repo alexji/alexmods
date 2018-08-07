@@ -25,9 +25,9 @@ install:
   - pip install emcee
   - pip install astro-gala
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      echo "Skipping pyia for python 2
+      echo "Skipping pyia for python 2";
     else
-      pip install pyia
+      pip install pyia;
     fi
   # Install alexmods
   - python setup.py install
