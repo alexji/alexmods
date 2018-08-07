@@ -46,7 +46,7 @@ setup(
     packages=find_packages(exclude=["documents", "tests"]),
     install_requires=[
         "numpy","pandas","astropy","scipy",
-        "six","astro-gala","pyia","seaborn"
+        "six","astro-gala","seaborn"
         ],
     extras_require={
         #"test": ["coverage"]
