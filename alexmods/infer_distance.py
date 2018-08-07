@@ -8,10 +8,13 @@ import emcee
 from astropy import units as u
 
 from pyia import GaiaData
-from importlib import reload
+from imp import reload
 from . import gaiatools as gtool; reload(gtool)
 
 default_L = 0.5
+default_vmax = 1500.
+default_alpha = 2.0
+default_beta = 8.0
 
 #######################
 # Likelihood and prior
@@ -26,7 +29,7 @@ def lnprior_d(d,L=default_L):
     """ Expotentially declining prior. d, L in kpc (default L=0.5) """
     if d < 0: return -np.inf
     return -np.log(2) - 3*np.log(L) + 2*np.log(d) - d/L
-def lnprior_vtan(vtan,vmax=1500.,alpha=2.,beta=8.):
+def lnprior_vtan(vtan,vmax=1500.,alpha=default_alpha,beta=default_beta):
     """ broad velocity prior. Peaks at ~180 km/s with a tail """
     if vtan > vmax or vtan < 0: return -np.inf
     return -special.betaln(alpha,beta) + (alpha-1.)*np.log(vtan/vmax) + (beta-1.)*np.log(1-vtan/vmax)
@@ -35,9 +38,9 @@ def lnprior_phi(phi):
     # TODO right now I just let phi float to anywhere
     # This makes chain convergence tests difficult
     return -1.8378770664093464
-def lnprior(d,vtan,phi,L=default_L):
-    return lnprior_d(d,L=L) + lnprior_vtan(vtan) + lnprior_phi(phi)
-def lnprob(theta, x, cov, L=default_L):
+def lnprior(d,vtan,phi,L=default_L,vmax=default_vmax,alpha=default_alpha,beta=default_beta):
+    return lnprior_d(d,L=L) + lnprior_vtan(vtan,vmax=vmax,alpha=alpha,beta=beta) + lnprior_phi(phi)
+def lnprob(theta, x, cov, L=default_L, vmax=default_vmax, alpha=default_alpha, beta=default_beta):
     d, vtan, phi = theta
     lp = lnprior(d,vtan,phi,L=L)
     if not np.isfinite(lp): return -np.inf
@@ -121,7 +124,8 @@ def guess_dist_vtan(gdat, default_dist=10., default_parallax_snr=1.0,
 def sample_distance_vtan(gdat, verbose=True, full_output=False,
                          use_gdat_init=True, default_distance_guess=10.,
                          dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.8,
-                         n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L):
+                         n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L,
+                         vmax=default_vmax, alpha=default_alpha, beta=default_beta):
     x = np.array([gdat.parallax.value[0], gdat.pmra.value[0], gdat.pmdec.value[0]])
     
     cov = gdat.get_cov()[0,2:5,2:5]
@@ -139,12 +143,13 @@ def sample_distance_vtan(gdat, verbose=True, full_output=False,
                                       dv_init=dv_init, dv_err_init=dv_err_init, 
                                       dv_corr_init=dv_corr_init,
                                       n_walkers=n_walkers, n_burn=n_burn, n_chain=n_chain, 
-                                      n_keep=n_keep, L=L)
+                                      n_keep=n_keep, L=L, vmax=vmax, alpha=alpha, beta=beta)
 
 def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
                                init_from_data=True, default_distance_guess=10.,
                                dv_init=[5., 100.], dv_err_init=[1., 50.], dv_corr_init=0.8,
-                               n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, L=default_L):
+                               n_walkers=100, n_burn=100, n_chain=1000, n_keep=None, 
+                               L=default_L, vmax=default_vmax, alpha=default_alpha, beta=default_beta):
     """ 
     Run MCMC for a single star. 
     x, cov are mean and covariance matrix in order of [parallax, pmra, pmdec]
@@ -155,7 +160,7 @@ def sample_distance_vtan_mucov(x, cov, verbose=True, full_output=False,
     assert cov.shape[0] == ndim
     assert cov.shape[1] == ndim
     
-    probfn = lambda *args: lnprob(*args, L=L)
+    probfn = lambda *args: lnprob(*args, L=L, vmax=default_vmax, alpha=default_alpha, beta=default_beta)
     sampler = emcee.EnsembleSampler(n_walkers, ndim, probfn, args=(x, cov))
     if verbose: print("{} walkers".format(n_walkers))
     

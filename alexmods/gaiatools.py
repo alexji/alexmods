@@ -3,7 +3,6 @@ import pandas as pd
 from scipy import interpolate
 import warnings
 
-import galpy
 import gala.integrate as gi
 import gala.dynamics as gd
 import gala.potential as gp
