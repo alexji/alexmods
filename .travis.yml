@@ -24,7 +24,11 @@ install:
   - pip install runipy
   - pip install emcee
   - pip install astro-gala
-  - pip install pyia
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      echo "Skipping pyia for python 2
+    else
+      pip install pyia
+    fi
   # Install alexmods
   - python setup.py install
 script:
