@@ -8,7 +8,7 @@ import emcee
 from astropy import units as u
 
 from pyia import GaiaData
-from importlib import reload
+from imp import reload
 from . import gaiatools as gtool; reload(gtool)
 
 default_L = 0.5

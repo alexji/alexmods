@@ -20,7 +20,12 @@ before_install:
 install:
   # Install anaconda basics
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib astropy nose coverage
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION pandas six
   - pip install runipy
+  - pip install emcee
+  - pip install gala
+  - pip install pyia
+  - pip install seaborn
   # Install alexmods
   - python setup.py install
 script:
