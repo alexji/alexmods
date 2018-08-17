@@ -19,7 +19,7 @@ datapath = os.path.join(basepath,"data")
 #from . import gaiatools as gtool
 #from pyia import GaiaData
 
-from .smhutils import element_to_species,species_to_element
+from .smhutils import element_to_species,species_to_element,element_to_atomic_number
 #from smh.photospheres.abundances import asplund_2009 as solar_composition
 
 ## Used to verify periodic table
@@ -567,3 +567,62 @@ def load_gcdata():
     df["rh_pc"] = 1000.*df["R_Sun"]*(np.array(df["r_h"])*u.arcmin).to(u.radian).value
     df["Mdyn"] = 580. * df["rh_pc"] * df["sig_v"]**2
     return df
+
+##################
+# Supernova yields
+##################
+def load_hw10():
+    """
+    Load Heger + Woosley 2010 Pop III CCSNe yields
+    This just adds all the isotopes into element yields
+    """
+    hw10 = Table.read(datapath+"/yield_tables/HW10.fits").to_pandas()
+    elems = np.unique(hw10["El"])
+    Z = np.zeros(len(hw10),dtype=int)
+    for elem in elems:
+        ii = hw10["El"] == elem
+        _Z = PTelement(elem.decode('utf-8').strip()).atomic
+        Z[ii] = _Z
+    hw10["Z"] = Z    
+
+    models = hw10.groupby(["Mass","Energy","Cut","Mixing"])
+    outputyields = []
+    for key,df in models:
+        mass = df.groupby("Z").sum()["Yield"]
+        mass.name = key
+        outputyields.append(mass)
+    hw10y = pd.DataFrame(outputyields)
+    hw10y["Mass"] = list(map(lambda x: x[0], hw10y.index))
+    hw10y["Energy"] = list(map(lambda x: round(x[1],1), hw10y.index))
+    hw10y["Cut"] = list(map(lambda x: x[2], hw10y.index))
+    hw10y["Mixing"] = list(map(lambda x: round(x[3],5), hw10y.index))
+    
+    return hw10y
+
+def load_hw02():
+    """
+    Load Heger + Woosley 2002 Pop III PISN yields
+    This just adds all the isotopes into element yields and computes their approximate PISN progenitor mass
+    """
+    hw02 = ascii.read(datapath+"/yield_tables/hw02.txt").to_pandas()
+    def elemsplitter(x):
+        if x=="He4": return "He",4
+        elem = x[:-2]
+        A = int(x[-2:])
+        return elem, A
+    elems,As = np.array(list(map(elemsplitter, hw02["Ion"]))).T
+    hw02["elem"] = elems
+    hw02["A"] = As
+    hw02["Z"] = list(map(element_to_atomic_number, elems))
+    outputyields = []
+    for model in hw02.columns:
+        if not model.startswith("He"): continue
+        mass = hw02[[model,"Z"]].groupby("Z").sum()
+        mass.name = model
+        outputyields.append(mass)
+    hw02y = pd.concat(outputyields,axis=1).transpose()
+    HeMass = np.array([int(model[2:]) for model in hw02y.index])
+    hw02y["HeMass"] = HeMass
+    PISNMass = 24./13. * np.array(HeMass) + 20.
+    hw02y["PISNMass"] = PISNMass
+    return hw02y
