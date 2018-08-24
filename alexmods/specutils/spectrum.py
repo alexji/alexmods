@@ -187,13 +187,18 @@ class Spectrum1D(object):
             order_mapping = np.array([map(float, each.rstrip('" ').split()) \
                 for each in re.split('spec[0-9]+ ?= ?"', concatenated_wat)[1:]])
             print(order_mapping)
-            dispersion = np.array(
-                [compute_dispersion(*mapping) for 
-                 mapping in order_mapping])
+            if len(order_mapping)==0:
+                NAXIS1 = metadata["NAXIS1"]
+                NAXIS2 = metadata["NAXIS2"]
+                dispersion = np.array([np.arange(NAXIS1) for _ in range(NAXIS2)])
+            else:
+                dispersion = np.array(
+                    [compute_dispersion(*mapping) for 
+                     mapping in order_mapping])
             
             ## Compute flux
             flux = data
-            flux[0 > flux] = np.nan
+            #flux[0 > flux] = np.nan
             
             ## Compute ivar assuming Poisson noise
             ivar = 1./flux
