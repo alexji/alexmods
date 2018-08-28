@@ -53,6 +53,7 @@ _asplund09 = {'H':12.0,'He':10.93,'Li':1.05,'Be':1.38,'B':2.70,
               'Tl':0.90,'Pb':1.75,'Bi':0.65,'Th':0.02,'U':-0.54,
               'Tc':np.nan}
 def get_solar(elems):
+    elems = np.ravel(elems)
     good_elems = [getelem(elem) for elem in elems]
     return pd.Series([_asplund09[elem] for elem in good_elems],index=elems,name='asplund09')
 
@@ -136,7 +137,7 @@ def getelem(elem,lower=False,keep_species=False):
             species = element_to_species(elem)
             elem = species_to_element(species)
             elem = elem.split()[0]
-    elif isinstance(elem, int):
+    elif isinstance(elem, (int, np.integer)):
         elem = PTelement(elem)
         ## TODO common molecules
         assert elem != None
@@ -571,7 +572,7 @@ def load_gcdata():
 ##################
 # Supernova yields
 ##################
-def load_hw10():
+def load_hw10(as_number=False):
     """
     Load Heger + Woosley 2010 Pop III CCSNe yields
     This just adds all the isotopes into element yields
@@ -584,11 +585,15 @@ def load_hw10():
         _Z = PTelement(elem.decode('utf-8').strip()).atomic
         Z[ii] = _Z
     hw10["Z"] = Z    
-
+    addcol = "Yield"
+    if as_number:
+        hw10["N"] = hw10["Yield"]/hw10["A"]
+        addcol = "N"
+    
     models = hw10.groupby(["Mass","Energy","Cut","Mixing"])
     outputyields = []
     for key,df in models:
-        mass = df.groupby("Z").sum()["Yield"]
+        mass = df.groupby("Z").sum()[addcol]
         mass.name = key
         outputyields.append(mass)
     hw10y = pd.DataFrame(outputyields)
