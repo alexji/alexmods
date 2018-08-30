@@ -138,6 +138,7 @@ def getelem(elem,lower=False,keep_species=False):
             elem = species_to_element(species)
             elem = elem.split()[0]
     elif isinstance(elem, (int, np.integer)):
+        elem = int(elem)
         elem = PTelement(elem)
         ## TODO common molecules
         assert elem != None
