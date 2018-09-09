@@ -16,7 +16,7 @@ from collections import OrderedDict
 from hashlib import md5
 
 from astropy.io import fits
-from scipy import interpolate, ndimage, polyfit, poly1d, optimize as op
+from scipy import interpolate, ndimage, polyfit, poly1d, optimize as op, signal
 from ..robust_polyfit import polyfit as rpolyfit
 
 logger = logging.getLogger(__name__)
@@ -1492,4 +1492,196 @@ def coadd(spectra, new_dispersion=None, full_output=False):
         return newspec, (common_flux, common_ivar)
     else:
         return newspec
+    
+
+def read_mike_spectrum(fname, fluxband=2):
+    """
+    Output an OrderedDict of Spectrum1D, indexed by order number
+    
+    Spectrum1D.dispersion computed from multispec header
+    Spectrum1D.flux depends on flux band
+    
+    BANDID1 = 'sky spectrum'
+    BANDID2 = 'object spectrum' (default)
+    BANDID3 = 'noise spectrum'
+    BANDID4 = 'signal-to-noise spectrum'
+    BANDID5 = 'lamp spectrum'
+    BANDID6 = 'flat spectrum'
+    BANDID7 = 'object spectrum divided by normed flat'
+    
+    Spectrum1D.ivar: 
+    If fluxband==2, uses (BANDID3)**-2
+    If fluxband==7, modifies ivar to account for flat
+    Otherwise, just uses 1/fluxband
+    """
+    assert fluxband in [1,2,3,4,5,6,7]
+    
+    with fits.open(fname) as hdul:
+        data = hdul[0].data
+        header = hdul[0].header
+        metadata = OrderedDict()
+        for k, v in header.items():
+            if k in metadata:
+                metadata[k] += v
+            else:
+                metadata[k] = v
+        assert metadata["CTYPE1"].upper().startswith("MULTISPE") \
+            or metadata["WAT0_001"].lower() == "system=multispec"
+    
+    assert data.shape[0] == 7, data.shape
+    
+    # Get order numbers
+    order_nums = []
+    i, key_fmt = 0, "ECORD{}"
+    while key_fmt.format(i) in metadata:
+        order_nums.append(metadata[key_fmt.format(i)])
+        i += 1
+    
+    assert data.shape[1] == len(order_nums), (data.shape, len(order_nums))
+    Norder = data.shape[1]
+    
+    Npix = data.shape[2]
+    
+    # Get flux data
+    fluxes = [data[fluxband-1,iorder] for iorder in range(Norder)]
+    # Get ivar data
+    if fluxband == 2:
+        ivars = [data[2,iorder]**-2. for iorder in range(Norder)]
+    elif fluxband == 7:
+        flats = [data[1,iorder]/data[6,iorder] for iorder in range(Norder)]
+        ivars = [(flats[iorder]/data[2,iorder])**2. for iorder in range(Norder)]
+    else:
+        ivars = [data[fluxband-1,iorder]**-1. for iorder in range(Norder)]
+
+    for ivar in ivars:
+        ivar[np.isnan(ivar)] = 0.
+    
+    # Join the WAT keywords for dispersion mapping.
+    i, concatenated_wat, key_fmt = (1, str(""), "WAT2_{0:03d}")
+    while key_fmt.format(i) in metadata:
+        value = metadata[key_fmt.format(i)]
+        concatenated_wat += value + (" "  * (68 - len(value)))
+        i += 1
+    # Split the concatenated header into individual orders.
+    order_mapping = np.array([map(float, each.rstrip('" ').split()) \
+        for each in re.split('spec[0-9]+ ?= ?"', concatenated_wat)[1:]])
+    if len(order_mapping)==0:
+        NAXIS1 = metadata["NAXIS1"]
+        NAXIS2 = metadata["NAXIS2"]
+        waves = np.array([np.arange(NAXIS1) for _ in range(NAXIS2)])
+    else:
+        waves = np.array(
+                [compute_dispersion(*mapping) for
+                 mapping in order_mapping])
+    
+    spec1ds = OrderedDict()
+    for iord,wave,flux,ivar in zip(order_nums, waves, fluxes, ivars):
+        meta = metadata.copy()
+        meta["order"] = iord
+        spec = Spectrum1D(wave, flux, ivar, meta)
+        spec1ds[iord] = spec
+    return spec1ds
+
+def alex_continuum_fit(spec, knot_spacing=5., Nknots=None,
+                       spline_order=2, median_window=51,
+                       sigmaclip=1.5, knot_reject_threshold=0.7, maxiter=5,
+                       full_output=False):
+    """
+    Alternate algorithm:
+    * Setup initial knots according to some spacing (not knot number!)
+    * Iterate:
+        * Mark outlier pixels using linear interpolation between knots
+        * Rolling window to count outliers
+        * If a knot has < a threshold continuum pixels, remove it (but do not expand the spacing)
+        * Update knot y
+        * Refit continuum
+
+
+
+    A hybrid of my own stuff and linetools
+    Algorithm:
+    * Setup initial knots (Nknots linearly spaced inside)
+    * Get 0th order median continuum (using window)
+    * Iterate:
+        * Mark outlier pixels using linear interpolation between knots
+        * Update knot y
+        * Remove bad knots? (those with all outlier pixels)
+        * Refit continuum through knots with lsq spline
+
+    """
+    x, y, w = spec.dispersion, spec.flux, spec.ivar
+    # 0th order median 
+    c0 = signal.medfilt(y, median_window)
+    n0 = y/c0
+    w0 = w*c0*c0
+    n0[np.isnan(n0)] = 0.
+    
+    # Generate evenly spaced knots in the interior
+    wmin, wmax = x.min(), x.max()
+    if Nknots is None:
+        waverange = wmax - wmin
+        Nknots = int(waverange // knot_spacing)
+        minknot = wmin + (waverange - Nknots * knot_spacing)/2.
+        maxknot = wmax - (waverange - Nknots * knot_spacing)/2.
+        xknots = np.arange(minknot, maxknot, knot_spacing)
+    else:
+        xknots = np.linspace(wmin,wmax,Nknots+2)[1:-1]
+        knot_spacing = np.median(np.diff(xknots))
+    assert len(xknots) == Nknots, (len(xknots), Nknots)
+    
+    # Generate a spacing window for convolution
+    spacing_window = int(knot_spacing/np.median(np.diff(x)))
+    if spacing_window % 2 == 0: spacing_window += 1
+    average_filter = np.ones(spacing_window)/float(spacing_window)
+    
+    ynorm = n0.copy()
+    for iter in range(maxiter):
+        # Assign knot y-values from median windowing
+        ixknots = np.searchsorted(x, xknots)
+        yknots = signal.medfilt(y, spacing_window)[ixknots]
+
+        # mark good pixels
+        flin = interpolate.interp1d(xknots, yknots, fill_value="extrapolate")
+        lincont = flin(x) #np.interp(x, xknots, yknots, left=1.0, right=1.0)
+        good = np.abs((y-lincont)*np.sqrt(w)) < sigmaclip
+        #logger.debug("iter{}: Found {} good points".format(iter+1, np.sum(good)))
+        # count good pixel fraction in spacing window
+        goodfrac = np.convolve(good.astype(int), average_filter, 'same')
+        # reject knots that have too few continuum points
+        iibadknots = goodfrac[ixknots] < knot_reject_threshold
+        #logger.debug("iter{}: Rejecting {}/{} knots".format(iter+1, np.sum(iibadknots), len(iibadknots)))
+        xknots = xknots[~iibadknots]
+        yknots = yknots[~iibadknots]
+        
+        #return x, y, w, xknots, yknots, lincont, good, goodfrac
+        # Fit spline through knots
+        fnorm = interpolate.LSQUnivariateSpline(x[good], y[good], xknots, w[good], k=spline_order)
+        #fnorm = interpolate.Akima1DInterpolator(xknots, yknots)
+        ynorm = fnorm(x)
+        #chi2 = np.nansum((y[good] - ynorm[good])**2.*w[good])/float(np.sum(good))
+        
+        #if np.sum(iibadknots) == 0: break
+        #if chi2 < 1.5:
+        #    logger.info("Chi2={:.2f}".format(chi2))
+        #    break
+    
+    if full_output:
+        return fnorm, ynorm, xknots, yknots, good
+    return fnorm
+
+def write_fits_linear(fname, wmin, dwave, flux):
+    hdu = fits.PrimaryHDU(np.array(flux))
+    headers = {}
+    headers.update({
+            'CTYPE1': 'LINEAR  ',
+            'CRVAL1': wmin,
+            'CRPIX1': 1,
+            'CDELT1': dwave
+    })
+    for k,v in headers.items():
+        try:
+            hdu.header[key] = value
+        except:
+            pass
+    hdu.writeto(fname, clobber=True)
     

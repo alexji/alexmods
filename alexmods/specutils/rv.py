@@ -208,7 +208,10 @@ def measure_order_velocities(orders, template, norm_kwargs, **kwargs):
     N = len(orders)
     rv_output = np.zeros((N,5))
     for i, order in enumerate(orders):
-        normorder = order.fit_continuum(**norm_kwargs)
+        if norm_kwargs is None:
+            normorder = order
+        else:
+            normorder = order.fit_continuum(**norm_kwargs)
         try:
             rv, e_rv, ccf = cross_correlate(normorder, template, **kwargs)
         except:
