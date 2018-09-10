@@ -7,7 +7,7 @@ from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
 from six import string_types
 
-__all__ = ["fit_continuum"]
+__all__ = []
 
 ## Standard imports
 import logging
@@ -19,7 +19,7 @@ import random
 
 ## Astro imports
 from astropy.io import fits, ascii
-from alexmods.specutils.spectrum import Spectrum1D, read_mike_spectrum
+from alexmods.specutils.spectrum import (Spectrum1D, read_mike_spectrum, stitch as spectrum_stitch)
 
 ## GUI imports
 # https://pythonspot.com/pyqt5-matplotlib/
@@ -185,6 +185,15 @@ class ContinuumModel(object):
         self.labels = labels
         return
     
+    def apply_radial_velocity_corrections(self, label_to_rv):
+        ## Verification that all the RVs exist
+        for order, specs in self.all_specs.items():
+            for label, spec in specs.items():
+                assert label in label_to_rv, (order, label)
+        for order, specs in self.all_specs.items():
+            for label, spec in specs.items():
+                rv = label_to_rv[label]
+                spec.redshift(rv)
     def fit_all_continuums(self):
         """ Fit all data for all orders """
         for order in self.all_order_numbers:
@@ -280,6 +289,63 @@ class ContinuumModel(object):
         model.all_knots = all_knots
         model.all_exclude_regions = all_exclude_regions
         model.fit_all_continuums()
+        return model
+
+    def get_normalized_orders(self):
+        self.fit_all_continuums()
+        normalized_specs = OrderedDict()
+        for order, specs in self.all_specs.items():
+            conts = self.all_continuum_data[order]
+            normalized_specs[order] = OrderedDict()
+            for label, spec in specs.items():
+                cont = conts[label]
+                # TODO add some extra metadata?
+                meta = spec.metadata.copy()
+                norm = Spectrum1D(spec.dispersion, spec.flux/cont, 
+                                  spec.ivar*cont*cont, meta)
+                normalized_specs[order][label] = norm
+        return normalized_specs
+    def get_coadded_orders(self, mode="wavg", **kwargs):
+        """
+        wavg = weighted average
+        sfit = spline fit
+        """
+        assert mode in ["wavg"]
+        normalized_specs = self.get_normalized_orders()
+        coadded_specs = OrderedDict()
+        for order, specs in normalized_specs.items():
+            ordwaves = []
+            ordfluxs = []
+            ordivars = []
+            for label, spec in specs.items():
+                ordwaves.append(spec.dispersion)
+                ordfluxs.append(spec.flux)
+                ordivars.append(spec.ivar)
+                dwave = np.median(np.diff(spec.dispersion))
+            
+            ordwaves = np.vstack(ordwaves)
+            ordfluxs = np.vstack(ordfluxs)
+            ordivars = np.vstack(ordivars)
+            wmin = np.max(ordwaves[:,0])
+            wmax = np.min(ordwaves[:,-1])
+            Npix = ordwaves.shape[1]
+            knots = np.linspace(wmin, wmax, int(Npix//2)+2)[1:-1]
+            waveeval = np.linspace(wmin, wmax, Npix)
+            for i in range(len(ordwaves)):
+                ordfluxs[i] = np.interp(waveeval, ordwaves[i], ordfluxs[i])
+                ordivars[i] = np.interp(waveeval, ordwaves[i], ordivars[i])
+    
+            ordwave = waveeval
+            ordivar = np.nansum(ordivars, axis=0)
+            ordflux = np.nansum(ordfluxs*ordivars, axis=0)/ordivar
+            ordivar[np.isnan(ordflux)] = 0.
+            #meta = specs[0].metadata.copy()
+            meta = {"labels":",".join(list(specs.keys()))}
+            coadded_specs[order] = Spectrum1D(waveeval, ordflux, ordivar, meta)
+        return coadded_specs
+    def get_full_stitch(self):
+        coadded_specs = list(self.get_coadded_orders().values())
+        return spectrum_stitch(coadded_specs)
 
 class ContinuumNormalizationApp(QMainWindow):
     def __init__(self, input_spectra_filenames, labels=None, fluxband=7, 
@@ -375,13 +441,14 @@ class ContinuumNormalizationApp(QMainWindow):
         toolbar = NavigationToolbar(self.canvas, self, False)
         self.toolbar = toolbar
         
-        button = QPushButton('Fit Continuums', self)
-        button.setToolTip('This is an example button')
+        #button = QPushButton('Fit All Continuums', self)
+        button = QPushButton('Save Stitched Spectrum', self)
+        button.setToolTip('')
         button.move(1100,0)
         button.resize(120,50)
-        #button.clicked.connect(self.plot_data)
-        button.clicked.connect(self.fit_all_continuums)
-        button.clicked.connect(self.update_plot)
+        #button.clicked.connect(self.fit_all_continuums)
+        #button.clicked.connect(self.update_plot)
+        button.clicked.connect(self.save_stitched_spectrum)
         self.button = button
         
         self.activate_keyboard_shortcuts()
@@ -390,6 +457,9 @@ class ContinuumNormalizationApp(QMainWindow):
         self.toolbar.update()
         self.show()
     
+    def save_stitched_spectrum(self):
+        fullspec = self.model.get_full_stitch()
+        fullspec.write("stitched_spectrum.txt")
     def activate_keyboard_shortcuts(self):
         self._figure_key_press_cid = self.canvas.mpl_connect("key_press_event", self.figure_key_press)
         self._interactive_mask_region_signal = None
@@ -456,11 +526,11 @@ class ContinuumNormalizationApp(QMainWindow):
             # save and quit
             self.model.save(self.default_save)
             print("Saved to {}".format(self.default_save))
-            self.quit()
+            self.close()
         if event.key in "!":
             # quit without saving
             print("Quitting without saving (NOT IMPLEMENTED FOR SAFETY)")
-            #self.quit()
+            #self.close()
     def start_interactive_exclude_region(self, x):
         # Disconnect all other signals
         self.canvas.mpl_disconnect(self._figure_key_press_cid)
@@ -645,10 +715,3 @@ def get_ax_ylim(ax, plo=0, phi=100):
     ymax = min(ymax, max(ally[np.isfinite(ally)]))
     return ymin, ymax
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    fnames = ["/Users/alexji/Dropbox/J0023+0307/order_coadd/ani-noCR_j0023+0307red_multi.fits"]
-    ex = ContinuumNormalizationApp(fnames, fluxband=2)
-    ex.fit_all_continuums()
-    sys.exit(app.exec_())
-    
