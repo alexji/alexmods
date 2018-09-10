@@ -13,7 +13,7 @@ __all__ = ["fit_continuum"]
 import logging
 import numpy as np
 from scipy import interpolate, signal
-import os, sys
+import os, sys, time
 from collections import OrderedDict
 import random
 
@@ -32,24 +32,44 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
 
+DOUBLE_CLICK_INTERVAL = 0.1 # MAGIC HACK
+
 def median_filter(spec, window):
     newflux = signal.median_filter(spec.flux, window)
     return Spectrum1D(spec.dispersion, newflux, spec.ivar, spec.metadata)
 
-def fit_continuum_lsq(spec, knots, exclude=[], **kwargs):
+def fit_continuum_lsq(spec, knots, exclude=[], maxiter=3, sigma_lo=2, sigma_hi=2, **kwargs):
     """ Fit least squares continuum through spectrum data using specified knots, return model """
     assert np.all(np.array(list(map(len, exclude))) == 2), exclude
     assert np.all(np.array(list(map(lambda x: x[0] < x[1], exclude)))), exclude
     x, y, w = spec.dispersion, spec.flux, spec.ivar
+    
     mask = np.ones_like(x, dtype=bool)
+    # Exclude regions
     for xmin, xmax in exclude:
         mask[(x >= xmin) & (x <= xmax)] = False
-    try:
-        fcont = interpolate.LSQUnivariateSpline(x[mask], y[mask], knots, w=w[mask], **kwargs)
-    except ValueError:
-        print("Knots:",knots)
-        print("xmin, xmax = {:.4f}, {:.4f}".format(x[mask].min(), x[mask].max()))
-        raise
+    # Get rid of bad fluxes
+    mask[np.abs(y)<1e-6] = False
+    mask[np.isnan(y)] = False
+    
+    for iter in range(maxiter):
+        # Make sure there the knots don't hit the edges
+        wmin = x[mask].min()
+        wmax = x[mask].max()
+        while knots[-1] >= wmax: knots = knots[:-1]
+        while knots[0] <= wmin: knots = knots[1:]
+        
+        try:
+            fcont = interpolate.LSQUnivariateSpline(x[mask], y[mask], knots, w=w[mask], **kwargs)
+        except ValueError:
+            print("Knots:",knots)
+            print("xmin, xmax = {:.4f}, {:.4f}".format(wmin, wmax))
+            raise
+        # Iterative rejection
+        cont = fcont(x)
+        sig = (y-cont) * np.sqrt(w)
+        mask[sig > sigma_hi] = False
+        mask[sig < -sigma_lo] = False
     return fcont
 
 def load_spectra_by_order(fnames, fluxband=7):
@@ -72,13 +92,13 @@ def load_spectra_by_order(fnames, fluxband=7):
 
 def initialize_knots(wmin, wmax, knot_spacing):
     """ Place knots evenly through """
-    waverange = wmax - wmin
+    waverange = wmax - wmin - 2*knot_spacing
     Nknots = int(waverange // knot_spacing)
     minknot = wmin + (waverange - Nknots * knot_spacing)/2.
     xknots = np.arange(minknot, wmax, knot_spacing)
     # Make sure there the knots don't hit the edges
-    while xknots[-1] >= wmax: xknots = xknots[:-1]
-    while xknots[0] <= wmin: xknots = xknots[1:]
+    while xknots[-1] >= wmax - knot_spacing: xknots = xknots[:-1]
+    while xknots[0] <= wmin + knot_spacing: xknots = xknots[1:]
     return list(xknots)
 def initialize_knots_from_spectrum(spec, knot_spacing):
     wave = spec.dispersion
@@ -105,9 +125,11 @@ def fit_continuum_to_spectra(specs, knots, **kwargs):
     return cont_funcs, cont_data
 
 class ContinuumModel(object):
-    def __init__(self, degree=3, knot_spacing=10.):
+    def __init__(self, degree=3, knot_spacing=10., sigma_lo=2, sigma_hi=2):
         self.degree = degree
         self.knot_spacing = knot_spacing
+        self.sigma_lo = sigma_lo
+        self.sigma_hi = sigma_hi
         self._initialize()
     
     def _initialize(self):
@@ -128,6 +150,7 @@ class ContinuumModel(object):
         """
         Load data, sort by order number
         """
+        self.fluxband=fluxband
         if isinstance(fnames, string_types):
             fnames = [fnames]
         if labels is not None:
@@ -149,16 +172,16 @@ class ContinuumModel(object):
                     self.all_specs[iord] = OrderedDict()
                     self.all_continuum_data[iord] = OrderedDict()
                     self.all_continuum_functions[iord] = OrderedDict()
-                    self.all_y_knots[iord] = []
+                    self.all_y_knots[iord] = OrderedDict()
                     
                     self.all_knots[iord] = []
                     self.all_exclude_regions[iord] = []
                 self.all_specs[iord][label] = spec
                 self.all_continuum_data[iord][label] = None
                 self.all_continuum_functions[iord][label] = None
-        self.all_order_numbers = list(np.sort(all_specs.keys()))
+        self.all_order_numbers = list(np.sort(list(self.all_specs.keys())))
         
-        self.fnames = fnames
+        self.fnames = [os.path.abspath(fname) for fname in fnames]
         self.labels = labels
         return
     
@@ -171,7 +194,7 @@ class ContinuumModel(object):
         """ Fit all data for one order """
         specs = self.all_specs[order]
         knots = self.get_knots(order)
-        exclude = self.exclude_regions[order]
+        exclude = self.all_exclude_regions[order]
         fconts, dconts = fit_continuum_to_spectra(specs, knots, k=self.degree, exclude=exclude)
         self.all_continuum_functions[order] = fconts
         self.all_continuum_data[order] = dconts
@@ -206,10 +229,17 @@ class ContinuumModel(object):
         x = knots.pop(iknot)
         self.fit_continuums(order)
         return x
-    def get_nearest_knot(self, order, x):
+    def get_nearest_knot(self, order, x, gety=False):
         knots = self.all_knots[order]
+        if len(knots) == 0:
+            if gety: return None, None, None
+            return None, None
         iknot = np.argmin(np.abs(x-np.array(knots)))
-        return iknot, knots[iknot]
+        xknot = knots[iknot]
+        if gety:
+            yknots = [self.all_y_knots[order][label][iknot] for label in self.labels]
+            return iknot, xknot, yknots
+        return iknot, xknot
     def delete_nearest_knot(self, order, x):
         iknot, xknot = self.get_nearest_knot(order, x)
         self.delete_knot(order, iknot)
@@ -221,21 +251,53 @@ class ContinuumModel(object):
     def reset_exclude_regions(self, order):
         self.all_exclude_regions[order] = []
     
+    def save(self, fname):
+        """
+        Save the parameters (degree, knots, exclusion regions) 
+        and filenames, but only the location of the original data filenames
+        """
+        output = [self.fnames, self.labels, self.fluxband,
+                  self.degree, self.knot_spacing, self.sigma_lo, self.sigma_hi,
+                  self.all_knots, self.all_exclude_regions]
+        np.save(fname, output)
+        
+    @classmethod
+    def load(cls, fname):
+        """
+        Load the data and refit
+        """
+        model = cls()
+        fnames, labels, fluxband, \
+            degree, knot_spacing, sigma_lo, sigma_hi, \
+            all_knots, all_exclude_regions = \
+            np.load(fname)
+        model.degree = degree
+        model.knot_spacing = knot_spacing
+        model.sigma_lo = sigma_lo
+        model.sigma_hi = sigma_hi
+        
+        model.load_data(fnames, labels, fluxband)
+        model.all_knots = all_knots
+        model.all_exclude_regions = all_exclude_regions
+        model.fit_all_continuums()
+
 class ContinuumNormalizationApp(QMainWindow):
-    def __init__(self, input_spectra_filenames, labels=None, fluxband=7, **kwargs):
+    def __init__(self, input_spectra_filenames, labels=None, fluxband=7, 
+                 default_save="continuum_fit.npy", **kwargs):
         super().__init__()
 
+        self.default_save = default_save
         self.model = ContinuumModel(**kwargs)
         self.model.load_data(input_spectra_filenames, labels=labels, fluxband=fluxband)
-        self.labels = labels
+        self.labels = self.model.labels
         
         self.all_orders = self.model.all_specs
-        self.all_order_numbers = self.all_order_numbers = self.model.all_order_numbers
+        self.all_order_numbers = self.model.all_order_numbers
         
         # Setup label colors
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         self.colordict = {}
-        for i,label in enumerate(model.labels):
+        for i,label in enumerate(self.model.labels):
             self.colordict[label] = colors[i]
         
         self.all_knots = self.model.all_knots
@@ -251,7 +313,7 @@ class ContinuumNormalizationApp(QMainWindow):
         self.height = 800
         self.initUI()
         
-        self.set_order(66)
+        self.set_order(np.max(self.all_order_numbers))
         
     def fit_all_continuums(self):
         self.model.fit_all_continuums()
@@ -261,6 +323,7 @@ class ContinuumNormalizationApp(QMainWindow):
         assert order in self.all_order_numbers
         self.order = order
         self.canvas.set_title("Order {}".format(self.order))
+        self.fit_continuums()
         self.update_plot()
     
     def update_plot(self):
@@ -291,39 +354,12 @@ class ContinuumNormalizationApp(QMainWindow):
         except:
             print("Error plotting continuum {}".format(self.order))
     def plot_exclude_regions(self):
-        pass
-                
+        exclude = self.all_exclude_regions[self.order]
+        for xmin, xmax in exclude:
+            self.canvas.vspan(xmin, xmax)
     
-    def update_y_knots(self):
-        if self.order in self.all_knots:
-            specs = self.all_orders[self.order]
-            conts = self.all_continuum_data[self.order]
-            knots = self.all_knots[self.order]
-            if self.order not in self.all_y_knots:
-                self.all_y_knots[self.order] = OrderedDict()
-            y_knots = self.all_y_knots[self.order]
-            for label, spec in specs.items():
-                cont = conts[label]
-                ixknots = np.searchsorted(spec.dispersion, knots)
-                y_knots[label] = cont[ixknots]
-        
     def fit_continuums(self):
-        """
-        Fit continuum through knots to all spectra of this order
-        """
-        # Get spectra and knots
-        specs = self.all_orders[self.order]
-        if self.order in self.all_knots and len(self.all_knots[self.order]) > 0:
-            knots = self.all_knots[self.order]
-        else:
-            logging.info("Initializing knots with spacing {}".format(self.knot_spacing))
-            knots = initialize_knots_from_spectra(specs, self.knot_spacing)
-            self.all_knots[self.order] = knots
-        
-        fconts, dconts = fit_continuum_to_spectra(specs, knots, k=self.degree)
-        self.all_continuum_functions[self.order] = fconts
-        self.all_continuum_data[self.order] = dconts
-        self.update_y_knots()
+        self.model.fit_continuums(self.order)
         
     def initUI(self):
         self.setWindowTitle(self.title)
@@ -344,7 +380,7 @@ class ContinuumNormalizationApp(QMainWindow):
         button.move(1100,0)
         button.resize(120,50)
         #button.clicked.connect(self.plot_data)
-        button.clicked.connect(self.fit_continuums)
+        button.clicked.connect(self.fit_all_continuums)
         button.clicked.connect(self.update_plot)
         self.button = button
         
@@ -355,103 +391,142 @@ class ContinuumNormalizationApp(QMainWindow):
         self.show()
     
     def activate_keyboard_shortcuts(self):
-        self.canvas.mpl_connect("key_press_event", self.figure_key_press)
+        self._figure_key_press_cid = self.canvas.mpl_connect("key_press_event", self.figure_key_press)
+        self._interactive_mask_region_signal = None
+        
     def figure_key_press(self, event):
         print("Pressed '{}'".format(event.key))
-        ## Change orders
-        if event.key in ("left", "right"):
-            offset = 1 if event.key == "right" else -1
+        ## Change orders (it is reversed on purpose!)
+        if event.key in ("left", "j", "J", "right", "k", "K"):
+            offset = -1 if event.key in ("right", "k", "K") else +1
             if (self.order + offset) in self.all_order_numbers:
                 self.canvas.clear_plot()
                 self.set_order(self.order+offset)
             return
         if event.key == " ":
             # print mouse and knot location
-            iknot, xknot = self.get_nearest_knot(event.xdata)
+            iknot, xknot, yknots = self.model.get_nearest_knot(self.order, event.xdata, gety=True)
             if xknot is not None:
                 self.canvas.textinfo("x={:.1f} y={:.2f} kx={:.1f}".format(
                         event.xdata, event.ydata, xknot))
             else:
                 self.canvas.textinfo("x={:.1f} y={:.2f} (no knots)".format(
                         event.xdata, event.ydata))
-            # TODO select knot visually
+            xknots = [xknot for label in self.model.labels]
+            colors = [self.colordict[label] for label in self.model.labels]
+            #self.canvas.select_points(xknots, yknots, colors=colors)
             return
         if event.key in "aA":
             # add knot
-            self.add_knot(event.xdata)
+            self.model.add_knot(self.order, event.xdata)
             self.update_plot()
             return
         if event.key in "dD":
             # delete knot
-            iknot, xknot = self.get_nearest_knot(event.xdata)
-            self.delete_knot(iknot)
+            self.model.delete_nearest_knot(self.order, event.xdata)
             self.update_plot()
             return
         if event.key in "cC":
             # refit continuum with default settings
-            if self.order in self.all_knots:
-                # Remove all knots
-                _ = self.all_knots.pop(self.order)
-                self.fit_continuums()
-                self.update_plot()
+            self.model.reset_exclude_regions(self.order)
+            self.model.reset_knots(self.order)
+            self.update_plot()
             return
         if event.key in "rR":
             # redraw
-            if self.order in self.all_knots:
-                self.update_plot()
+            self.update_plot()
+            return
+        if event.key in "fF":
+            # fit
+            self.fit_continuums()
+            self.update_plot()
             return
         if event.key in "eE":
             # exclude region
             xmin, xmax = self.canvas.ax.get_xlim()
-            if xmin < event.xdata and event.data < xmax:
-                self.start_interactive_exclude_region()
+            if xmin < event.xdata and event.xdata < xmax:
+                self.start_interactive_exclude_region(event.xdata)
             return
-    def start_interactive_exclude_region(self):
-        self.canvas.mpl_disconnect("key_press_event", self.figure_key_press)
-        self.canvas.mpl_connect("key_press_event", self.finish_interactive_exclude_region)
+        if event.key in "sS":
+            # save
+            self.model.save(self.default_save)
+            print("Saved to {}".format(self.default_save))
+            return
+        if event.key in "qQ":
+            # save and quit
+            self.model.save(self.default_save)
+            print("Saved to {}".format(self.default_save))
+            self.quit()
+        if event.key in "!":
+            # quit without saving
+            print("Quitting without saving (NOT IMPLEMENTED FOR SAFETY)")
+            #self.quit()
+    def start_interactive_exclude_region(self, x):
+        # Disconnect all other signals
+        self.canvas.mpl_disconnect(self._figure_key_press_cid)
+        
+        # Setup interactive mask in canvas
+        xmin, xmax, ymin, ymax = (x, np.nan, -1e8, +1e8)
+        for patch in self.canvas._interactive_mask:
+            patch.set_xy([
+                [xmin, ymin],
+                [xmin, ymax],
+                [xmax, ymax],
+                [xmax, ymin],
+                [xmin, ymin]
+            ])
+            patch.set_facecolor("r")
+        
+        self._interactive_mask_region_signal = (
+            time.time(),
+            self.canvas.mpl_connect(
+                "motion_notify_event", self.continue_interactive_exclude_region)
+        )
+        self._finish_interactive_exclude_region_cid = \
+            self.canvas.mpl_connect("key_press_event", self.finish_interactive_exclude_region)
     def continue_interactive_exclude_region(self, event):
-        pass
-    def finish_interactive_exclude_region(self, event):
-        xmin, xmax = self.canvas.ax.get_xlim()
-        if xmin < event.xdata and event.xdata < xmax:
-        self.canvas.mpl_disconnect("key_press_event", self.finish_interactive_exclude_region)
-        self.canvas.mpl_connect("key_press_event", self.figure_key_press)
-        pass
-            
-    def add_knot(self, x):
-        if self.order not in self.all_knots: return
-        knots = self.all_knots[self.order]
-        ix = np.searchsorted(knots, x)
-        knots = list(knots)
-        knots.insert(ix, x)
-        assert np.allclose(np.sort(knots), np.array(knots))
-        self.all_knots[self.order] = np.array(knots)
-        self.fit_continuums()
-        return
-    def delete_knot(self, iknot):
-        if iknot is None: return
-        knots = self.all_knots[self.order]
-        knots = list(knots)
-        knots.pop(iknot)
-        assert np.allclose(np.sort(knots), np.array(knots))
-        self.all_knots[self.order] = np.array(knots)
-        self.fit_continuums()
-        return
-    def get_nearest_knot(self, x):
-        """ Given coordinate x, find the nearest knot """
-        if self.order not in self.all_knots:
-            logging.debug("This order has no knots")
-            return None, None
-        # Get normalized location
-        knots = self.all_knots[self.order]
-        xmin, xmax = self.canvas.ax.get_xlim()
-        normknots = (knots - xmin)/(xmax-xmin)
-        normx = (x - xmin)/(xmax-xmin)
-        iknot = np.argmin(np.abs(normx-normknots))
-        return iknot, knots[iknot]
+        if event.xdata is None: return None
+        signal_time, signal_cid = self._interactive_mask_region_signal
+        
+        data = self.canvas._interactive_mask[0].get_xy()
+        # Update xmax.
+        data[2:4, 0] = event.xdata
+        for patch in self.canvas._interactive_mask:
+            patch.set_xy(data)
+        self.canvas.draw()
+        return None
     
+    def finish_interactive_exclude_region(self, event):
+        if event.key not in "eE": return
+        
+        signal_time, signal_cid = self._interactive_mask_region_signal
+        
+        xy = self.canvas._interactive_mask[0].get_xy()
+        if event.xdata is None:
+            # Out of axis; exclude based on the closest axis limit
+            xdata = xy[2, 0]
+        else:
+            xdata = event.xdata
+        
+        # Save mask data
+        minx = min(xy[0,0],xy[2,0])
+        maxx = max(xy[0,0],xy[2,0])
+        self.model.add_exclude_region(self.order, minx, maxx)
+
+        # Clean up interactive mask
+        xy[:, 0] = np.nan
+        for patch in self.canvas._interactive_mask:
+            patch.set_xy(xy)
+        del self._interactive_mask_region_signal
+        self.canvas.mpl_disconnect(signal_cid)
+        self.canvas.mpl_disconnect(self._finish_interactive_exclude_region_cid)
+        self._figure_key_press_cid = self.canvas.mpl_connect("key_press_event", self.figure_key_press)
+        
+        self.fit_continuums()
+        self.update_plot()
         
 class PlotCanvas(FigureCanvas):
+    ## TODO put keyboard stuff in the canvas rather than the application?
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         # Create canvas
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -469,26 +544,68 @@ class PlotCanvas(FigureCanvas):
                               transform=ax.transAxes)
         self._selected_points = ax.scatter([], [], edgecolor="b", facecolor="none", 
                                            s=150, linewidth=3, zorder=2)
-        self._interactive_mask =self.ax_spectrum.axvspan(xmin=np.nan, xmax=np.nan, ymin=np.nan,
-                                                         ymax=np.nan, facecolor="r", edgecolor="none", alpha=0.25,
-                                                         zorder=-5)
+        self._interactive_mask =[self.ax.axvspan(xmin=np.nan, xmax=np.nan, ymin=np.nan,
+                                                ymax=np.nan, facecolor="r", edgecolor="none", alpha=0.25,
+                                                zorder=-5),]
+        self._vspans = []
+        self._next_vspan = 0
         
     def textinfo(self, text):
         self._text.set_text(text)
         self.draw()
         
+    def select_points(self, x, y, colors):
+        self._selected_points.set_offsets(np.array([x, y]).T)
+        self._selected_points.set_edgecolors(colors)
+        self.draw()
+    def deselect_points(self):
+        self._selected_points.set_offsets(np.array([[np.nan],[np.nan]]).T)
+        self.draw()
+
     def plot(self, *args, **kwargs):
         self.ax.plot(*args, **kwargs)
         self.draw()
     def plot_norefresh(self, *args, **kwargs):
         self.ax.plot(*args, **kwargs)
+        
+    def vspan(self, xmin, xmax):
+        try:
+            patch = self._vspans[self._next_vspan]
+        except IndexError:
+            patch = self.ax.axvspan(xmin=xmin, xmax=xmax, facecolor="r", edgecolor="none", alpha=0.25, zorder=-5)
+            self._vspans.append(patch)
+        else:
+            patch.set_xy([
+                    [xmin, -1e8],
+                    [xmin, +1e8],
+                    [xmax, +1e8],
+                    [xmax, -1e8],
+                    [xmin, -1e8]
+                    ])
+            patch.set_visible(True)
+        self._next_vspan += 1
+        self.draw()
+    
     def clear_plot(self):
+        for l in self.ax.lines:
+            l.remove()
         for l in self.ax.lines:
             l.remove()
         try:
             self.ax.legend_.remove()
         except:
             pass
+        self.deselect_points()
+        self._next_vspan = 0
+        for patch in self._vspans:
+            patch.set_xy([
+                    [np.nan, np.nan],
+                    [np.nan, np.nan],
+                    [np.nan, np.nan],
+                    [np.nan, np.nan],
+                    [np.nan, np.nan]
+                    ])
+            patch.set_visible(False)
         self.draw()
     
     def reset_limits(self, plo=0, phi=100):
@@ -530,9 +647,8 @@ def get_ax_ylim(ax, plo=0, phi=100):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    fname1 = "/Users/alexji/Dropbox/J0023+0307/order_coadd/ani-noCR_j0023+0307red_multi.fits"
-    fname2 = "/Users/alexji/Dropbox/J0023+0307/order_coadd/ranaN5_j0023+0307red_multi.fits"
-    fnames = [fname1, fname2]
-    ex = ContinuumNormalizationApp(fnames)
+    fnames = ["/Users/alexji/Dropbox/J0023+0307/order_coadd/ani-noCR_j0023+0307red_multi.fits"]
+    ex = ContinuumNormalizationApp(fnames, fluxband=2)
+    ex.fit_all_continuums()
     sys.exit(app.exec_())
     
