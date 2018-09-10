@@ -23,13 +23,14 @@ from alexmods.specutils.spectrum import (Spectrum1D, read_mike_spectrum, stitch 
 
 ## GUI imports
 # https://pythonspot.com/pyqt5-matplotlib/
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QDialog
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtCore, QtGui
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from mpl import MPLWidget
 
 
 DOUBLE_CLICK_INTERVAL = 0.1 # MAGIC HACK
@@ -38,12 +39,14 @@ def median_filter(spec, window):
     newflux = signal.median_filter(spec.flux, window)
     return Spectrum1D(spec.dispersion, newflux, spec.ivar, spec.metadata)
 
-def fit_continuum_lsq(spec, knots, exclude=[], maxiter=3, sigma_lo=2, sigma_hi=2, **kwargs):
+def fit_continuum_lsq(spec, knots, exclude=[], maxiter=3, sigma_lo=2, sigma_hi=2,
+                      get_edges=False, **kwargs):
     """ Fit least squares continuum through spectrum data using specified knots, return model """
     assert np.all(np.array(list(map(len, exclude))) == 2), exclude
     assert np.all(np.array(list(map(lambda x: x[0] < x[1], exclude)))), exclude
     x, y, w = spec.dispersion, spec.flux, spec.ivar
     
+    # This is a mask marking good pixels
     mask = np.ones_like(x, dtype=bool)
     # Exclude regions
     for xmin, xmax in exclude:
@@ -51,6 +54,9 @@ def fit_continuum_lsq(spec, knots, exclude=[], maxiter=3, sigma_lo=2, sigma_hi=2
     # Get rid of bad fluxes
     mask[np.abs(y)<1e-6] = False
     mask[np.isnan(y)] = False
+    if get_edges:
+        left = np.where(mask)[0][0]
+        right = np.where(mask)[0][-1]
     
     for iter in range(maxiter):
         # Make sure there the knots don't hit the edges
@@ -70,6 +76,8 @@ def fit_continuum_lsq(spec, knots, exclude=[], maxiter=3, sigma_lo=2, sigma_hi=2
         sig = (y-cont) * np.sqrt(w)
         mask[sig > sigma_hi] = False
         mask[sig < -sigma_lo] = False
+    if get_edges:
+        return fcont, left, right
     return fcont
 
 def load_spectra_by_order(fnames, fluxband=7):
@@ -113,14 +121,18 @@ def initialize_knots_from_spectra(specs, knot_spacing):
         wmax = min(wave.max(), wmax)
     return initialize_knots(wmin, wmax, knot_spacing)
 
-def fit_continuum_to_spectra(specs, knots, **kwargs):
+def fit_continuum_to_spectra(specs, knots, snip_edges=True, **kwargs):
     """ Run lsq spline fit on all spectra """
     cont_funcs = OrderedDict()
     cont_data = OrderedDict()
     for label, spec in specs.items():
-        fcont = fit_continuum_lsq(spec, knots, **kwargs)
+        fcont, left, right = fit_continuum_lsq(spec, knots, get_edges=True, **kwargs)
         cont_funcs[label] = fcont
         dcont = fcont(spec.dispersion)
+        if snip_edges:
+            # Set continuum = nan at edges
+            dcont[:left] = np.nan
+            dcont[right:] = np.nan
         cont_data[label] = dcont
     return cont_funcs, cont_data
 
@@ -146,7 +158,11 @@ class ContinuumModel(object):
         self.all_continuum_data = OrderedDict()
         self.all_continuum_functions = OrderedDict()
         
-    def load_data(self, fnames, labels=None, fluxband=7):
+        self.label_to_rv = {}
+        self.rv_applied = False
+        
+    def load_data(self, fnames, labels=None, fluxband=7,
+                  label_to_rv=None):
         """
         Load data, sort by order number
         """
@@ -183,6 +199,9 @@ class ContinuumModel(object):
         
         self.fnames = [os.path.abspath(fname) for fname in fnames]
         self.labels = labels
+        
+        if label_to_rv is not None:
+            self.apply_radial_velocity_corrections(label_to_rv)
         return
     
     def apply_radial_velocity_corrections(self, label_to_rv):
@@ -194,6 +213,8 @@ class ContinuumModel(object):
             for label, spec in specs.items():
                 rv = label_to_rv[label]
                 spec.redshift(rv)
+        self.label_to_rv = label_to_rv
+        self.rv_applied = True
     def fit_all_continuums(self):
         """ Fit all data for all orders """
         for order in self.all_order_numbers:
@@ -267,7 +288,8 @@ class ContinuumModel(object):
         """
         output = [self.fnames, self.labels, self.fluxband,
                   self.degree, self.knot_spacing, self.sigma_lo, self.sigma_hi,
-                  self.all_knots, self.all_exclude_regions]
+                  self.all_knots, self.all_exclude_regions,
+                  self.label_to_rv, self.rv_applied]
         np.save(fname, output)
         
     @classmethod
@@ -278,18 +300,38 @@ class ContinuumModel(object):
         model = cls()
         fnames, labels, fluxband, \
             degree, knot_spacing, sigma_lo, sigma_hi, \
-            all_knots, all_exclude_regions = \
+            all_knots, all_exclude_regions, \
+            label_to_rv, rv_applied = \
             np.load(fname)
         model.degree = degree
         model.knot_spacing = knot_spacing
         model.sigma_lo = sigma_lo
         model.sigma_hi = sigma_hi
         
-        model.load_data(fnames, labels, fluxband)
+        model.load_data(fnames, labels, fluxband,
+                        label_to_rv = label_to_rv)
         model.all_knots = all_knots
         model.all_exclude_regions = all_exclude_regions
         model.fit_all_continuums()
         return model
+
+    def load_parameters_from(self, fname):
+        """
+        Load parameters but keep current data/rv.
+        Parameters are:
+          degree, knot_spacing, sigma_lo, sigma_hi,
+          all_knots, all_exclude_regions
+          
+        Currently does not do any checks, but in the future would be nice if
+        e.g. check that all the orders are there,
+        or that orders roughly match up in wavelength.
+        """
+        data = np.load(fname)
+        assert data[2] == self.fluxband, (data[2], self.fluxband)
+        self.degree, self.knot_spacing, \
+            self.sigma_lo, self.sigma_hi = data[3:7]
+        self.all_knots = data[7]
+        self.all_exclude_regions = data[8]
 
     def get_normalized_orders(self):
         self.fit_all_continuums()
@@ -301,8 +343,12 @@ class ContinuumModel(object):
                 cont = conts[label]
                 # TODO add some extra metadata?
                 meta = spec.metadata.copy()
-                norm = Spectrum1D(spec.dispersion, spec.flux/cont, 
-                                  spec.ivar*cont*cont, meta)
+                badmask = np.logical_or(np.isnan(cont), np.isnan(spec.flux))
+                flux = spec.flux/cont
+                flux[badmask] = np.nan
+                ivar = spec.ivar*cont*cont
+                ivar[badmask] = 0.
+                norm = Spectrum1D(spec.dispersion, flux, ivar, meta)
                 normalized_specs[order][label] = norm
         return normalized_specs
     def get_coadded_orders(self, mode="wavg", **kwargs):
@@ -347,16 +393,34 @@ class ContinuumModel(object):
         coadded_specs = list(self.get_coadded_orders().values())
         return spectrum_stitch(coadded_specs)
 
+class NormalizedPlotDialog(QDialog):
+    def __init__(self, parent):
+        # Center it on the parent location
+        rect = parent.geometry()
+        x, y = rect.center().x(), rect.center().y()
+        w = 1000
+        h = 640
+        self.setGeometry(x-w/2, y-h/2, w, h)
+        vbox = QtGui.QVBoxLayout(self)
+        figure_widget = MPLWidget(self, toolbar=True, tight_layout=True)
+        vbox.addWidget(figure_widget)
+    def make_plot(self, fullstitch, coadds):
+        pass
+
 class ContinuumNormalizationApp(QMainWindow):
-    def __init__(self, input_spectra_filenames, labels=None, fluxband=7, 
-                 default_save="continuum_fit.npy", **kwargs):
+    def __init__(self, model, 
+                 default_save="continuum_fit.npy",
+                 default_stitched="stitched_spectrum.txt"):
         super().__init__()
 
         self.default_save = default_save
-        self.model = ContinuumModel(**kwargs)
-        self.model.load_data(input_spectra_filenames, labels=labels, fluxband=fluxband)
-        self.labels = self.model.labels
+        self.stitched_default_fname = default_stitched
+        self.new_model(model)
         
+    def new_model(self, model):
+        self.model = model
+
+        # Sorry the naming here is a legacy code problem 
         self.all_orders = self.model.all_specs
         self.all_order_numbers = self.model.all_order_numbers
         
@@ -457,14 +521,19 @@ class ContinuumNormalizationApp(QMainWindow):
         self.toolbar.update()
         self.show()
     
-    def save_stitched_spectrum(self):
-        fullspec = self.model.get_full_stitch()
-        fullspec.write("stitched_spectrum.txt")
     def activate_keyboard_shortcuts(self):
         self._figure_key_press_cid = self.canvas.mpl_connect("key_press_event", self.figure_key_press)
         self._interactive_mask_region_signal = None
         
+    def save_stitched_spectrum(self):
+        fullspec = self.model.get_full_stitch()
+        fullspec.write(self.stitched_default_fname)
+        print("Wrote stitched spectrum to {}".format(self.stitched_default_fname))
+    
     def figure_key_press(self, event):
+        """
+        Keyboard Shortcuts
+        """
         print("Pressed '{}'".format(event.key))
         ## Change orders (it is reversed on purpose!)
         if event.key in ("left", "j", "J", "right", "k", "K"):
@@ -595,6 +664,7 @@ class ContinuumNormalizationApp(QMainWindow):
         self.fit_continuums()
         self.update_plot()
         
+
 class PlotCanvas(FigureCanvas):
     ## TODO put keyboard stuff in the canvas rather than the application?
     def __init__(self, parent=None, width=5, height=4, dpi=100):
