@@ -6,7 +6,7 @@
 from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
 
-__all__ = ["Spectrum1D", "stitch", "coadd"]
+__all__ = ["Spectrum1D", "stitch", "coadd", "read_mike_spectrum", "write_fits_linear"]
 
 import logging
 import numpy as np
