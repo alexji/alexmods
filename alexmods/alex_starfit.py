@@ -122,7 +122,9 @@ def find_best_models(hw10, hw10logN, epsval, epserr, epslim, name=""):
     Nelem = len(hw10logN.columns)
     best_models = hw10[valid_ul].iloc[iisort] #- np.tile(np.array(offsets[valid_ul,np.newaxis][iisort]), Nelem)
     best_models["chi2"] = chi2[valid_ul][iisort]
-    best_models["Dilution"] = -offsets[valid_ul][iisort]
+    # Solving logeps(X) - 12 = log(NX)/log(NH) -->
+    # log MH = 12 + logN(X) - logeps(X), where N(X) = M(X)/A(X) (Msun/amu) is computed in read_hw10, assuming A(H)=1.0
+    best_models["Dilution"] = 12 + offsets[valid_ul][iisort]
     
     best_models.index = np.arange(len(best_models))+1
     best_models.columns.name = name
