@@ -308,6 +308,7 @@ class ContinuumModel(object):
         model.sigma_lo = sigma_lo
         model.sigma_hi = sigma_hi
         
+        print(fnames,labels,fluxband)
         model.load_data(fnames, labels, fluxband,
                         label_to_rv = label_to_rv)
         model.all_knots = all_knots
@@ -392,6 +393,60 @@ class ContinuumModel(object):
     def get_full_stitch(self):
         coadded_specs = list(self.get_coadded_orders().values())
         return spectrum_stitch(coadded_specs)
+
+def plot_normalized_order_regions(model, xlims, ylims, **kwargs):
+    assert len(xlims)==len(ylims)
+    def in_xlim_range(spec, xlim):
+        for x in xlim:
+            if spec.dispersion[0] < x and x < spec.dispersion[-1]: return True
+        return False
+    N = len(xlims)
+    figx, figy = 10, 4
+    fig, axes = plt.subplots(N, figsize=(figx, N*figy))
+    normalized_specs = model.get_normalized_orders()
+    full_stitch = model.get_full_stitch()
+
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    colordict = {}
+    for i,label in enumerate(model.labels):
+        colordict[label] = colors[i]
+
+    for xlim, ylim, ax in zip(xlims, ylims, axes):
+        for order, specs in normalized_specs.items():
+            for label, spec in specs.items():
+                if in_xlim_range(spec, xlim):
+                    print("Found one",order,label,xlim)
+                    ax.plot(spec.dispersion, spec.flux, 
+                            label=label, color=colordict[label],
+                            **kwargs)
+        ii = (full_stitch.dispersion > xlim[0]-10) & (full_stitch.dispersion < xlim[1]+10)
+        ax.plot(full_stitch.dispersion[ii], full_stitch.flux[ii], 'k-', lw=3, alpha=.5)
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+    fig.tight_layout()
+    return fig
+def plot_all_normalized_orders(model, Nrow, Ncol, **kwargs):
+    if Nrow*Ncol != len(model.all_order_numbers):
+        print("warning: not plotting all orders")
+    
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    colordict = {}
+    for i,label in enumerate(model.labels):
+        colordict[label] = colors[i]
+    
+    normalized_orders = model.get_normalized_orders()
+    
+    figx, figy = 6, 3
+    fig, axes = plt.subplots(Nrow, Ncol, figsize=(figx*Ncol, figy*Nrow))
+    for ax, order in zip(axes.flat, model.all_order_numbers[::-1]):
+        specs = normalized_orders[order]
+        for label, spec in specs.items():
+            ax.plot(spec.dispersion, spec.flux, label=label, color = colordict[label],
+                    **kwargs)
+        ax.set_ylim(0,1.2)
+        ax.set_xlim(get_ax_xlim(ax))
+    fig.tight_layout()
+    return fig
 
 class NormalizedPlotDialog(QDialog):
     def __init__(self, parent):
@@ -785,3 +840,49 @@ def get_ax_ylim(ax, plo=0, phi=100):
     ymax = min(ymax, max(ally[np.isfinite(ally)]))
     return ymin, ymax
 
+if __name__=="__main__":
+    app = QApplication(sys.argv)
+    basedir = "/Users/alexji/Dropbox/J0023+0307/order_coadd"
+    prefixes = ["ani-noCR","ranaN5","tthN12","ian"]
+    labels_red = ["{}_red".format(prefix) for prefix in prefixes]
+    labels_blue = ["{}_blue".format(prefix) for prefix in prefixes]
+    fnames_red = [os.path.join(basedir, "{}_j0023+0307red_multi.fits".format(prefix)) for prefix in prefixes]
+    fnames_blue = [os.path.join(basedir, "{}_j0023+0307blue_multi.fits".format(prefix)) for prefix in prefixes]
+    
+    labels_red[0] = "ani-prune"
+    fnames_red[0] = os.path.join(basedir, "{}_j0023+0307red_multi.fits".format("ani-prune"))
+    labels = labels_red + labels_blue
+    fnames = fnames_red + fnames_blue
+    rvdict = {"ranaN5":-225.75, "ian":-223.50, "tthN12":-219.87, "ani-noCR":-207.81, "ani-prune":-207.81}
+    rvcorr = [-rvdict[label.split("_")[0]] for label in labels]
+    label_to_rv = dict(zip(labels, rvcorr))
+    
+    model = ContinuumModel(knot_spacing=15, sigma_lo=1.0, sigma_hi=0.5)
+    model.load_data(fnames, labels=labels, fluxband=1, label_to_rv=label_to_rv)
+
+    #model = ContinuumModel.load("sky_continuum_fit.npy")
+    
+    ex = ContinuumNormalizationApp(model)
+    sys.exit(app.exec_())
+    
+
+def tmp():
+    app = QApplication(sys.argv)
+    model = ContinuumModel.load("J0023_continuum_fit.npy")
+    ex = ContinuumNormalizationApp(model)
+    sys.exit(app.exec_())
+    #fig = plot_all_normalized_orders(model, 10, 7, marker=',', ls='none')
+    #fig.savefig("test_plot_norm.png")
+    
+def tmp():
+    #xlims = [(3855,3865),(3960,3980),(4290,4330),(5160,5190),(5885,5905),(6550,6570),(6700,6716)]
+    #ylims = [(0.0, 1.2), (0.0, 1.2), (0.8, 1.1), (0.0, 1.2), (0.0, 1.2), (0.0, 1.2), (0.5, 1.1)]
+    #fig = plot_normalized_order_regions(model, xlims, ylims, lw=.3, marker=',')
+    #fig.savefig("test_plot_norm_region.png")
+    xlims = [(6705,6711),(6700,6716)]
+    ylims = [(0.8, 1.1),(0.5, 1.1)]
+    fig = plot_normalized_order_regions(model, xlims, ylims, lw=.3, marker='.')
+    fig.axes[1].legend()
+    fig.savefig("Li_region.png")
+    
+    plt.show()

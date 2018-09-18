@@ -16,6 +16,7 @@ from collections import OrderedDict
 from hashlib import md5
 
 from astropy.io import fits
+from astropy.stats import biweight_scale
 from scipy import interpolate, ndimage, polyfit, poly1d, optimize as op, signal
 from ..robust_polyfit import polyfit as rpolyfit
 
@@ -1551,7 +1552,11 @@ def read_mike_spectrum(fname, fluxband=2):
         flats = [data[1,iorder]/data[6,iorder] for iorder in range(Norder)]
         ivars = [(flats[iorder]/data[2,iorder])**2. for iorder in range(Norder)]
     else:
-        ivars = [data[fluxband-1,iorder]**-1. for iorder in range(Norder)]
+        # SNR estimate
+        snr = [estimate_snr(data[fluxband-1,iorder]) for iorder in range(Norder)]
+        ivars = [np.full(Npix, snr**2.) for snr in snr]
+        #ivars = [data[fluxband-1,iorder]**-1. for iorder in range(Norder)]
+        #ivars = [np.max(np.vstack([ivar,np.zeros_like(ivar)]),axis=0) for ivar in ivars]
 
     for ivar in ivars:
         ivar[np.isnan(ivar)] = 0.
@@ -1581,6 +1586,12 @@ def read_mike_spectrum(fname, fluxband=2):
         spec = Spectrum1D(wave, flux, ivar, meta)
         spec1ds[iord] = spec
     return spec1ds
+
+def estimate_snr(flux, window=51):
+    """Use median filter and biweight scale to estimate SNR """
+    continuum = signal.medfilt(flux, window)
+    noise = biweight_scale(flux/continuum)
+    return 1./noise
 
 def alex_continuum_fit(spec, knot_spacing=5., Nknots=None,
                        spline_order=2, median_window=51,
