@@ -573,10 +573,40 @@ def load_gcdata():
 ##################
 # Supernova yields
 ##################
-def load_hw10(as_number=False):
+def load_hw10(as_number=True):
+    assert as_number, "Did not download the mass tables"
+    hw10 = Table.read(datapath+"/yield_tables/HW10.znuc.S4.star.el.fits").to_pandas()
+    hw10.rename(inplace=True, columns={
+            "mass":"Mass","energy":"Energy","mixing":"Mixing","remnant":"Remnant"})
+    #elems = [i+1 for i in list(range(83))+[89,91]]
+    elems = [i+1 for i in list(range(83))]
+    missing_elems = []
+    ## the units of this table are mol/g?
+    ## I want Msun/amu?
+    Mej = hw10["Mass"] - hw10["Remnant"]
+    
+    for i in elems:
+        if str(i) in hw10.columns:
+            hw10.rename(inplace=True, columns={str(i):i})
+            hw10[i] = hw10[i]*Mej
+        else:
+            missing_elems.append(i)
+    for i in missing_elems: elems.remove(i)
+    hw10["Cut"] = "S4"
+    cols = elems + list(hw10.columns[0:3].values) + ["Cut"] #,"Remnant"]
+    hw10 = hw10[cols]
+    hw10["Mass"] = hw10["Mass"].map(lambda x: round(x, 1))
+    hw10["Energy"] = hw10["Energy"].map(lambda x: round(x, 1))
+    hw10["Mixing"] = hw10["Mixing"].map(lambda x: round(x, 5))
+    
+    return hw10
+    
+def load_hw10_old(as_number=False):
     """
     Load Heger + Woosley 2010 Pop III CCSNe yields
     This just adds all the isotopes into element yields
+    These are just the models that are in the ApJ paper, but
+    online there are a HUGE number more!
     """
     hw10 = Table.read(datapath+"/yield_tables/HW10.fits").to_pandas()
     elems = np.unique(hw10["El"])
@@ -598,7 +628,7 @@ def load_hw10(as_number=False):
         mass.name = key
         outputyields.append(mass)
     hw10y = pd.DataFrame(outputyields)
-    hw10y["Mass"] = list(map(lambda x: x[0], hw10y.index))
+    hw10y["Mass"] = list(map(lambda x: round(x[0],1), hw10y.index))
     hw10y["Energy"] = list(map(lambda x: round(x[1],1), hw10y.index))
     hw10y["Cut"] = list(map(lambda x: x[2], hw10y.index))
     hw10y["Mixing"] = list(map(lambda x: round(x[3],5), hw10y.index))
