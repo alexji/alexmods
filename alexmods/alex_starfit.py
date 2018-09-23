@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
+from scipy import stats
 
 from . import read_data as rd
 from .smhutils import element_to_atomic_number
@@ -107,6 +108,7 @@ def find_best_models(hw10, hw10logN, epsval, epserr, epslim, name=""):
     wtot = np.sum(1./e2)
     
     # Solve for bestfit offsets to model
+    # delta * wtot = - sum((x-mu)/sigma^2)
     offsets = -np.sum((x - modelvals)/e2, axis=1)/wtot
     new_modelvals = modelvals - offsets[:,np.newaxis]
     new_modellims = modellims - offsets[:,np.newaxis]
@@ -123,7 +125,7 @@ def find_best_models(hw10, hw10logN, epsval, epserr, epslim, name=""):
     best_models = hw10[valid_ul].iloc[iisort] #- np.tile(np.array(offsets[valid_ul,np.newaxis][iisort]), Nelem)
     best_models["chi2"] = chi2[valid_ul][iisort]
     # Solving logeps(X) - 12 = log(NX)/log(NH) -->
-    # log MH = 12 + logN(X) - logeps(X), where N(X) = M(X)/A(X) (Msun/amu) is computed in read_hw10, assuming A(H)=1.0
+    # log MH = 12 + logN(X) - logeps(X), where N(X) = M(X)/A(X) (Msun/amu) is computed in load_hw10, assuming A(H)=1.0
     best_models["Dilution"] = 12 + offsets[valid_ul][iisort]
     
     best_models.index = np.arange(len(best_models))+1
@@ -173,10 +175,15 @@ def plot_abund_fit(epsval, epserr, epslim, logNmodel, offset=0.,
     ax.set_xlabel("Z")
     ax.set_ylabel(r"$\log\epsilon(X)$")
     return fig
-def generate_labels(best_models):
-    labels = [r"M={:.0f}$M_\odot$ E={:.1f}B $\xi$={:.2e} $\chi^2$={:.1f}".format(
-            *tuple(model[["Mass","Energy","Mixing","chi2"]])) \
-                  for i,model in best_models.iterrows()]
+def generate_labels(best_models, Mdil=False):
+    if Mdil:
+        labels = [r"M={:.1f}$M_\odot$ E={:.1f}B $\xi$={:.2e} $\log M_{{\rm dil}}$={:.1f} $\chi^2$={:.1f}".format(
+                *tuple(model[["Mass","Energy","Mixing","Dilution","chi2"]])) \
+                      for i,model in best_models.iterrows()]
+    else:
+        labels = [r"M={:.0f}$M_\odot$ E={:.1f}B $\xi$={:.2e} $\chi^2$={:.1f}".format(
+                *tuple(model[["Mass","Energy","Mixing","chi2"]])) \
+                      for i,model in best_models.iterrows()]
     return labels
     
 def plot_many_abund_fits(nrow, ncol,
@@ -196,4 +203,37 @@ def plot_many_abund_fits(nrow, ncol,
                            ax = axes[irow,icol], mlabel=label,
                            **kwargs)
             axes[irow,icol].legend(loc='upper right')
+    return fig
+
+def plot_model_parameters(best_models, best_logN, 
+                          scattermin=1, scattermax=250,
+                          sigma=2.0, minlogMdil=2.0):
+    chi2 = best_models["chi2"].values
+    minchi2 = np.min(chi2)
+    maxchi2 = minchi2 + stats.chi2.ppf(stats.norm.cdf(sigma)-stats.norm.cdf(-sigma),4) # 4 params
+    chi2sf = stats.chi2.sf(chi2-minchi2, 4)
+    scattersize = scattermin + (scattermax-scattermin)*chi2sf
+
+    valid_for_plot = np.logical_and(chi2 < maxchi2, best_models["Dilution"] > minlogMdil)
+    cols = ["Mass","Energy","Mixing","Dilution"]
+    limits = [[np.min(best_models[col]), np.max(best_models[col])] for col in cols]
+    limits[cols.index("Dilution")][0] = minlogMdil
+    limits[cols.index("Energy")][0] = 0
+    limits[cols.index("Mass")][0] = 0
+    
+    fig, axes = plt.subplots(4,4,figsize=(4*6,4*6))
+    for i1, col1 in enumerate(cols):
+        for i2, col2 in enumerate(cols):
+            ax = axes[i1,i2]
+            if i1==i2:
+                x = np.array(best_models[col1][valid_for_plot])
+                ax.hist(x[np.isfinite(x)],weights=chi2sf[valid_for_plot][np.isfinite(x)])
+                ax.set_xlabel(col1)
+                ax.set_xlim(limits[i1])
+            else:
+                ax.scatter(best_models[col1][valid_for_plot], best_models[col2][valid_for_plot], s=scattersize[valid_for_plot])
+                ax.set_xlabel(col1)
+                ax.set_ylabel(col2)
+                ax.set_xlim(limits[i1])
+                ax.set_ylim(limits[i2])
     return fig

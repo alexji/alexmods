@@ -581,10 +581,11 @@ def load_hw10(as_number=True):
     #elems = [i+1 for i in list(range(83))+[89,91]]
     elems = [i+1 for i in list(range(83))]
     missing_elems = []
-    ## the units of this table are mol/g?
-    ## I want Msun/amu?
+    ## the units of this table are mol/g, divided out the ejecta mass.
+    ## 1 amu * 1 mol = 1 g
+    ## I want Msun/amu of the total ejecta mass, so need to multiply by the ejecta mass in Msun
+    ## Units: mol / g * Msun = Msun / amu
     Mej = hw10["Mass"] - hw10["Remnant"]
-    
     for i in elems:
         if str(i) in hw10.columns:
             hw10.rename(inplace=True, columns={str(i):i})
