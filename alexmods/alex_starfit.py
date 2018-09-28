@@ -207,13 +207,13 @@ def plot_many_abund_fits(nrow, ncol,
 
 def plot_model_parameters(best_models, best_logN, 
                           scattermin=1, scattermax=250,
-                          sigma=2.0, minlogMdil=2.0):
+                          sigma=2.0, minlogMdil=2.0, **kwargs):
     chi2 = best_models["chi2"].values
     minchi2 = np.min(chi2)
     maxchi2 = minchi2 + stats.chi2.ppf(stats.norm.cdf(sigma)-stats.norm.cdf(-sigma),4) # 4 params
     chi2sf = stats.chi2.sf(chi2-minchi2, 4)
     scattersize = scattermin + (scattermax-scattermin)*chi2sf
-
+    
     valid_for_plot = np.logical_and(chi2 < maxchi2, best_models["Dilution"] > minlogMdil)
     cols = ["Mass","Energy","Mixing","Dilution"]
     limits = [[np.min(best_models[col]), np.max(best_models[col])] for col in cols]
@@ -221,17 +221,22 @@ def plot_model_parameters(best_models, best_logN,
     limits[cols.index("Energy")][0] = 0
     limits[cols.index("Mass")][0] = 0
     
+    colbins = [np.arange(10,100.1,0),
+               np.arange(0, 10.1, .5),
+               np.arange(0,0.252,.02),
+               np.arange(2,7,.5)]
     fig, axes = plt.subplots(4,4,figsize=(4*6,4*6))
     for i1, col1 in enumerate(cols):
         for i2, col2 in enumerate(cols):
             ax = axes[i1,i2]
             if i1==i2:
                 x = np.array(best_models[col1][valid_for_plot])
-                ax.hist(x[np.isfinite(x)],weights=chi2sf[valid_for_plot][np.isfinite(x)])
+                ax.hist(x[np.isfinite(x)],weights=chi2sf[valid_for_plot][np.isfinite(x)],
+                        bins=colbins[i1])
                 ax.set_xlabel(col1)
                 ax.set_xlim(limits[i1])
             else:
-                ax.scatter(best_models[col1][valid_for_plot], best_models[col2][valid_for_plot], s=scattersize[valid_for_plot])
+                ax.scatter(best_models[col1][valid_for_plot], best_models[col2][valid_for_plot], s=scattersize[valid_for_plot], **kwargs)
                 ax.set_xlabel(col1)
                 ax.set_ylabel(col2)
                 ax.set_xlim(limits[i1])
