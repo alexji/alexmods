@@ -67,6 +67,14 @@ default_columns = ",".join(["source_id",cols_astrometry,ecol_astrometry,
                             cols_phot, cols_spec, cols_star])
                          
 
+def create_source_query_from_ids(ids, columns=default_columns,
+                             source="gaiadr2.gaia_source"):
+    out = "SELECT {} FROM {} WHERE ".format(
+        columns, source)
+    idstrs = " or ".join(["source_id = {}".format(x) for x in ids])
+    out += idstrs
+    return out
+
 def create_source_query_from(coords, radius=1*u.arcsec,
                              columns=default_columns,
                              source="gaiadr2.gaia_source",
