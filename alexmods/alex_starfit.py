@@ -152,16 +152,23 @@ def plot_abund_fit(epsval, epserr, epslim, logNmodel, offset=0.,
                    fmt="s", color="r", ms=6,
                    model_only=False,
                    mcolor = 'k', mlw=1, mls='-', mlabel=None,
-                   ax = None):
+                   ax = None, plot_XH=False):
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.figure
     Zii = np.array([isinstance(x, int) and x > 5 for x in logNmodel.index])
-    ax.plot(logNmodel.index[Zii], logNmodel[Zii], color=mcolor, lw=mlw, ls=mls, label=mlabel)
-    if not model_only:
-        ax.errorbar(epsval.index, epsval.values, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
-        ax.errorbar(epslim.index, epslim.values, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
+    if plot_XH:
+        solar = rd.get_solar(logNmodel.index[Zii])
+        ax.plot(logNmodel.index[Zii], logNmodel[Zii]-solar, color=mcolor, lw=mlw, ls=mls, label=mlabel)
+        if not model_only:
+            ax.errorbar(epsval.index, epsval.values-solar, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
+            ax.errorbar(epslim.index, epslim.values-solar, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
+    else:
+        ax.plot(logNmodel.index[Zii], logNmodel[Zii], color=mcolor, lw=mlw, ls=mls, label=mlabel)
+        if not model_only:
+            ax.errorbar(epsval.index, epsval.values, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
+            ax.errorbar(epslim.index, epslim.values, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
     
     mineps = np.floor(min(np.min(epsval-epserr), np.min(epslim))) - 1
     maxeps = np.ceil(max(np.max(epsval+epserr), np.max(epserr))) + 1
@@ -173,7 +180,10 @@ def plot_abund_fit(epsval, epserr, epslim, logNmodel, offset=0.,
     ax.set_xlim(5,30)
     ax.set_ylim(mineps, maxeps)
     ax.set_xlabel("Z")
-    ax.set_ylabel(r"$\log\epsilon(X)$")
+    if plot_XH:
+        ax.set_ylabel(r"[X/H]")
+    else:
+        ax.set_ylabel(r"$\log\epsilon(X)$")
     return fig
 def generate_labels(best_models, Mdil=False):
     if Mdil:
@@ -221,7 +231,7 @@ def plot_model_parameters(best_models, best_logN,
     limits[cols.index("Energy")][0] = 0
     limits[cols.index("Mass")][0] = 0
     
-    colbins = [np.arange(10,100.1,0),
+    colbins = [np.arange(10,100,  10),
                np.arange(0, 10.1, .5),
                np.arange(0,0.252,.02),
                np.arange(2,7,.5)]
