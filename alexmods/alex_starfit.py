@@ -162,27 +162,34 @@ def plot_abund_fit(epsval, epserr, epslim, logNmodel, offset=0.,
         solar = rd.get_solar(logNmodel.index[Zii])
         ax.plot(logNmodel.index[Zii], logNmodel[Zii]-solar, color=mcolor, lw=mlw, ls=mls, label=mlabel)
         if not model_only:
-            ax.errorbar(epsval.index, epsval.values-solar, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
-            ax.errorbar(epslim.index, epslim.values-solar, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
+            ax.errorbar(epsval.index, epsval.values-solar.loc[epsval.index], yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms, label=None)
+            ax.errorbar(epslim.index, epslim.values-solar.loc[epslim.index], yerr=.1, fmt='none', color=color, ecolor=color, uplims=True, label=None)
     else:
         ax.plot(logNmodel.index[Zii], logNmodel[Zii], color=mcolor, lw=mlw, ls=mls, label=mlabel)
         if not model_only:
             ax.errorbar(epsval.index, epsval.values, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
             ax.errorbar(epslim.index, epslim.values, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
     
-    mineps = np.floor(min(np.min(epsval-epserr), np.min(epslim))) - 1
-    maxeps = np.ceil(max(np.max(epsval+epserr), np.max(epserr))) + 1
     
     ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.xaxis.set_major_locator(MultipleLocator(5))
     ax.yaxis.set_minor_locator(MultipleLocator(.5))
     ax.yaxis.set_major_locator(MultipleLocator(2))
     ax.set_xlim(5,30)
-    ax.set_ylim(mineps, maxeps)
     ax.set_xlabel("Z")
     if plot_XH:
+        XHval = epsval.values - solar.loc[epsval.index]
+        XHlim = epslim.values - solar.loc[epslim.index]
+        minXH = min(np.min(XHval), np.min(XHlim))
+        maxXH = max(np.max(XHval), np.max(XHlim))
+        minXH = np.floor(minXH)
+        maxXH = np.ceil(maxXH)
+        ax.set_ylim(minXH, maxXH)
         ax.set_ylabel(r"[X/H]")
     else:
+        mineps = np.floor(min(np.min(epsval-epserr), np.min(epslim))) - 1
+        maxeps = np.ceil(max(np.max(epsval+epserr), np.max(epserr))) + 1
+        ax.set_ylim(mineps, maxeps)
         ax.set_ylabel(r"$\log\epsilon(X)$")
     return fig
 def generate_labels(best_models, Mdil=False):
