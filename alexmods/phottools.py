@@ -4,6 +4,7 @@ from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
 import numpy as np
 from scipy import interpolate
+from astropy.io import ascii
 
 import logging
 import os, sys, time
