@@ -117,8 +117,6 @@ def get_jordi06_coeffs(type):
     else:
         raise ValueError("Type must be 0, 1, 2 (got {})".format(type))
     return a_Bmg, b_Bmg, a_Vmg, b_Vmg, e_a_Bmg, e_b_Bmg, e_a_Vmg, e_b_Vmg
-    
-
 
 def jordi06_gmi_to_VmI(gmi,geterr=True):
     assert np.all(np.ravel(gmi) < 2.1)
@@ -177,3 +175,59 @@ def phot_logg(Teff,mag0,BCmag,distmod,Mstar=0.8):
     """
     return 4.44 + np.log10(Mstar) + 4*np.log10(Teff/5780) + 0.4 * (mag0 - distmod + BCmag - 4.75)
 
+
+###################
+## Y2 isochrones ##
+###################
+def get_logT_to_logg(FeH=-3.0):
+    assert FeH in [-2.0, -2.5, -3.0]
+    if FeH == -2.0:
+        iso = ascii.read(datapath+'/stellar_param_data/afe040feh200set1_12gyr.txt')
+    elif FeH == -2.5:
+        iso = ascii.read(datapath+'/stellar_param_data/afe040feh250set1_12gyr.txt')
+    elif FeH == -3.0:
+        iso = ascii.read(datapath+'/stellar_param_data/afe040feh300set1_12gyr.txt')
+    ii_max_logT = np.argmax(iso['logT'])
+    max_logT = iso[ii_max_logT]['logT']
+    max_logg = iso[ii_max_logT]['logg']
+    #print max_logT, max_logg
+    ii = iso['logg'] < max_logg
+    logT = iso[ii]['logT']
+    logg = iso[ii]['logg']
+    logT_to_logg = interpolate.interp1d(logT,logg)
+    return logT_to_logg
+_my_interps = [get_logT_to_logg(FeH) for FeH in [-2.0,-2.5,-3.0]]
+def _logTFeH_to_logg(logT,FeH):
+    if FeH > -2.0: return _my_interps[0](logT)
+    elif FeH <= -3.0: return _my_interps[2](logT)
+    elif FeH <= -2.0 and FeH > -2.5:
+        x = (FeH+2.5)*2.0
+        assert x <= 1 and x >= 0
+        logg1 = _my_interps[0](logT)
+        logg2 = _my_interps[1](logT)
+        return logg1 * x + logg2 * (1-x)
+    elif FeH <= -2.5 and FeH > -3.5:
+        x = (FeH+3.0)*2.0
+        assert x <= 1 and x >= 0
+        logg1 = _my_interps[1](logT)
+        logg2 = _my_interps[2](logT)
+        return logg1 * x + logg2 * (1-x)
+    else:
+        raise ValueError("FeH = {}".format(FeH))
+logTFeH_to_logg = np.vectorize(_logTFeH_to_logg)
+###############################
+## Microturbulence Relations ##
+###############################
+def get_logg_to_vt_B05():
+    b = ascii.read(datapath+'/stellar_param_data/barklem.txt')
+    fit = interpolate.UnivariateSpline(b['logg'],b['Vt'],k=2)
+    return fit
+def logg_to_vt_B05(logg):
+    fit = get_logg_to_vt_B05()
+    return fit(logg)
+def logg_to_vt_K09(logg):
+    """ Kirby et al. 2009 ApJ 705, 328 (uncertainty is ~ 0.05 + 0.03*logg) """
+    return 2.13 - 0.23 * logg
+def logg_to_vt_M08(logg):
+    """ Marino et al. 2008 A&A 490, 625 (from Gratton et al. 1996) """
+    return 2.22 - 0.322 * logg
