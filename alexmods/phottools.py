@@ -5,6 +5,7 @@ from __future__ import (division, print_function, absolute_import,
 import numpy as np
 from scipy import interpolate
 from astropy.io import ascii
+from .robust_polyfit import polyfit
 
 import logging
 import os, sys, time
@@ -237,7 +238,7 @@ def A99_Teff_BmV(BmV, FeH):
     t[ii] = y[ii]
     return 5040./t
 
-def phot_logg(Teff,mag0,BCmag,distmod,Mstar=0.8):
+def phot_logg(Teff,mag0,BCmag,distmod,Mstar=0.75):
     """
     Using solar values from Venn et al. 2017
     """
@@ -315,7 +316,11 @@ logTFeH_to_logg = np.vectorize(_logTFeH_to_logg)
 ###############################
 def get_logg_to_vt_B05():
     b = ascii.read(datapath+'/stellar_param_data/barklem.txt')
-    fit = interpolate.UnivariateSpline(b['logg'],b['Vt'],k=2)
+    ## This fails in the newer version of scipy
+    #iisort = np.argsort(b['logg'])
+    #fit = interpolate.UnivariateSpline(b['logg'][iisort],b['Vt'][iisort],k=2)
+    coeff, sigma = polyfit(b['logg'],b['Vt'],2)
+    fit = lambda x: np.polyval(coeff, x)
     return fit
 def logg_to_vt_B05(logg):
     fit = get_logg_to_vt_B05()
