@@ -256,6 +256,20 @@ def iterate_find_logg(Teff,mag0,FeH,dmod,filt,maxiter=10,tol=.005):
     else:
         print("WARNING: Reached max iters")
     return logg
+def phot_logg_error(Tfracerr, dmoderr, masserr=0.05, magerr=0.0, BCerr=0.03):
+    """
+    Estimate 1 sigma error in logg 
+    Tfracerr: temperature error divided by temperature
+    dmoderr: distance modulus error in mag
+    masserr (0.05 mag): from assuming a mass, 0.05 is 0.7-0.8 Msun
+    magerr: assume this is negligible by default
+    BCerr: estimated about 0.03 mag from running CV14 several times
+    """
+    Terr_mag = 4*Tfracerr # from a taylor expansion
+    magerr = 0.4*magerr
+    BCerr = 0.4*BCerr
+    dmoderr = 0.4*dmoderr
+    return np.sqrt(masserr**2 + Terr_mag**2 + magerr**2 + dmoderr**2 + BCerr**2)
 
 ###################
 ## Y2 isochrones ##
