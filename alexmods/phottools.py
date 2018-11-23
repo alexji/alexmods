@@ -185,11 +185,21 @@ def A99_BC_V(Teff, FeH):
     BC[ii] = BC18[ii]
     return BC
     
+def B79_VmI_C2J(VmI):
+    """ Convert V-I in Cousins' mags to V-I in Johnson's mags from Bessell 1979 """
+    VmI = np.ravel(VmI)
+    out = VmI.copy()/0.778
+    out[VmI < 0] = VmI[VmI < 0]/0.713
+    ii = out > 2.0
+    out[ii] = (VmI[ii]+0.13)/0.835
+    return out
 def A99_Teff_VmI(VmI):
     """
     Johnson's V, Johnson's (NOT Cousins') I
-    125K scatter, no dependence on Fe/H
+    125K scatter, no dependence on Fe/H.
+    I have assumed that VmI is given in Johnson-Cousins, and 
     """
+    VmI = B79_VmI_C2J(VmI)
     theta = 0.5379 + 0.3981 * VmI + 4.432e-2 * VmI**2 - 2.693e-2 * VmI**3
     Teff = 5040./theta
     return Teff
@@ -232,7 +242,20 @@ def phot_logg(Teff,mag0,BCmag,distmod,Mstar=0.8):
     Using solar values from Venn et al. 2017
     """
     return 4.44 + np.log10(Mstar) + 4*np.log10(Teff/5780) + 0.4 * (mag0 - distmod + BCmag - 4.75)
-
+def iterate_find_logg(Teff,mag0,FeH,dmod,filt,maxiter=10,tol=.005):
+    """ Assumes [alpha/Fe] = +0.4, sdss mags for filt """
+    # Initialize BC and logg
+    BC = 0.0
+    logg = phot_logg(Teff,mag0,BC,dmod)
+    for iter in range(maxiter):
+        BC = eval_BC(Teff, logg, FeH, filt=filt)
+        new_logg = phot_logg(Teff,mag0,BC,dmod)
+        if np.all(np.abs(new_logg - logg) < tol):
+            break
+        logg = new_logg
+    else:
+        print("WARNING: Reached max iters")
+    return logg
 
 ###################
 ## Y2 isochrones ##
