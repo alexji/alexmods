@@ -20,3 +20,5 @@ If you expect to change any code, instead do `python setup.py develop`
 
 `gaiatools` requires [pyia](https://github.com/adrn/pyia), [gala](https://github.com/adrn/gala), [galpy](https://github.com/jobovy/galpy), and [gaia_tools](https://github.com/jobovy/gaia_tools). The last one needs an environment variable set.
 
+### To do list
+- [ ] Make installable (seems not to work all the time)

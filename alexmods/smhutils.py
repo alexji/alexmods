@@ -66,7 +66,8 @@ common_molecule_species2elems = {
     840: ["Zr", "O"]
     }
 
-__all__ = ["element_to_species", "element_to_atomic_number", "species_to_element", "get_common_letters",
+__all__ = ["element_to_species", "element_to_atomic_number", "species_to_element", "atomic_number_to_element", 
+           "get_common_letters",
            "elems_isotopes_ion_to_species", "species_to_elems_isotopes_ion",
            "find_common_start", "extend_limits"]
 
@@ -196,6 +197,20 @@ def species_to_element(species):
     if element in ("C", "H", "He"): return element
     return "%s %s" % (element, "I" * ionization)
 
+
+
+def atomic_number_to_element(Z):
+    """
+    Converts a string representation of an element and its ionization state
+    to a floating point.
+
+    :param element_repr:
+        A string representation of the element. Typical examples might be 'Fe',
+        'Ti I', 'si'.
+    """
+    
+    elem = species_to_element(float(Z))
+    return elem.split()[0]
 
 def elems_isotopes_ion_to_species(elem1,elem2,isotope1,isotope2,ion):
     Z1 = int(element_to_species(elem1.strip()))

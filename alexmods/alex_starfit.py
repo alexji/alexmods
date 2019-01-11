@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
+from scipy import stats
 
 from . import read_data as rd
 from .smhutils import element_to_atomic_number
@@ -107,6 +108,7 @@ def find_best_models(hw10, hw10logN, epsval, epserr, epslim, name=""):
     wtot = np.sum(1./e2)
     
     # Solve for bestfit offsets to model
+    # delta * wtot = - sum((x-mu)/sigma^2)
     offsets = -np.sum((x - modelvals)/e2, axis=1)/wtot
     new_modelvals = modelvals - offsets[:,np.newaxis]
     new_modellims = modellims - offsets[:,np.newaxis]
@@ -122,7 +124,9 @@ def find_best_models(hw10, hw10logN, epsval, epserr, epslim, name=""):
     Nelem = len(hw10logN.columns)
     best_models = hw10[valid_ul].iloc[iisort] #- np.tile(np.array(offsets[valid_ul,np.newaxis][iisort]), Nelem)
     best_models["chi2"] = chi2[valid_ul][iisort]
-    best_models["Dilution"] = -offsets[valid_ul][iisort]
+    # Solving logeps(X) - 12 = log(NX)/log(NH) -->
+    # log MH = 12 + logN(X) - logeps(X), where N(X) = M(X)/A(X) (Msun/amu) is computed in load_hw10, assuming A(H)=1.0
+    best_models["Dilution"] = 12 + offsets[valid_ul][iisort]
     
     best_models.index = np.arange(len(best_models))+1
     best_models.columns.name = name
@@ -148,33 +152,55 @@ def plot_abund_fit(epsval, epserr, epslim, logNmodel, offset=0.,
                    fmt="s", color="r", ms=6,
                    model_only=False,
                    mcolor = 'k', mlw=1, mls='-', mlabel=None,
-                   ax = None):
+                   ax = None, plot_XH=False):
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.figure
     Zii = np.array([isinstance(x, int) and x > 5 for x in logNmodel.index])
-    ax.plot(logNmodel.index[Zii], logNmodel[Zii], color=mcolor, lw=mlw, ls=mls, label=mlabel)
-    if not model_only:
-        ax.errorbar(epsval.index, epsval.values, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
-        ax.errorbar(epslim.index, epslim.values, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
+    if plot_XH:
+        solar = rd.get_solar(logNmodel.index[Zii])
+        ax.plot(logNmodel.index[Zii], logNmodel[Zii]-solar, color=mcolor, lw=mlw, ls=mls, label=mlabel)
+        if not model_only:
+            ax.errorbar(epsval.index, epsval.values-solar.loc[epsval.index], yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms, label=None)
+            ax.errorbar(epslim.index, epslim.values-solar.loc[epslim.index], yerr=.1, fmt='none', color=color, ecolor=color, uplims=True, label=None)
+    else:
+        ax.plot(logNmodel.index[Zii], logNmodel[Zii], color=mcolor, lw=mlw, ls=mls, label=mlabel)
+        if not model_only:
+            ax.errorbar(epsval.index, epsval.values, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
+            ax.errorbar(epslim.index, epslim.values, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
     
-    mineps = np.floor(min(np.min(epsval-epserr), np.min(epslim))) - 1
-    maxeps = np.ceil(max(np.max(epsval+epserr), np.max(epserr))) + 1
     
     ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.xaxis.set_major_locator(MultipleLocator(5))
     ax.yaxis.set_minor_locator(MultipleLocator(.5))
     ax.yaxis.set_major_locator(MultipleLocator(2))
     ax.set_xlim(5,30)
-    ax.set_ylim(mineps, maxeps)
     ax.set_xlabel("Z")
-    ax.set_ylabel(r"$\log\epsilon(X)$")
+    if plot_XH:
+        XHval = epsval.values - solar.loc[epsval.index]
+        XHlim = epslim.values - solar.loc[epslim.index]
+        minXH = min(np.min(XHval), np.min(XHlim))
+        maxXH = max(np.max(XHval), np.max(XHlim))
+        minXH = np.floor(minXH)
+        maxXH = np.ceil(maxXH)
+        ax.set_ylim(minXH, maxXH)
+        ax.set_ylabel(r"[X/H]")
+    else:
+        mineps = np.floor(min(np.min(epsval-epserr), np.min(epslim))) - 1
+        maxeps = np.ceil(max(np.max(epsval+epserr), np.max(epserr))) + 1
+        ax.set_ylim(mineps, maxeps)
+        ax.set_ylabel(r"$\log\epsilon(X)$")
     return fig
-def generate_labels(best_models):
-    labels = [r"M={:.0f}$M_\odot$ E={:.1f}B $\xi$={:.2e} $\chi^2$={:.1f}".format(
-            *tuple(model[["Mass","Energy","Mixing","chi2"]])) \
-                  for i,model in best_models.iterrows()]
+def generate_labels(best_models, Mdil=False):
+    if Mdil:
+        labels = [r"M={:.1f}$M_\odot$ E={:.1f}B $\xi$={:.2e} $\log M_{{\rm dil}}$={:.1f} $\chi^2$={:.1f}".format(
+                *tuple(model[["Mass","Energy","Mixing","Dilution","chi2"]])) \
+                      for i,model in best_models.iterrows()]
+    else:
+        labels = [r"M={:.0f}$M_\odot$ E={:.1f}B $\xi$={:.2e} $\chi^2$={:.1f}".format(
+                *tuple(model[["Mass","Energy","Mixing","chi2"]])) \
+                      for i,model in best_models.iterrows()]
     return labels
     
 def plot_many_abund_fits(nrow, ncol,
@@ -194,4 +220,42 @@ def plot_many_abund_fits(nrow, ncol,
                            ax = axes[irow,icol], mlabel=label,
                            **kwargs)
             axes[irow,icol].legend(loc='upper right')
+    return fig
+
+def plot_model_parameters(best_models, best_logN, 
+                          scattermin=1, scattermax=250,
+                          sigma=2.0, minlogMdil=2.0, **kwargs):
+    chi2 = best_models["chi2"].values
+    minchi2 = np.min(chi2)
+    maxchi2 = minchi2 + stats.chi2.ppf(stats.norm.cdf(sigma)-stats.norm.cdf(-sigma),4) # 4 params
+    chi2sf = stats.chi2.sf(chi2-minchi2, 4)
+    scattersize = scattermin + (scattermax-scattermin)*chi2sf
+    
+    valid_for_plot = np.logical_and(chi2 < maxchi2, best_models["Dilution"] > minlogMdil)
+    cols = ["Mass","Energy","Mixing","Dilution"]
+    limits = [[np.min(best_models[col]), np.max(best_models[col])] for col in cols]
+    limits[cols.index("Dilution")][0] = minlogMdil
+    limits[cols.index("Energy")][0] = 0
+    limits[cols.index("Mass")][0] = 0
+    
+    colbins = [np.arange(10,100,  10),
+               np.arange(0, 10.1, .5),
+               np.arange(0,0.252,.02),
+               np.arange(2,7,.5)]
+    fig, axes = plt.subplots(4,4,figsize=(4*6,4*6))
+    for i1, col1 in enumerate(cols):
+        for i2, col2 in enumerate(cols):
+            ax = axes[i1,i2]
+            if i1==i2:
+                x = np.array(best_models[col1][valid_for_plot])
+                ax.hist(x[np.isfinite(x)],weights=chi2sf[valid_for_plot][np.isfinite(x)],
+                        bins=colbins[i1])
+                ax.set_xlabel(col1)
+                ax.set_xlim(limits[i1])
+            else:
+                ax.scatter(best_models[col1][valid_for_plot], best_models[col2][valid_for_plot], s=scattersize[valid_for_plot], **kwargs)
+                ax.set_xlabel(col1)
+                ax.set_ylabel(col2)
+                ax.set_xlim(limits[i1])
+                ax.set_ylim(limits[i2])
     return fig

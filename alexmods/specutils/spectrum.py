@@ -185,7 +185,7 @@ class Spectrum1D(object):
                 i += 1
 
             # Split the concatenated header into individual orders.
-            order_mapping = np.array([map(float, each.rstrip('" ').split()) \
+            order_mapping = np.array([list(map(float, each.rstrip('" ').split())) \
                 for each in re.split('spec[0-9]+ ?= ?"', concatenated_wat)[1:]])
             print(order_mapping)
             if len(order_mapping)==0:
@@ -264,7 +264,7 @@ class Spectrum1D(object):
             i += 1
 
         # Split the concatenated header into individual orders.
-        order_mapping = np.array([map(float, each.rstrip('" ').split()) \
+        order_mapping = np.array([list(map(float, each.rstrip('" ').split())) \
                 for each in re.split('spec[0-9]+ ?= ?"', concatenated_wat)[1:]])
 
         # Parse the order mapping into dispersion values.

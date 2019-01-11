@@ -9,6 +9,8 @@ from astropy import table
 from astropy import coordinates as coord
 from astropy import units as u
 
+import warnings
+
 from six import string_types
 
 import os
@@ -573,10 +575,41 @@ def load_gcdata():
 ##################
 # Supernova yields
 ##################
-def load_hw10(as_number=False):
+def load_hw10(as_number=True):
+    assert as_number, "Did not download the mass tables"
+    hw10 = Table.read(datapath+"/yield_tables/HW10.znuc.S4.star.el.fits").to_pandas()
+    hw10.rename(inplace=True, columns={
+            "mass":"Mass","energy":"Energy","mixing":"Mixing","remnant":"Remnant"})
+    #elems = [i+1 for i in list(range(83))+[89,91]]
+    elems = [i+1 for i in list(range(83))]
+    missing_elems = []
+    ## the units of this table are mol/g, divided out the ejecta mass.
+    ## 1 amu * 1 mol = 1 g
+    ## I want Msun/amu of the total ejecta mass, so need to multiply by the ejecta mass in Msun
+    ## Units: mol / g * Msun = Msun / amu
+    Mej = hw10["Mass"] - hw10["Remnant"]
+    for i in elems:
+        if str(i) in hw10.columns:
+            hw10.rename(inplace=True, columns={str(i):i})
+            hw10[i] = hw10[i]*Mej
+        else:
+            missing_elems.append(i)
+    for i in missing_elems: elems.remove(i)
+    hw10["Cut"] = "S4"
+    cols = elems + list(hw10.columns[0:3].values) + ["Cut"] #,"Remnant"]
+    hw10 = hw10[cols]
+    hw10["Mass"] = hw10["Mass"].map(lambda x: round(x, 1))
+    hw10["Energy"] = hw10["Energy"].map(lambda x: round(x, 1))
+    hw10["Mixing"] = hw10["Mixing"].map(lambda x: round(x, 5))
+    
+    return hw10
+    
+def load_hw10_old(as_number=False):
     """
     Load Heger + Woosley 2010 Pop III CCSNe yields
     This just adds all the isotopes into element yields
+    These are just the models that are in the ApJ paper, but
+    online there are a HUGE number more!
     """
     hw10 = Table.read(datapath+"/yield_tables/HW10.fits").to_pandas()
     elems = np.unique(hw10["El"])
@@ -598,7 +631,7 @@ def load_hw10(as_number=False):
         mass.name = key
         outputyields.append(mass)
     hw10y = pd.DataFrame(outputyields)
-    hw10y["Mass"] = list(map(lambda x: x[0], hw10y.index))
+    hw10y["Mass"] = list(map(lambda x: round(x[0],1), hw10y.index))
     hw10y["Energy"] = list(map(lambda x: round(x[1],1), hw10y.index))
     hw10y["Cut"] = list(map(lambda x: x[2], hw10y.index))
     hw10y["Mixing"] = list(map(lambda x: round(x[3],5), hw10y.index))
@@ -632,3 +665,29 @@ def load_hw02():
     PISNMass = 24./13. * np.array(HeMass) + 20.
     hw02y["PISNMass"] = PISNMass
     return hw02y
+
+def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt"):
+    galdata = ascii.read(filename,
+                         fill_values=[('-9.999','0','DRA'),('-9.999','0','DDEC'),
+                                      ('-9.99','0','DELLIP_LOW'), ('-9.99','0','DELLIP_HIGH'),
+                                      ('-999.9','0','VHEL'),('-999.9','0','DVHEL_LOW'),('-999.9','0','DVHEL_HIGH'),
+                                      ('-9.9','0','SIGMA'),('-9.9','0','DSIGMA_LOW'),('-9.9','0','DSIGMA_HIGH'),
+                                      ('-9.99','0','FEH'),('-9.9','0','DFEH_LOW'),('-9.9','0','DFEH_HIGH')])
+    df = galdata.to_pandas()
+    df.index = df["SHORTNAME"]
+    df["DMOD"] = 5.*np.log10(df["DIST"]) + 10
+    df["DDMOD_LOW"] = df["DMOD"]-5.*np.log10(df["DIST"]-df["DDIST_LOW"]) + 10
+    df["DDMOD_HIGH"] = 5.*np.log10(df["DIST"]+df["DDIST_HIGH"]) + 10 - df["DMOD"]
+    df["RHALF_PC"] = 1000.*df["DIST"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value
+    df["DRHALF_PC_HIGH"] = 1000.*df["DDIST_HIGH"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value + 1000.*df["DIST"]*(np.array(df["DRHALF_HIGH"])*u.arcmin).to(u.radian).value
+    df["DRHALF_PC_LOW"] = 1000.*df["DDIST_LOW"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value + 1000.*df["DIST"]*(np.array(df["DRHALF_LOW"])*u.arcmin).to(u.radian).value
+    df["MDYN"] = 580. * df["RHALF_PC"] * df["SIGMA"]**2
+    df["DMDYN_HIGH"] = 580. * (df["RHALF_PC"]+df["DRHALF_PC_HIGH"]) * (df["SIGMA"]+df["DSIGMA_HIGH"])**2 - df["MDYN"]
+    df["DMDYN_LOW"] = df["MDYN"] - 580. * (df["RHALF_PC"]-df["DRHALF_PC_LOW"]) * (df["SIGMA"]-df["DSIGMA_LOW"])**2
+
+    return df
+
+def load_sakari18(filename=datapath+"/abundance_tables/sakari18_merged.txt"):
+    df = ascii.read(filename).to_pandas()
+    return df
+    
