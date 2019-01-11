@@ -9,6 +9,8 @@ from astropy import table
 from astropy import coordinates as coord
 from astropy import units as u
 
+import warnings
+
 from six import string_types
 
 import os
@@ -663,3 +665,29 @@ def load_hw02():
     PISNMass = 24./13. * np.array(HeMass) + 20.
     hw02y["PISNMass"] = PISNMass
     return hw02y
+
+def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt"):
+    galdata = ascii.read(filename,
+                         fill_values=[('-9.999','0','DRA'),('-9.999','0','DDEC'),
+                                      ('-9.99','0','DELLIP_LOW'), ('-9.99','0','DELLIP_HIGH'),
+                                      ('-999.9','0','VHEL'),('-999.9','0','DVHEL_LOW'),('-999.9','0','DVHEL_HIGH'),
+                                      ('-9.9','0','SIGMA'),('-9.9','0','DSIGMA_LOW'),('-9.9','0','DSIGMA_HIGH'),
+                                      ('-9.99','0','FEH'),('-9.9','0','DFEH_LOW'),('-9.9','0','DFEH_HIGH')])
+    df = galdata.to_pandas()
+    df.index = df["SHORTNAME"]
+    df["DMOD"] = 5.*np.log10(df["DIST"]) + 10
+    df["DDMOD_LOW"] = df["DMOD"]-5.*np.log10(df["DIST"]-df["DDIST_LOW"]) + 10
+    df["DDMOD_HIGH"] = 5.*np.log10(df["DIST"]+df["DDIST_HIGH"]) + 10 - df["DMOD"]
+    df["RHALF_PC"] = 1000.*df["DIST"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value
+    df["DRHALF_PC_HIGH"] = 1000.*df["DDIST_HIGH"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value + 1000.*df["DIST"]*(np.array(df["DRHALF_HIGH"])*u.arcmin).to(u.radian).value
+    df["DRHALF_PC_LOW"] = 1000.*df["DDIST_LOW"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value + 1000.*df["DIST"]*(np.array(df["DRHALF_LOW"])*u.arcmin).to(u.radian).value
+    df["MDYN"] = 580. * df["RHALF_PC"] * df["SIGMA"]**2
+    df["DMDYN_HIGH"] = 580. * (df["RHALF_PC"]+df["DRHALF_PC_HIGH"]) * (df["SIGMA"]+df["DSIGMA_HIGH"])**2 - df["MDYN"]
+    df["DMDYN_LOW"] = df["MDYN"] - 580. * (df["RHALF_PC"]-df["DRHALF_PC_LOW"]) * (df["SIGMA"]-df["DSIGMA_LOW"])**2
+
+    return df
+
+def load_sakari18(filename=datapath+"/abundance_tables/sakari18_merged.txt"):
+    df = ascii.read(filename).to_pandas()
+    return df
+    
