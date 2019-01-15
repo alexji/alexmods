@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import (division, print_function, absolute_import,
+                        unicode_literals)
+
 """
 Small collection of robust statistical estimators based on functions from
 Henry Freudenriech (Hughes STX) statistics library (called ROBLIB) that have
@@ -516,7 +521,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 	v = y
 	
 	nSeg = order + 2
-	if (nSeg/2)*2 == nSeg:
+	if (nSeg//2)*2 == nSeg:
 		nSeg = nSeg + 1
 	minPts = nSeg*3
 	if n < 1000:
@@ -528,9 +533,9 @@ def polyfit(inputX, inputY, order, iterMax=25):
 		q = numpy.argsort(u)
 		u = u[q]
 		v = v[q]
-		nPerSeg = numpy.zeros(nSeg) + n/nSeg
+		nPerSeg = numpy.zeros(nSeg, dtype=int) + n//nSeg
 		nLeft = n - nPerSeg[0]*nSeg
-		nPerSeg[nSeg/2] = nPerSeg[nSeg/2] + nLeft
+		nPerSeg[nSeg//2] = nPerSeg[nSeg//2] + nLeft
 		r = numpy.zeros(nSeg)
 		s = numpy.zeros(nSeg)
 		r[0] = numpy.median(u[0:nPerSeg[0]])
@@ -546,7 +551,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 		
 	sigma, fracDev, nGood, biweights, scaledResids = checkfit(v, yFit, __epsilon, __delta)
 	if nGood == 0:
-		return cc
+		return cc, np.nan
 	if nGood < minPts:
 		if lsqFit == 0:
 			cc = numpy.polyfit(u, v, order)
@@ -556,7 +561,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 				return __processPoly(x0, y0, order, cc)
 			nGood = n - nGood
 		if nGood < minPts:
-			return 0
+			return 0, np.nan
 			
 	closeEnough = 0.03*numpy.sqrt(0.5/(n-1))
 	if closeEnough < __delta:
@@ -587,7 +592,7 @@ def polyfit(inputX, inputY, order, iterMax=25):
 		yFit = numpy.polyval(cc, u)
 		sigma, fracDev, nGood, biweights, scaledResids = checkfit(v, yFit, __epsilon, __delta)
 		if nGood < minPts:
-			return cc
+			return cc, np.nan
 		diff1 = numpy.abs(sigma1 - sigma)/sigma
 		diff2 = numpy.abs(sigma2 - sigma)/sigma
 		if diff1 < diff2:
