@@ -27,3 +27,4 @@ logger.addHandler(handler)
 from . import (specutils, robust_polyfit, plot_spectrum)
 from .specutils import Spectrum1D
 
+from . import smhr
