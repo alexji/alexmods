@@ -13,10 +13,11 @@ Go to a directory where you want to keep the code. Then:
 ```
 git clone https://github.com/alexji/alexmods.git
 cd alexmods
-python setup.py install
+python setup.py develop
 ```
 
-If you expect to change any code, instead do `python setup.py develop`
+If you do `python setup.py install`, it appears to not copy the data files to the right location.
+If you know how to fix this please let me know!
 
 `gaiatools` requires [pyia](https://github.com/adrn/pyia), [gala](https://github.com/adrn/gala), [galpy](https://github.com/jobovy/galpy), and [gaia_tools](https://github.com/jobovy/gaia_tools). The last one needs an environment variable set.
 
