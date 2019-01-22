@@ -11,6 +11,10 @@ __all__ = ["calculate_fractional_overlap", "find_overlaps"]
 import numpy as np
 import time
 import os, sys
+from scipy import signal, ndimage
+from astropy.modeling import models, fitting
+from astropy.stats import sigma_clip, biweight_scale
+from ..robust_polyfit import polyfit as rpolyfit
 
 def calculate_fractional_overlap(interest_range, comparison_range):
     """
@@ -224,6 +228,7 @@ def find_resolution(multispec_fname, initial_fwhm=.05, usepercentile=True, perce
 
 
 
+
 def find_peaks(flux,
                window = 51,niter = 5,
                clip_iter = 5,clip_sigma_upper = 5.0,clip_sigma_lower = 5.0,
@@ -312,3 +317,60 @@ def find_peaks(flux,
             ax.vlines(allpeakx, allpeaky*1.1, allpeaky*1.1+300, color='r', lw=1)
     if make_fig: return allpeakx, fullmodel, fig
     return allpeakx, fullmodel
+
+## Quick and dirty signal processing
+def replace_nans(x, value=0., msg=""):
+    if np.any(~np.isfinite(x)):
+        bad = ~np.isfinite(x)
+        print("WARNING {}: {} bad pixels, replacing with {}".format(msg, np.sum(bad), value))
+        x[bad] = value
+    return x
+def fast_smooth(flux, fwhm):
+    flux = replace_nans(flux, msg="fast_smooth")
+    sigma = fwhm / (2 * (2*np.log(2))**0.5)
+    return ndimage.gaussian_filter1d(flux, sigma)
+def fast_find_continuum(flux, kernel=51, Niter=3):
+    cont = np.copy(flux)
+    cont = replace_nans(cont, msg="fast_find_continuum")
+    for i in range(Niter):
+        cont = signal.medfilt(cont, kernel)
+        kernel += 10
+    return cont
+def fast_find_continuum_polyfit(flux, kernel=51, Niter=3, degree=3, getcoeff=False):
+    cont = fast_find_continuum(flux, kernel, Niter)
+    cont = replace_nans(cont, msg="fast_find_continuum_polyfit")
+    x = np.arange(len(flux))
+    popt, sigma = rpolyfit(x, cont, degree)
+    if getcoeff: return popt
+    return np.polyval(popt, x)
+def fast_find_noise(flux, **sigma_clip_kwargs):
+    """ sigma clip then biweight scale """
+    flux = replace_nans(flux, msg="fast_find_noise")
+    clipped = sigma_clip(flux, **sigma_clip_kwargs)
+    noise = biweight_scale(clipped)
+    return noise
+def fast_find_peaks(flux, cont=None,
+                    noise=None, detection_sigma=2.0,
+                    detection_threshold=None,
+                    prune_dist=None):
+    # Subtract continuum:
+    if cont is not None: flux = flux.copy() - cont
+    
+    # Find threshold for peak finding
+    if noise is None: noise = fast_find_noise(flux)
+    if detection_threshold is None:
+        detection_threshold = detection_sigma * noise
+    
+    # 1st derivative for peak finding
+    dflux = np.gradient(flux)
+    ii1 = flux > detection_threshold
+    ii2 = dflux >= 0
+    ii3 = np.zeros_like(ii2)
+    ii3[:-1] = dflux[1:] < 0
+    peaklocs = ii1 & ii2 & ii3
+    peakx = np.where(peaklocs)[0]
+    
+    
+    if prune_dist is not None:
+        pass
+    return peakx
