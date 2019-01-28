@@ -8,7 +8,7 @@ from __future__ import (division, print_function, absolute_import,
 from six import string_types
 import numpy as np
 from .robust_polyfit import gaussfit
-from scipy import interpolate
+from scipy import interpolate, signal
 
 def struct2array(x):
     """ Convert numpy structured array of simple type to normal numpy array """
@@ -66,18 +66,31 @@ def get_cdf_raw(x):
     """
     Take a set of points x and find the CDF.
     Returns xcdf, ycdf, where ycdf = p(x < xcdf)
-    Normalized such that p(min(x)) = 1/len(x), p(max(x)) = 1
+    Defined such that p(min(x)) = 1/len(x), p(max(x)) = 1
     """
-    xcdf = np.argsort(x)
+    xcdf = np.sort(x)
     ycdf = np.arange(len(x)).astype(float)/float(len(x))
     return xcdf, ycdf
 
-def get_cdf(x, **kwargs):
+def find_distribution_mode(x, percentile=5., full_output=False):
+    """
+    Find the mode of the PDF of a set of elements.
+    Algorithm inspired by Shannon Patel
+    """
+    xcdf, ycdf = get_cdf_raw(x)
+    xval = xcdf[1:]
+    pdf = np.diff(ycdf)
+    # Take the lowest percentile differences, these bunch up near the mode
+    pdfcut = np.percentile(pdf, percentile)
+    # Take the median of the x's where they bunch up
+    return np.median(xval[pdf < pdfcut])
+
+def get_cdf(x, smoothiter=3, window=None, order=1, **kwargs):
     """
     Take a set of points x and find the CDF.
     Use get_cdf_raw, fit and return an interpolating function.
     
-    By default we use scipy.interpolate.UnivariateSpline.
+    By default we use scipy.interpolate.Akima1DInterpolator
     kwargs are passed to the interpolating function.
     (We do not fit a perfectly interpolating spline right now, because if two points have identical x's,
     you get infinity for the derivative.)
@@ -86,9 +99,21 @@ def get_cdf(x, **kwargs):
     You can obtain the PDF by taking the first derivative.
     """
     xcdf, ycdf = get_cdf_raw(x)
-    if "ext" not in kwargs:
-        kwargs["ext"] = 3 #return the boundary value rather than extrapolating
-    F = interpolate.UnivariateSpline(xcdf, ycdf, **kwargs)
+    # Smooth the CDF
+    if window is None:
+        window = int(len(xcdf)/100.)
+    else:
+        window = int(window)
+    if window % 2 == 0: window += 1
+    F = interpolate.PchipInterpolator(xcdf,ycdf,extrapolate=False)#**kwargs)
+    for i in range(smoothiter):
+        ycdf = signal.savgol_filter(F(xcdf), window, order)
+        F = interpolate.PchipInterpolator(xcdf,ycdf,extrapolate=False)#**kwargs)
+    
+    #if "ext" not in kwargs:
+    #    kwargs["ext"] = 3 #return the boundary value rather than extrapolating
+    #F = interpolate.UnivariateSpline(xcdf, ycdf, **kwargs)
+    #F = interpolate.Akima1DInterpolator(xcdf,ycdf,**kwargs)
     return F
 
 def find_distribution_peak(x, xtol, full_output=False):
@@ -103,7 +128,7 @@ def find_distribution_peak(x, xtol, full_output=False):
     - Return the biggest PDF peak
     """
     Fcdf = get_cdf(x)
-    fpdf = F.derivative()
+    fpdf = Fcdf.derivative()
     
     xsamp = np.arange(np.min(x), np.max(x)+xtol, xtol/2.)
     pdf = fpdf(xsamp)
@@ -172,4 +197,40 @@ def find_confidence_region(x, p, xtol, full_output=False):
     if full_output:
         return xsamp[i1], xpeak, xsamp[i2], current_prob, xsamp, pdf
     return xsamp[i1], xpeak, xsamp[i2]
-            
+
+def box_select(x,y,topleft,topright,botleft,botright):
+    """
+    Select x, y within a box defined by the corner points
+    I think this fails if the box is not convex.
+    """
+    assert len(x) == len(y)
+    x = np.ravel(x)
+    y = np.ravel(y)
+    selection = np.ones_like(x, dtype=bool)
+    # Check the directions all make sense
+    # I think I assume the box is convex
+    assert botleft[1] <= topleft[1], (botleft, topleft)
+    assert botright[1] <= topright[1], (botright, topright)
+    assert topleft[0] <= topright[0], (topleft, topright)
+    assert botleft[0] <= botright[0], (botleft, botright)
+    
+    # left boundary
+    (x1,y1), (x2,y2) = botleft, topleft
+    m = (x2-x1)/(y2-y1)
+    selection[x < m*(y-y1) + x1] = False
+    # right boundary
+    (x1,y1), (x2,y2) = botright, topright
+    m = (x2-x1)/(y2-y1)
+    selection[x > m*(y-y1) + x1] = False
+
+    # top boundary
+    (x1,y1), (x2,y2) = topleft, topright
+    m = (y2-y1)/(x2-x1)
+    selection[y > m*(x-x1) + y1] = False
+
+    # bottom boundary
+    (x1,y1), (x2,y2) = botleft, botright
+    m = (y2-y1)/(x2-x1)
+    selection[y < m*(x-x1) + y1] = False
+
+    return selection
