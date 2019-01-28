@@ -13,7 +13,7 @@ import time
 import os, sys
 from scipy import signal, ndimage
 from astropy.modeling import models, fitting
-from astropy.stats import sigma_clip, biweight_scale
+from astropy.stats import sigma_clip, biweight_scale, median_absolute_deviation
 from ..robust_polyfit import polyfit as rpolyfit
 
 def calculate_fractional_overlap(interest_range, comparison_range):
@@ -347,7 +347,8 @@ def fast_find_noise(flux, **sigma_clip_kwargs):
     """ sigma clip then biweight scale """
     flux = replace_nans(flux, msg="fast_find_noise")
     clipped = sigma_clip(flux, **sigma_clip_kwargs)
-    noise = biweight_scale(clipped)
+    print("fast_find_noise: sigma-clipped {}/{}".format(np.sum(~clipped.mask),len(clipped)))
+    noise = biweight_scale(clipped[~clipped.mask])
     return noise
 def fast_find_peaks(flux, cont=None,
                     noise=None, detection_sigma=2.0,
@@ -374,3 +375,39 @@ def fast_find_peaks(flux, cont=None,
     if prune_dist is not None:
         pass
     return peakx
+
+def cosmic_ray_reject(flux, ivar, sigma=10., minflux=-100, use_mad=False, verbose=False):
+    """
+    flux (n_frame, n_pix)
+    """
+    assert flux.shape==ivar.shape
+    TINYNUMBER=1e-8
+
+    n_frame, n_pix = flux.shape
+    
+    scale_factor = np.nanmedian(flux, axis=1)
+    scaled_flux = (flux.T/scale_factor).T
+    scaled_median_flux = np.median(scaled_flux, axis=0)
+    
+    errs = ivar**-0.5
+    if use_mad:
+        scaled_errs = 1.4826 * median_absolute_deviation(scaled_flux, axis=0)
+        for iframe in range(n_frame):
+            errs[iframe] = scaled_errs * scale_factor[iframe]
+
+    new_flux = flux.copy()
+    new_ivar = ivar.copy()
+    new_mask = np.zeros_like(new_flux, dtype=bool)
+    for iframe in range(n_frame):
+        medianspec = scale_factor[iframe] * scaled_median_flux
+        mask1 = np.abs(flux[iframe]) > sigma * errs[iframe] + medianspec
+        mask2 = flux[iframe] < minflux
+        mask3 = ~(np.isfinite(flux[iframe]) & np.isfinite(ivar[iframe]))
+        mask = mask1 | mask2 | mask3
+        new_flux[iframe,mask] = medianspec[mask]
+        new_ivar[iframe,mask] = TINYNUMBER
+        new_mask[iframe,mask] = True
+        if verbose:
+            print("frame {}: {}px high, {}px low, {}px nan, {} total".format(
+                iframe, mask1.sum(), mask2.sum(), mask3.sum(), mask.sum()))
+    return new_flux, new_ivar, new_mask
