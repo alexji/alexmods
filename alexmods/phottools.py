@@ -121,7 +121,7 @@ def get_jordi06_coeffs(type):
     return a_Bmg, b_Bmg, a_Vmg, b_Vmg, e_a_Bmg, e_b_Bmg, e_a_Vmg, e_b_Vmg
 
 def jordi06_gmi_to_VmI(gmi,geterr=True):
-    assert np.all(np.ravel(gmi) < 2.1)
+    assert np.all(np.logical_or(np.ravel(gmi) < 2.1, np.isnan(np.ravel(gmi))))
     VmI = 0.674 * gmi + 0.406
     if geterr:
         VmImin = (0.674-0.005)*gmi + (0.406 - 0.004)
