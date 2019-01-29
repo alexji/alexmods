@@ -5,12 +5,14 @@
 
 from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
+import six
 
 #__all__ = ["abundance_cog", "synthesize", "RTError"]
 __all__ = ["abundance_cog", "RTError"]
 
-# See stackoverflow.com/questions/19913653/no-unicode-in-all-for-a-packages-init
-#__all__ = [_.encode("ascii") for _ in __all__]
+if six.PY2:
+    # See stackoverflow.com/questions/19913653/no-unicode-in-all-for-a-packages-init
+    __all__ = [_.encode("ascii") for _ in __all__]
 
 from .cog import abundance_cog
 #from .synthesis import synthesize
