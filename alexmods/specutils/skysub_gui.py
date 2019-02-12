@@ -19,6 +19,7 @@ import functools
 ## Astro imports
 from astropy.io import fits, ascii
 from alexmods.specutils.spectrum import (Spectrum1D, read_mike_spectrum, stitch as spectrum_stitch)
+from alexmods.specutils.utils import fast_find_continuum_polyfit
 
 ## GUI imports
 # https://pythonspot.com/pyqt5-matplotlib/
@@ -36,7 +37,8 @@ from mpl import MPLWidget
 DOUBLE_CLICK_INTERVAL = 0.1 # MAGIC HACK
 
 class SkySubModel(object):
-    def __init__(self, wave, objfluxarr, skyfluxarr, initial_params=None, objnames=None):
+    def __init__(self, wave, objfluxarr, skyfluxarr, initial_params=None, objnames=None,
+                 subtract_continuum=False, continuum_order=3):
         self.param_names = ["Scale","fwhm_obj","fwhm_sky","delta_lambda"]
         Npix = len(wave)
         Nobj, Nframe, _ = objfluxarr.shape
@@ -58,6 +60,8 @@ class SkySubModel(object):
         self.skyfluxarr = skyfluxarr
         self.params = initial_params
         self.objnames = objnames
+        self.subtract_continuum = subtract_continuum
+        self.continuum_order = continuum_order
         
         # Assume linear wavelength spacing to within 0.01 pixels
         dwave = np.median(np.diff(wave))
@@ -68,31 +72,49 @@ class SkySubModel(object):
         assert fname.endswith(".npy")
         np.save(fname, [self.wave, self.objfluxarr, self.skyfluxarr, self.params, self.objnames])
     @classmethod
-    def load(cls, fname):
+    def load(cls, fname, **kwargs):
         assert fname.endswith(".npy")
         wave, objfluxarr, skyfluxarr, params, objnames = np.load(fname)
-        return cls(wave, objfluxarr, skyfluxarr, params, objnames)
+        return cls(wave, objfluxarr, skyfluxarr, params, objnames, **kwargs)
     
     def get_default_initial_params(self, Nobj, Nframe):
         params = np.zeros((Nobj, Nframe, 4))
         params[:,:,0] = 1.0
         return params
     
-    def get_obj_flux(self, iobj, iframe):
+    def sum_spectra(self):
+        processed_flux = np.zeros_like(self.objfluxarr)
+        for iobj in range(self.Nobj):
+            for iframe in range(self.Nframe):
+                processed_flux[iobj,iframe] = self.get_residual_flux(iobj, iframe, subtract_continuum=False)
+        sum_flux = np.sum(processed_flux, axis=1)
+        return sum_flux
+   
+    def get_obj_flux(self, iobj, iframe, subtract_continuum=None):
         """ Apply FWHM and shift but not scale """
         flux = self.objfluxarr[iobj,iframe]
         fwhm = self.params[iobj, iframe, 1]
         shift = self.params[iobj, iframe, 3]
-        return self.apply_params(flux, 1.0, fwhm, shift)
-    def get_sky_flux(self, iobj, iframe):
+        flux = self.apply_params(flux, 1.0, fwhm, shift)
+        if subtract_continuum is None: subtract_continuum = self.subtract_continuum
+        if subtract_continuum:
+            cont = fast_find_continuum_polyfit(flux, self.continuum_order)
+            flux = flux - cont
+        return flux
+    def get_sky_flux(self, iobj, iframe, subtract_continuum=None):
         """ Apply FWHM and scale but not shift """
         flux = self.skyfluxarr[iobj,iframe]
         scale = self.params[iobj, iframe, 0]
         fwhm = self.params[iobj, iframe, 2]
-        return self.apply_params(flux, scale, fwhm, 0.)
-    def get_residual_flux(self, iobj, iframe):
-        objflux = self.get_obj_flux(iobj, iframe)
-        skyflux = self.get_sky_flux(iobj, iframe)
+        flux = self.apply_params(flux, scale, fwhm, 0.)
+        if subtract_continuum is None: subtract_continuum = self.subtract_continuum
+        if subtract_continuum:
+            cont = fast_find_continuum_polyfit(flux, self.continuum_order)
+            flux = flux - cont
+        return flux
+    def get_residual_flux(self, iobj, iframe, subtract_continuum=None):
+        objflux = self.get_obj_flux(iobj, iframe, subtract_continuum=subtract_continuum)
+        skyflux = self.get_sky_flux(iobj, iframe, subtract_continuum=subtract_continuum)
         return objflux - skyflux
     
     def apply_params(self, flux, scale, fwhm, shift):
@@ -135,7 +157,7 @@ class SkySubApp(QMainWindow):
         return wavelength_ranges
 
     def new_model(self, modelfname):
-        model = SkySubModel.load(modelfname)
+        model = SkySubModel.load(modelfname, subtract_continuum=True, continuum_order=3)
         self.model = model
         self.modelfname = modelfname
         self.canvas.set_wavelength_indices(model.wave)
@@ -213,6 +235,9 @@ class SkySubApp(QMainWindow):
         _vbox, label, line = _create_label_lineedit("iframe", 0, 999)
         self.edit_iframe = line
         hbox.addLayout(_vbox)
+        self.btn_plot_coadd = QPushButton(self)
+        self.btn_plot_coadd.setText("Plot Coadd")
+        hbox.addWidget(self.btn_plot_coadd)
         ## End Button Row
         
         ## Interactivity
@@ -222,6 +247,7 @@ class SkySubApp(QMainWindow):
             line.textChanged.connect(func)
         self.edit_iobj.returnPressed.connect(self.edit_iobj_changed)
         self.edit_iframe.returnPressed.connect(self.edit_iframe_changed)
+        self.btn_plot_coadd.clicked.connect(self.btn_plot_coadd_clicked)
         self.activate_keyboard_shortcuts()
         
         self.canvas.setFocus()
@@ -250,6 +276,16 @@ class SkySubApp(QMainWindow):
         assert 0 <= new_iframe and new_iframe < self.model.Nframe
         self.iframe = new_iframe
         self.set_iobj_iframe(self.iobj, self.iframe)
+        return None
+    def btn_plot_coadd_clicked(self):
+        w = PlotDialog(self)
+        wave = self.model.wave
+        flux = self.model.sum_spectra()[self.iobj]
+        fig = w.fig
+        ax = fig.add_subplot(111)
+        ax.plot(wave, flux, 'k-', lw=0.5)
+        ax.plot(wave, flux, '.')
+        w.exec_()
         return None
     def get_edit_value(self, edit_index):
         """ Get LineEdit value from model """
@@ -322,10 +358,12 @@ class SkySubApp(QMainWindow):
             new_iobj = (int(self.edit_iobj.text()) + 1) % self.model.Nobj
             self.set_iobj_iframe(new_iobj, self.iframe)
             return
-        elif event.key in ("r","R"):
+        if event.key in ("r","R"):
             # redraw
             self.update_plot(relim_axes=True)
             return
+        if event.key in ("p", "P"):
+            self.btn_plot_coadd_clicked()
         if event.key in ("s","S"):
             # save
             self.model.save(self.modelfname)
@@ -460,9 +498,46 @@ def get_ax_ylim(ax, plo=0, phi=100):
     ymax = min(ymax, np.max(ally[finite]))
     return ymin, ymax
 
+class PlotDialog(QDialog):
+    """ A wrapper to MPLWidget to show up in a dialog box"""
+    def __init__(self, parent):
+        super().__init__()
+        # Center on parent location
+        rect = parent.geometry()
+        x, y = rect.center().x(), rect.center().y()
+        w = 1000
+        h = 640
+        self.setGeometry(x-w/2, y-h/2, w, h)
+        vbox = QVBoxLayout(self)
+        self.figure_widget = MPLWidget(None, tight_layout=True, toolbar=True)
+        vbox.addWidget(self.figure_widget)
+        self.fig = self.figure_widget.figure
+
 if __name__=="__main__":
     app = QApplication(sys.argv)
     modelfname = "/Users/alexji/Dropbox/RetIIMOS/M2FSdata/M2FS/b_skysubmodel_3.npy"
-    wavelength_ranges = [(6460, 6480), (6495, 6500), (6530, 6540)]
+    wavelength_ranges = [(6468, 6473), (6496.5, 6500), (6531, 6535)]
     ex = SkySubApp(modelfname, wavelength_ranges)
     sys.exit(app.exec_())
+
+    def plot_ax(ax, wave, flux, title, xmin=6495, xmax=6500):
+        ax.set_title(title)
+        ax.set_xlim(xmin, xmax)
+        iiplot = (wave > xmin-5) & (wave < xmin+5)
+        ax.plot(wave[iiplot], flux[iiplot], 'k-', lw=.5)
+        ax.plot(wave[iiplot], flux[iiplot], '.')
+        wsky1 = 6498.736816
+        wsky2 = 6497.53125
+        wsky3 = 6533.049805
+        wsky4 = 6553.625977
+        wskies = [wsky1,wsky2,wsky3,wsky4]
+        skyhwhm = .18/2
+        for wsky in wskies:
+            ax.axvspan(wsky-skyhwhm*2, wsky+skyhwhm*2, alpha=.1, color='b')
+        for wlcen in [6496.897, 6494.980, 6493.781]:
+            wlmid = wlcen * (1 + (66.8 + 6.0)/3e5)
+            wlmin = wlcen * (1 + (66.8 + 6.0 - 3*3.4)/3e5)
+            wlmax = wlcen * (1 + (66.8 + 6.0 + 3*3.4)/3e5)
+            ax.axvline(wlmid,color='r')
+            ax.axvspan(wlmin,wlmax,color='r',alpha=.1)
+        
