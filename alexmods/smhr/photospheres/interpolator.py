@@ -102,6 +102,14 @@ class BaseInterpolator(object):
         return self.interpolate(*args, **kwargs)
 
 
+    def make_photosphere(self, Teff, logg, vt, MH, alpha=None):
+        if alpha is None:
+            photosphere = self.interpolate(Teff, logg, MH)
+        else:
+            photosphere = self.interpolate(Teff, logg, MH, alpha)
+        photosphere.meta["stellar_parameters"]["microturbulence"] = vt
+        return photosphere
+
     def _return_photosphere(self, stellar_parameters, quantities):
         """ 
         Prepare the interpolated photospheric quantities (with correct columns,
