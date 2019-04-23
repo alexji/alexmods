@@ -460,24 +460,32 @@ def rescale_snr(specwave, flux=None, ivar=None,
     noise = biweight_scale(clipped[~clipped.mask])
     print("Noise is {:.2f} compared to 1.0".format(noise))
     
-    new_ivar = ivar * noise**2.
+    new_ivar = ivar / (noise**2.)
     
     outspec = Spectrum1D(wave, flux, new_ivar, meta)
     if make_fig:
+        newz = z/noise
+        newerrs = errs*noise
+        newnormerrs = normerrs*noise
+        
         import matplotlib.pyplot as plt
         fig, axes = plt.subplots(2,2,figsize=(8,6))
         ax = axes[0,0]
         ax.plot(wave, flux)
         ax.plot(wave, errs)
+        ax.plot(wave, newerrs)
         ax.plot(wave, cont, color='k', ls=':')
         ax.set_xlabel('wavelength'); ax.set_ylabel('counts')
         ax = axes[1,0]
         ax.plot(wave, norm)
         ax.plot(wave, normerrs)
+        ax.plot(wave, newnormerrs)
         ax.axhline(1,color='k',ls=':')
         ax.set_xlabel('wavelength'); ax.set_ylabel('norm'); ax.set_ylim(0,1.2)
         ax = axes[1,1]
         ax.plot(wave, z)
+        ax.plot([np.nan],[np.nan]) # hack to get the right color
+        ax.plot(wave, newz)
         ax.axhline(0,color='k',ls=':')
         ax.set_xlabel('wavelength'); ax.set_ylabel('z'); ax.set_ylim(-7,7)
         
@@ -487,6 +495,7 @@ def rescale_snr(specwave, flux=None, ivar=None,
         ax.plot(bins, norm_distr.pdf(bins)*np.sum(np.isfinite(z))*binsize, color='k')
         ax.hist(z[np.isfinite(z)], bins=bins)
         ax.hist(clipped[~clipped.mask], bins=bins, histtype='step')
+        ax.hist(newz[np.isfinite(newz)], bins=bins, histtype='step')
         ax.set_xlabel('z'); ax.set_xlim(-7,7)
         fig.tight_layout()
         return outspec, fig
