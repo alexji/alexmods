@@ -12,9 +12,12 @@ import numpy as np
 import time
 import os, sys
 from scipy import signal, ndimage
+from scipy.stats import norm as norm_distr
 from astropy.modeling import models, fitting
 from astropy.stats import sigma_clip, biweight_scale, median_absolute_deviation
 from ..robust_polyfit import polyfit as rpolyfit
+from .spectrum import Spectrum1D
+from collections import OrderedDict
 
 def calculate_fractional_overlap(interest_range, comparison_range):
     """
@@ -411,3 +414,81 @@ def cosmic_ray_reject(flux, ivar, sigma=10., minflux=-100, use_mad=False, verbos
             print("frame {}: {}px high, {}px low, {}px nan, {} total".format(
                 iframe, mask1.sum(), mask2.sum(), mask3.sum(), mask.sum()))
     return new_flux, new_ivar, new_mask
+
+def find_lines(wave, flux, ivar):
+    """
+    Automatically find all locations of lines in a spectrum
+    """
+    raise NotImplementedError
+
+def rescale_snr(specwave, flux=None, ivar=None,
+                x1=None, x2=None,
+                cont=None, cont_kernel=51, cont_Niter=3,
+                make_fig=False,
+                **sigma_clip_kwargs):
+    """
+    Take biweight standard deviation of x_i/sigma_i of sigma-clipped data,
+    rescale ivar so that standard deviation is 1
+    Returns a Spectrum1D object
+    """
+    if flux is None and ivar is None:
+        assert isinstance(specwave, Spectrum1D)
+        spec = specwave
+        wave, flux, ivar = spec.dispersion, spec.flux, spec.ivar
+        meta = spec.metadata
+    else:
+        wave = specwave
+        assert len(wave) == len(flux)
+        assert len(wave) == len(ivar)
+        meta = OrderedDict({})
+    if cont is None:
+        cont = fast_find_continuum(flux, cont_kernel, cont_Niter)
+    else:
+        assert len(cont)==len(flux)
+    errs = ivar**-0.5
+    errs[errs > 10*flux] = np.nan
+    
+    iirescale = np.ones_like(wave,dtype=bool)
+    if x1 is not None: iirescale = iirescale & (wave > x1)
+    if x2 is not None: iirescale = iirescale & (wave < x2)
+    
+    norm = flux[iirescale]/cont[iirescale]
+    normerrs = errs/cont[iirescale]
+    
+    z = (norm-1.)/normerrs
+    clipped = sigma_clip(z[np.isfinite(z)], **sigma_clip_kwargs)
+    noise = biweight_scale(clipped[~clipped.mask])
+    print("Noise is {:.2f} compared to 1.0".format(noise))
+    
+    new_ivar = ivar * noise**2.
+    
+    outspec = Spectrum1D(wave, flux, new_ivar, meta)
+    if make_fig:
+        import matplotlib.pyplot as plt
+        fig, axes = plt.subplots(2,2,figsize=(8,6))
+        ax = axes[0,0]
+        ax.plot(wave, flux)
+        ax.plot(wave, errs)
+        ax.plot(wave, cont, color='k', ls=':')
+        ax.set_xlabel('wavelength'); ax.set_ylabel('counts')
+        ax = axes[1,0]
+        ax.plot(wave, norm)
+        ax.plot(wave, normerrs)
+        ax.axhline(1,color='k',ls=':')
+        ax.set_xlabel('wavelength'); ax.set_ylabel('norm'); ax.set_ylim(0,1.2)
+        ax = axes[1,1]
+        ax.plot(wave, z)
+        ax.axhline(0,color='k',ls=':')
+        ax.set_xlabel('wavelength'); ax.set_ylabel('z'); ax.set_ylim(-7,7)
+        
+        ax = axes[0,1]
+        bins = np.linspace(-7,7,100)
+        binsize = np.diff(bins)[1]
+        ax.plot(bins, norm_distr.pdf(bins)*np.sum(np.isfinite(z))*binsize, color='k')
+        ax.hist(z[np.isfinite(z)], bins=bins)
+        ax.hist(clipped[~clipped.mask], bins=bins, histtype='step')
+        ax.set_xlabel('z'); ax.set_xlim(-7,7)
+        fig.tight_layout()
+        return outspec, fig
+    
+    return outspec
