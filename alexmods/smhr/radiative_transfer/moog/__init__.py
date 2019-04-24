@@ -8,12 +8,13 @@ from __future__ import (division, print_function, absolute_import,
 import six
 
 #__all__ = ["abundance_cog", "synthesize", "RTError"]
-__all__ = ["abundance_cog", "RTError"]
+__all__ = ["abundance_cog", "RTError", "blends_cog"]
 
 if six.PY2:
     # See stackoverflow.com/questions/19913653/no-unicode-in-all-for-a-packages-init
     __all__ = [_.encode("ascii") for _ in __all__]
 
 from .cog import abundance_cog
+from .blends import blends_cog
 #from .synthesis import synthesize
 from .utils import RTError

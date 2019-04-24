@@ -84,3 +84,7 @@ dispersion_delta: 0.01
 # if 1, treat scattering with Sobeck code
 # if 0, normal moog
 scat: 1
+
+# blenlimits:
+blend_dwl: 0.3
+blend_wspace: 0.001
