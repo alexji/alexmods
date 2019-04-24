@@ -498,6 +498,6 @@ def rescale_snr(specwave, flux=None, ivar=None,
         ax.hist(newz[np.isfinite(newz)], bins=bins, histtype='step')
         ax.set_xlabel('z'); ax.set_xlim(-7,7)
         fig.tight_layout()
-        return outspec, fig
+        return fig, outspec, noise
     
-    return outspec
+    return outspec, noise
