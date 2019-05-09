@@ -24,7 +24,7 @@ def eval_BC(Teff,logg,FeH,filt="g",allBCs=None):
         
     BCs = allBCs[filt]
     
-    points = np.atleast_2d([Teff,logg,FeH]).T
+    points = np.atleast_2d([np.ravel(Teff),np.ravel(logg),np.ravel(FeH)]).T
     points[points[:,2] < -2.5,2] = -2.5
     out = interpolate.griddata(BCs[:,0:3], BCs[:,3], points, method='linear')
     return out
@@ -100,6 +100,7 @@ def griz_des2sdss(gdes,rdes,ides,zdes):
     return gsdss, rsdss, isdss, zsdss
 
 ### Setup Jordi06
+# http://www.sdss3.org/dr8/algorithms/sdssUBVRITransform.php#Jordi2006
 def get_jordi06_coeffs(type):
     if type==0: # Combined Pop I/Pop II
         a_Bmg = 0.313; e_a_Bmg = 0.003
@@ -355,3 +356,98 @@ Note Casagrande+2010 is not calibrated to very red giants (<4500K).
 
 For E(B-V)=0.02, I found the order in which you deredden makes <1 mmag difference in the final color.
 """
+
+
+def determine_stellar_params(gmag,rmag,imag,zmag,
+                             MH,dmod,
+                             EBV=0,EBVerr=0.0,dmoderr=0.1,
+                             gerr=0.02,rerr=0.02,ierr=0.02,zerr=0.02,
+                             verbose=True,fp=sys.stdout,
+                             Teff_color="VmI", Teff_calib="C10",
+                             logg_mag="r", full_output=False):
+    """
+    [g,r,i,z]mag: DES magnitudes
+    MH: input metallicity
+    dmod: distance modulus
+    [g,r,i,z]err: magnitude error 
+        default 0.02 mag in each band, the absolute calibration uncertainty (ADW+2017 arxiv:1708.01531)
+        (The internal calibration uncertainty is <4mmag)
+    
+    Effective temperature error includes:
+      [g/r/i]err, EBVerr, Jordi06 err
+    """
+    
+    assert Teff_color in ["BmV","VmI"], Teff_color
+    assert Teff_calib in ["C10","A99"], Teff_calib
+    assert logg_mag in ["g","r","i"], logg_mag
+    
+    out = griz_des2sdss(gmag,rmag,imag,zmag)
+    g,r,i,z = out
+    if verbose:
+        fp.write("g-r={:.2f}->{:.2f}\n".format(gmag-rmag,g-r))
+        fp.write("g-i={:.2f}->{:.2f}\n".format(gmag-imag,g-i))
+    
+    logg_mag_dict = {"g":g,"r":r,"i":i}
+    logg_magerr_dict = {"g":gerr,"r":rerr,"i":ierr}
+    
+    ## Determine Effective Temperature and Error
+    ## Output: Teff, Teff_err, color, color_err
+    if Teff_color=="BmV":
+        BmV1, BmV, BmV2 = jordi06_gmr_to_BmV(g-r, geterr=True) 
+        BmVerr = max(abs(BmV2-BmV), abs(BmV-BmV1))
+        BmVerr = np.sqrt(BmVerr**2. + gerr**2 + rerr**2 + EBVerr**2)
+        BmV = BmV + EBV
+        if Teff_calib=="C10":
+            Teff = C10_Teff_BmV(BmV, MH)
+            Teff1 =  C10_Teff_BmV(BmV-BmVerr, MH)
+            Teff2 =  C10_Teff_BmV(BmV+BmVerr, MH)
+            Teff_syserr = 73.
+        elif Teff_calib=="A99":
+            Teff = A99_Teff_BmV(BmV, MH)
+            Teff1 = A99_Teff_BmV(BmV-BmVerr, MH)
+            Teff2 = A99_Teff_BmV(BmV+BmVerr, MH)
+            Teff_syserr = 167.
+        color_err = BmVerr
+        color = BmV
+    elif Teff_color=="VmI":
+        EVI = deredden(EBV, "LandoltV") - deredden(EBV, "LandoltI")
+        VmI1, VmI, VmI2 = jordi06_gmi_to_VmI(g-i, geterr=True)
+        VmIerr = max(abs(VmI2 - VmI), abs(VmI - VmI1))
+        VmIerr = np.sqrt(VmIerr**2 + gerr**2 + ierr**2 + EBVerr**2)
+        VmI = VmI + EVI
+        if Teff_calib=="C10":
+            Teff = C10_Teff_VmI(VmI, MH)
+            Teff1 = C10_Teff_VmI(VmI-VmIerr, MH)
+            Teff2 = C10_Teff_VmI(VmI+VmIerr, MH)
+            Teff_syserr = 59.
+        elif Teff_calib=="A99":
+            Teff = A99_Teff_VmI(VmI)
+            Teff1 = A99_Teff_VmI(VmI-VmIerr)
+            Teff2 = A99_Teff_VmI(VmI+VmIerr)
+            Teff_syserr = 125.
+        color_err = VmIerr
+        color = VmI
+    if verbose: fp.write("{}={:.2f}±{:.2f}\n".format(Teff_color, color, color_err))
+    Teff_err = max(abs(Teff-Teff1), abs(Teff-Teff2))
+    if verbose: fp.write("Teff={:.0f} ± {:.0f} (stat) ± {:.0f} (sys)\n".format(Teff,Teff_err,Teff_syserr))
+    Teff_err = np.sqrt(Teff_err**2 + Teff_syserr**2)
+    
+    logg = iterate_find_logg(Teff, logg_mag_dict[logg_mag], MH, dmod, logg_mag)
+    try:
+        logg = logg[0]
+    except:
+        pass
+    logg_err = phot_logg_error(Teff_err/Teff, dmoderr, magerr=logg_magerr_dict[logg_mag])
+    if verbose: fp.write("logg ({})={:.2f} ± {:.2f} (stat)\n".format(logg_mag, logg, logg_err))
+    
+    vt_syserr = 0.13 # from scatter around B05 relation
+    vt = logg_to_vt_B05(logg)
+    vt1 = logg_to_vt_B05(logg-logg_err)
+    vt2 = logg_to_vt_B05(logg+logg_err)
+    vt_err = max(abs(vt-vt1),abs(vt-vt2))
+    if verbose: fp.write("vt={:.2f} ± {:.2f} (stat) ± {:.2f} (sys)\n".format(vt, vt_err, vt_syserr))
+    vt_err = np.sqrt(vt_syserr**2 + vt_err**2)
+    
+    if full_output:
+        return Teff, Teff_err, logg, logg_err, vt, vt_err, color, color_err, g, r, i, z
+    return Teff, Teff_err, logg, logg_err, vt, vt_err
