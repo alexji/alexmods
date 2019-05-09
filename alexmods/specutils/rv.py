@@ -10,7 +10,7 @@ __all__ = ["cross_correlate"]
 
 import logging
 import numpy as np
-from scipy import interpolate
+from scipy import interpolate, optimize
 from scipy.optimize import leastsq
 
 from . import spectrum
@@ -226,3 +226,45 @@ def measure_order_velocities(orders, template, norm_kwargs, **kwargs):
         rv_output[i,3] = np.min(order.dispersion)
         rv_output[i,4] = np.max(order.dispersion)
     return rv_output
+
+def cross_correlate_2(observed_spectrum, template_spectrum,
+                      vmin=-1000., vmax=1000., dv=1,
+                      dispersion_range=None,
+                      use_weight=False, apodize=0, verbose=False):
+    """
+    """
+    
+    wave = observed_spectrum.dispersion
+    flux = observed_spectrum.flux
+    ivar = observed_spectrum.ivar
+    if dispersion_range is not None:
+        w1, w2 = dispersion_range
+        assert w2 > w1, (w1,w2)
+        ii = (wave > w1) & (wave < w2)
+        wave = wave[ii]
+        flux = flux[ii]
+        ivar = ivar[ii]
+    norm = np.nansum(ivar)
+    
+    voff = np.arange(vmin,vmax+dv,dv)
+    chi2arr = np.zeros_like(voff)
+    for i,v in enumerate(voff):
+        # shift template by velocity v
+        this_template = template_spectrum.copy()
+        this_template.redshift(v)
+        # interpolate onto new wavelength
+        this_template = this_template.linterpolate(wave, fill_value=np.nan)
+        Ngood = np.isfinite(this_template.flux).sum()
+        # calculate the chi2 of the fit
+        if Ngood == 0:
+            chi2 = np.inf
+        else:
+            chi2 = np.nansum(ivar * (flux-this_template.flux)**2.)
+        chi2arr[i] = chi2
+    vbest = voff[np.argmin(chi2arr)]
+    chi2func = interpolate.interp1d(voff, chi2arr, fill_value=np.inf)
+    optres = optimize.minimize_scalar(chi2func, bracket=[voff[0],vbest,voff[-1]])
+    if not optres.success:
+        print("Warning: optimization did not succeed")
+    vfit = optres.x
+    return vfit, voff, chi2arr
