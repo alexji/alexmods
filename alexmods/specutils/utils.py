@@ -13,6 +13,7 @@ import time
 import os, sys
 from scipy import signal, ndimage
 from scipy.stats import norm as norm_distr
+from scipy.stats import pearsonr
 from astropy.modeling import models, fitting
 from astropy.stats import sigma_clip, biweight_scale, median_absolute_deviation
 from ..robust_polyfit import polyfit as rpolyfit
@@ -469,7 +470,7 @@ def rescale_snr(specwave, flux=None, ivar=None,
         newnormerrs = normerrs*noise
         
         import matplotlib.pyplot as plt
-        fig, axes = plt.subplots(2,2,figsize=(8,6))
+        fig, axes = plt.subplots(2,3,figsize=(12,6))
         ax = axes[0,0]
         ax.plot(wave, flux)
         ax.plot(wave, errs)
@@ -497,7 +498,42 @@ def rescale_snr(specwave, flux=None, ivar=None,
         ax.hist(clipped[~clipped.mask], bins=bins, histtype='step')
         ax.hist(newz[np.isfinite(newz)], bins=bins, histtype='step')
         ax.set_xlabel('z'); ax.set_xlim(-7,7)
+        
+        ax = axes[0,2]
+        zfinite = z.copy()
+        zfinite[~np.isfinite(zfinite)] = 0.
+        autocorr = np.correlate(zfinite, zfinite, mode="same")
+        ax.plot(np.arange(len(flux)), autocorr, '.-')
+        ax.axvline(len(flux)//2)
+        ax.set_xlim(len(flux)//2-10,len(flux)//2+10,)
+        ax.set_xlabel("pixel"); ax.set_ylabel("autocorrelation(z)")
+        
+        
+        z1,z2 = -10,10
+        zarr1 = np.zeros((len(z)-1,2))
+        zarr1[:,0] = z[:-1]
+        zarr1[:,1] = z[1:]
+        zarr1 = zarr1[np.sum(np.isfinite(zarr1),axis=1)==2]
+        zarr2 = np.zeros((len(z)-2,2))
+        zarr2[:,0] = z[:-2]
+        zarr2[:,1] = z[2:]
+        zarr2 = zarr2[np.sum(np.isfinite(zarr2),axis=1)==2]
+        #ax = axes[0,2]
+        #ax.plot([z1,z2],[z1,z2],'k:')
+        #ax.plot(z[:-1], z[1:], '.', alpha=.3)
+        #ax.set_title("r={:+.2}".format(pearsonr(zarr1[:,0],zarr1[:,1])[0]))
+        #ax.set_xlabel("z(pixel)"); ax.set_ylabel("z(pixel+1)")
+        #ax.set_xlim(z1,z2); ax.set_ylim(z1,z2)
+
+        ax = axes[1,2]
+        ax.plot([z1,z2],[z1,z2],'k:')
+        ax.plot(z[:-2], z[2:], '.', alpha=.3)
+        ax.set_title("r={:+.2}".format(pearsonr(zarr2[:,0],zarr2[:,1])[0]))
+        ax.set_xlabel("z(pixel)"); ax.set_ylabel("z(pixel+2)")
+        ax.set_xlim(z1,z2); ax.set_ylim(z1,z2)
+        
         fig.tight_layout()
+        
         return fig, outspec, noise
     
     return outspec, noise

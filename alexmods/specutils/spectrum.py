@@ -5,6 +5,7 @@
 
 from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
+from six import iteritems
 
 __all__ = ["Spectrum1D", "stitch", "coadd", "read_mike_spectrum", "write_fits_linear"]
 
@@ -504,13 +505,15 @@ class Spectrum1D(object):
         return cls.read_ascii_spectrum1d(path, **kwds)
 
 
-    def write(self, filename, clobber=True, output_verify="warn"):
+    def write(self, filename, overwrite=True, output_verify="warn", header=None):
         """ Write spectrum to disk. """
 
-        if os.path.exists(filename) and not clobber:
+        if os.path.exists(filename) and not overwrite:
             raise IOError("Filename '%s' already exists and we have been asked not to clobber it." % (filename, ))
         
         if not filename.endswith('fits'):
+            if header is not None:
+                print("Writing text, cannot include header!")
             a = np.array([self.dispersion, self.flux, self.ivar]).T
             np.savetxt(filename, a, fmt="%.4f".encode('ascii'))
             return
@@ -545,7 +548,12 @@ class Spectrum1D(object):
                 ## python 2(?) hack needs the b prefix
                 ## https://github.com/numpy/numpy/issues/2407
                 
-                headers = {}
+                if header is None:
+                    headers = {}
+                elif header is True:
+                    headers = self.metadata
+                else:
+                    headers = header
 
                 dispcol = fits.Column(name=b"WAVELENGTH[COORD]",
                                       format="D",
@@ -559,8 +567,8 @@ class Spectrum1D(object):
                 
                 coldefs = fits.ColDefs([dispcol, fluxcol, errscol])
                 hdu = fits.BinTableHDU.from_columns(coldefs)
-                hdu.header.update(headers)
-                hdu.writeto(filename, output_verify=output_verify, clobber=clobber)
+                hdu.header.update(header)
+                hdu.writeto(filename, output_verify=output_verify, overwrite=overwrite)
 
                 return
 
@@ -570,7 +578,14 @@ class Spectrum1D(object):
                 hdu2 = fits.ImageHDU(np.array(self.ivar))
     
                 #headers = self.headers.copy()
-                headers = {}
+                #headers = {}
+                if header is None:
+                    headers = {}
+                elif header is True:
+                    headers = self.metadata
+                else:
+                    headers = header
+                    
                 headers.update({
                     'CTYPE1': 'LINEAR  ',
                     'CRVAL1': crval1,
@@ -578,14 +593,14 @@ class Spectrum1D(object):
                     'CDELT1': cdelt1
                 })
                 
-                for key, value in headers.iteritems():
+                for key, value in iteritems(headers):
                     try:
                         hdu.header[key] = value
                     except ValueError:
                         #logger.warn("Could not save header key/value combination: %s = %s" % (key, value, ))
                         print("Could not save header key/value combination: %s = %s".format(key, value))
                 hdulist = fits.HDUList([hdu,hdu2])
-                hdulist.writeto(filename, output_verify=output_verify, clobber=clobber)
+                hdulist.writeto(filename, output_verify=output_verify, overwrite=overwrite)
                 return
 
     def redshift(self, v=None, z=None, reinterpolate=False):
@@ -1694,5 +1709,5 @@ def write_fits_linear(fname, wmin, dwave, flux):
             hdu.header[key] = value
         except:
             pass
-    hdu.writeto(fname, clobber=True)
+    hdu.writeto(fname, overwrite=True)
     
