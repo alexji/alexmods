@@ -244,7 +244,6 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
         wave = wave[ii]
         flux = flux[ii]
         ivar = ivar[ii]
-    norm = np.nansum(ivar)
     
     voff = np.arange(vmin,vmax+dv,dv)
     chi2arr = np.zeros_like(voff)
@@ -263,8 +262,18 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
         chi2arr[i] = chi2
     vbest = voff[np.argmin(chi2arr)]
     chi2func = interpolate.interp1d(voff, chi2arr, fill_value=np.inf)
+    if vbest == voff[0]: vbest = voff[1]
     optres = optimize.minimize_scalar(chi2func, bracket=[voff[0],vbest,voff[-1]])
     if not optres.success:
         print("Warning: optimization did not succeed")
     vfit = optres.x
-    return vfit, voff, chi2arr
+    chi2min = chi2func(vfit)
+    chi2targ = chi2min + 1.0 # single parameter
+    
+    err1 = optimize.brentq(lambda x: chi2func(x)-chi2targ, voff[0], vfit, xtol=dv/10)
+    err2 = optimize.brentq(lambda x: chi2func(x)-chi2targ, vfit, voff[-1], xtol=dv/10)
+    
+    err1 = err1-vfit
+    err2 = err2-vfit
+    
+    return vfit, err1, err2, voff, chi2arr

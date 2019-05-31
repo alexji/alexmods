@@ -744,7 +744,8 @@ class Spectrum1D(object):
         """
         dispersion = self.dispersion.copy()
         flux = self.flux.copy()
-        coeff, rms = rpolyfit(dispersion, flux, order)
+        finite = np.isfinite(dispersion) & np.isfinite(flux)
+        coeff, rms = rpolyfit(dispersion[finite], flux[finite], order)
         cont = np.poly1d(coeff)(dispersion)
         if getsnr: return np.median(cont)/rms
         if getcont: return cont

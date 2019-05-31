@@ -6,6 +6,7 @@ from .specutils import Spectrum1D
 
 def plot_spectrum(spec, wlmin=None, wlmax=None, ax=None,
                   dxmaj=None, dxmin=None, dymaj=None, dymin=None,
+                  fillcolor="#cccccc",
                   **kwargs):
     if ax is None:
         fig, ax = plt.subplots()
@@ -24,7 +25,7 @@ def plot_spectrum(spec, wlmin=None, wlmax=None, ax=None,
     y1 = flux-errs
     y2 = flux+errs
 
-    fill_between_steps(ax, wave, y1, y2, alpha=1, facecolor="#cccccc", edgecolor="#cccccc")
+    fill_between_steps(ax, wave, y1, y2, alpha=1, facecolor=fillcolor, edgecolor=fillcolor)
     ax.plot(wave, flux, **kwargs)
     
     ax.xaxis.set_major_formatter(ScalarFormatter(useOffset=False))
