@@ -9,6 +9,7 @@ from six import string_types
 import numpy as np
 from .robust_polyfit import gaussfit
 from scipy import interpolate, signal
+import emcee
 
 def struct2array(x):
     """ Convert numpy structured array of simple type to normal numpy array """
@@ -234,3 +235,22 @@ def box_select(x,y,topleft,topright,botleft,botright):
     selection[y < m*(x-x1) + y1] = False
 
     return selection
+
+def 2d_linefit(x, y, ex, ey, fit_outliers=False, full_output=False):
+    """
+    Fits a line to a set of data (x, y) with independent gaussian errors (ex, ey) using MCMC.
+    Based on Hogg et al. 2010
+    
+    Returns simple estimate for m, b, and uncertainties.
+    
+    If fit_outliers=True, fits a background model that is a very flat/wide gaussian.
+    Then also returns estimates for 
+    
+    If full_output=True, return the full MCMC sampler
+    """
+    assert len(x)==len(y)==len(ex)==len(ey)
+    if fit_outliers:
+        pass
+    else:
+        pass
+    raise NotImplementedError
