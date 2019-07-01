@@ -236,7 +236,7 @@ def box_select(x,y,topleft,topright,botleft,botright):
 
     return selection
 
-def 2d_linefit(x, y, ex, ey, fit_outliers=False, full_output=False):
+def linefit_2d(x, y, ex, ey, fit_outliers=False, full_output=False):
     """
     Fits a line to a set of data (x, y) with independent gaussian errors (ex, ey) using MCMC.
     Based on Hogg et al. 2010

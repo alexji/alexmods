@@ -703,6 +703,37 @@ def load_hw02():
     hw02y["PISNMass"] = PISNMass
     return hw02y
 
+def load_nkt13(as_number=True):
+    df = pd.read_csv(datapath+"/yield_tables/nkt13.dat", names=["Zmet","M","E","Mrem","Z","A","y"])
+    groups = df.groupby(["Zmet","M","E"])
+    #yields = groups.sum()["y"]
+    allZmet = np.unique(df["Zmet"]); NZmet = allZmet.size
+    allM = np.unique(df["M"]); NM = allM.size
+    allE = np.unique(df["E"]); NE = allE.size
+    imodel = 0
+    df["n"] = df["y"]/df["A"]
+    
+    allZ = np.unique(df["Z"])
+    alloutput = []
+    for Zmet in allZmet:
+        for M in allM:
+            for E in allE:
+                try:
+                    tdf = groups.get_group((Zmet,M,E))
+                except:
+                    continue
+                if as_number:
+                    y = tdf.groupby("Z")["n"].sum()
+                else:
+                    y = tdf.groupby("Z")["y"].sum()
+                s = pd.Series([Zmet,M,E],
+                              index=["Zmet","M","E"],
+                              name=imodel)
+                alloutput.append(s.append(y))
+                imodel += 1
+    df = pd.DataFrame(alloutput)
+    return df
+
 def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt"):
     galdata = ascii.read(filename,
                          fill_values=[('-9.999','0','DRA'),('-9.999','0','DDEC'),

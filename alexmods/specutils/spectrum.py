@@ -1058,7 +1058,8 @@ class Spectrum1D(object):
         return normalized_spectrum
 
 
-    def cut_wavelength(self, wlmin, wlmax):
+    def cut_wavelength(self, wlmin, wlmax=None):
+        if wlmax is None: wlmin, wlmax = wlmin
         ii = np.logical_and(self.dispersion > wlmin, self.dispersion < wlmax)
         return self.__class__(self.dispersion[ii], self.flux[ii], self.ivar[ii], self.metadata)
 

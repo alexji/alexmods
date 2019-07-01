@@ -203,7 +203,7 @@ def cross_correlate(observed_spectrum, template_spectrum, dispersion_range=None,
 def measure_order_velocities(orders, template, norm_kwargs, **kwargs):
     """
     Run cross correlation against a list of orders
-    Return Nx3 array, where columns are order_num, rv, e_rv, wlmin, wlmax
+    Return Nx5 array, where columns are order_num, rv, e_rv, wlmin, wlmax
     """
     N = len(orders)
     rv_output = np.zeros((N,5))
@@ -230,8 +230,11 @@ def measure_order_velocities(orders, template, norm_kwargs, **kwargs):
 def cross_correlate_2(observed_spectrum, template_spectrum,
                       vmin=-1000., vmax=1000., dv=1,
                       dispersion_range=None,
-                      use_weight=False, apodize=0, verbose=False):
+                      use_weight=False, apodize=0, verbose=False,
+                      renormalize_template=False):
     """
+    Calculate velocity using naive chi^2.
+    Gives a good velocity error estimate.
     """
     
     wave = observed_spectrum.dispersion
@@ -244,6 +247,8 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
         wave = wave[ii]
         flux = flux[ii]
         ivar = ivar[ii]
+    else:
+        dispersion_range = [wave.min(), wave.max()]
     
     voff = np.arange(vmin,vmax+dv,dv)
     chi2arr = np.zeros_like(voff)
@@ -253,6 +258,9 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
         this_template.redshift(v)
         # interpolate onto new wavelength
         this_template = this_template.linterpolate(wave, fill_value=np.nan)
+        if renormalize_template:
+            this_template = this_template.cut_wavelength(dispersion_range)
+            this_template = this_template.fit_rpoly_continuum()
         Ngood = np.isfinite(this_template.flux).sum()
         # calculate the chi2 of the fit
         if Ngood == 0:
@@ -277,3 +285,68 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
     err2 = err2-vfit
     
     return vfit, err1, err2, voff, chi2arr
+
+def iterative_velocity_measurement(norm, template, wlrange=None,
+                                   dvlist=[10,1,.1], vmin=-500., vmax=500., vspanmin=15.):
+    """
+    Iteratively determine velocity with chi^2 based cross-correlation (cross_correlate_2).
+    
+    norm = normalized spectrum
+    template = normalized template spectrum for RV
+    wlrange = used to restrict wavelength range if desired
+    dvlist = list of velocity precisions to zoom in by
+    vmin, vmax = initial range of velocities to span
+    vspanmin = minimum amount of velocity range to calculate error
+    """
+    chi2min = np.inf
+    for dv in dvlist:
+        rv, e1, e2, varr, chi2arr = cross_correlate_2(
+            norm, template, vmin=vmin, vmax=vmax, dv=dv,
+            dispersion_range=wlrange)
+        
+        vmin = rv + 10*e1
+        vmax = rv + 10*e2
+        
+        if vmax-vmin < vspanmin:
+            vmin = rv - vspanmin/2
+            vmax = rv + vspanmin/2
+        chi2min = min(chi2arr.min(), chi2min)
+    return rv, e1, e2, varr, chi2arr, chi2min
+
+def measure_order_velocities_2(orders, template, norm_kwargs, **kwargs):
+    """
+    Run cross correlation 2 against a list of orders
+    Return Nx5 array, where columns are order_num, rv, e_rv, wlmin, wlmax
+    """
+    N = len(orders)
+    rv_output = np.zeros((N,5))
+    for i, order in enumerate(orders):
+        if norm_kwargs is None:
+            normorder = order
+        else:
+            normorder = order.fit_continuum(**norm_kwargs)
+        try:
+            rv, e_rv1, e_rv2, varr, chi2arr, chi2min = iterative_velocity_measurement(normorder, template, **kwargs)
+            e_rv = max(abs(e_rv1), abs(e_rv2))
+        except Exception as e:
+            print("FAILED at",i, e)
+            rv, e_rv = np.nan, np.nan
+        try:
+            order_num = order.metadata["ECORD{}".format(i)]
+        except:
+            order_num = i
+        rv_output[i,0] = order_num
+        rv_output[i,1] = rv
+        rv_output[i,2] = e_rv
+        rv_output[i,3] = np.min(order.dispersion)
+        rv_output[i,4] = np.max(order.dispersion)
+    return rv_output
+
+def process_rv_output(rv_output):
+    """
+    Process the output of measure_order_velocities[_2] and find the final velocity + error
+    """
+    finite = np.isfinite(rv_output[:,1])
+    rvdata = rv_output[finite,:]
+    
+    pass
