@@ -307,7 +307,8 @@ def add_ufd_legend(fig, ax, hbuffer=.09, height=.09, nrow=3):
         except:
             continue
     lax = fig.add_axes([hbuffer,0,1.-2*hbuffer,height],frameon=False)
-    ncol = int(len(handles)/nrow)+(len(handles) % nrow)
+    ncol = int(len(handles)/nrow)#+(len(handles) % nrow)
+    if len(handles) > nrow*ncol: ncol += 1
     lax.legend(handles,labels,fontsize=12,scatterpoints=1,ncol=ncol,loc='center')
     lax.set_xticks([])
     lax.set_yticks([])

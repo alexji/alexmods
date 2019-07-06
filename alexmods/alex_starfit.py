@@ -60,11 +60,13 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
         XH = pd.Series(XH, index=elems)
         solar = rd.get_solar(elems)
         logeps = XH + solar
+    else:
+        logeps = pd.Series(logeps, index=elems)
     epserr = pd.Series(errs, index=elems)
     iilim = epserr < 0
-    epsval = logeps[~iilim]
-    epslim = logeps[iilim]
-    epserr = epserr[~iilim]
+    epsval = logeps[~iilim].astype(float)
+    epslim = logeps[iilim].astype(float)
+    epserr = epserr[~iilim].astype(float)
     return epsval, epslim, epserr
 
 def load_hw10_starfit():
