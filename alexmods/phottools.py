@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 __all__ = []
 
 from .read_data import datapath
+from .read_data import load_parsec_isochrones
 
 
 def eval_BC(Teff,logg,FeH,filt="g",allBCs=None):
@@ -451,3 +452,54 @@ def determine_stellar_params(gmag,rmag,imag,zmag,
     if full_output:
         return Teff, Teff_err, logg, logg_err, vt, vt_err, color, color_err, g, r, i, z
     return Teff, Teff_err, logg, logg_err, vt, vt_err
+
+def parsec_des_stellar_params(dmod=0):
+    """ Uses label=2 and 3 (subgiant/RGB) to create gmag, rmag->Teff,logg """
+    isos = load_parsec_isochrones("DECAM")
+    g_Teff_funcs = {}
+    g_logg_funcs = {}
+    r_Teff_funcs = {}
+    r_logg_funcs = {}
+    gmr_Teff_funcs = {}
+    gmr_logg_funcs = {}
+    interp_kwargs = {"bounds_error":False,"fill_value":np.nan}
+    for key in isos.keys():
+        tab = isos[key]
+        tab = tab[(tab["label"]==2) | (tab["label"]==3)]
+        gmag, rmag = tab["gmag"], tab["rmag"]
+        logT, logg = tab["logTe"], tab["logg"]
+        Teff = 10**logT
+        g_Teff_funcs[key] = interpolate.interp1d(gmag+dmod,Teff,**interp_kwargs)
+        g_logg_funcs[key] = interpolate.interp1d(gmag+dmod,logg,**interp_kwargs)
+        r_Teff_funcs[key] = interpolate.interp1d(rmag+dmod,Teff,**interp_kwargs)
+        r_logg_funcs[key] = interpolate.interp1d(rmag+dmod,logg,**interp_kwargs)
+        gmr_Teff_funcs[key] = interpolate.interp1d(gmag-rmag,Teff,**interp_kwargs)
+        gmr_logg_funcs[key] = interpolate.interp1d(gmag-rmag,logg,**interp_kwargs)
+    return g_Teff_funcs, g_logg_funcs, r_Teff_funcs, r_logg_funcs, gmr_Teff_funcs, gmr_logg_funcs
+def dartmouth_des_stellar_params(dmod=0,ages=[10.0,11.0,12.0,13.0,14.0],logZs=[-2.5,-2.0,-1.5],alpha="ap4"):
+    """ Uses label=2 and 3 (subgiant/RGB) to create gmag, rmag->Teff,logg """
+    isos = {}
+    for MH in [-2.5,-2.0,-1.5]:
+        isos.update(load_dartmouth_isochrones(MH,alpha,"DECAM")
+    g_Teff_funcs = {}
+    g_logg_funcs = {}
+    r_Teff_funcs = {}
+    r_logg_funcs = {}
+    gmr_Teff_funcs = {}
+    gmr_logg_funcs = {}
+    interp_kwargs = {"bounds_error":False,"fill_value":np.nan}
+    for age in ages:
+        for logZ in logZs:
+            
+    for key in isos.keys():
+        tab = isos[key]
+        gmag, rmag = tab["gmag"], tab["rmag"]
+        logT, logg = tab["logTe"], tab["logg"]
+        Teff = 10**logT
+        g_Teff_funcs[key] = interpolate.interp1d(gmag+dmod,Teff,**interp_kwargs)
+        g_logg_funcs[key] = interpolate.interp1d(gmag+dmod,logg,**interp_kwargs)
+        r_Teff_funcs[key] = interpolate.interp1d(rmag+dmod,Teff,**interp_kwargs)
+        r_logg_funcs[key] = interpolate.interp1d(rmag+dmod,logg,**interp_kwargs)
+        gmr_Teff_funcs[key] = interpolate.interp1d(gmag-rmag,Teff,**interp_kwargs)
+        gmr_logg_funcs[key] = interpolate.interp1d(gmag-rmag,logg,**interp_kwargs)
+    return g_Teff_funcs, g_logg_funcs, r_Teff_funcs, r_logg_funcs, gmr_Teff_funcs, gmr_logg_funcs

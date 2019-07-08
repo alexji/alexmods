@@ -759,3 +759,54 @@ def load_sakari18(filename=datapath+"/abundance_tables/sakari18_merged.txt"):
     df = ascii.read(filename).to_pandas()
     return df
     
+def load_parsec_isochrones(system="DECAM"):
+    #assert system=="DECAM" # for now
+    coldict = {
+        "DECAM":["umag","gmag","rmag","imag","zmag","Ymag"],
+        "WFC3":["F218W1mag","F225W1mag","F275W1mag","F336Wmag","F390Wmag","F438Wmag",
+                "F475Wmag","F555Wmag","F606Wmag","F625Wmag","F775Wmag","F814Wmag",
+                "F105Wmag","F110Wmag","F125Wmag","F140Wmag","F160Wmag"]
+    }
+    fname = datapath+"/isochrones/parsec_{}.dat".format(system)
+    if not os.path.exists(fname):
+        import glob
+        fnames = glob.glob(datapath+"/isochrones/parsec*")
+        raise ValueError("System {} not in fnames: {}".format(system, fnames))
+    cols = ["Zini","MH","logAge","Mini","int_IMF","Mass","logL","logTe","logg","label","McoreTP","C_O","period0","period1","pmode","Mloss","tau1m","X","Y","Xc","Xn","Xo","Cexcess","Z","mbolmag"] + coldict[system]
+    tab = ascii.read(fname, names=cols)
+    isodict = {}
+    ages = np.unique(tab["logAge"])
+    Zs = np.unique(tab["Zini"])
+    Zsol = .01471
+    #print("Unique Ages:",ages)
+    #print("Unique Zs:",Zs)
+    for logage in ages:
+        for Z in Zs:
+            selection = (tab["logAge"]==logage) & (tab["Zini"]==Z)
+            age = np.round(10**(logage-9),1)
+            logZsun = np.round(np.log10(Z/Zsol),1)
+            if np.sum(selection)==0:
+                print("Skipping age={} Z={}".format(age,logZsun))
+            else:
+                isodict[(age,logZsun)] = tab[selection]
+    return isodict
+def load_dartmouth_isochrones(MH,alpha="ap4",system="DECAM"):
+    assert MH in [-2.5, -2.0, -1.5], MH
+    assert alpha in ["ap0","ap4"]
+    coldict = {
+        "DECAM":["{}mag".format(x) for x in ["u","g","r","i","z","Y"]],
+    }
+    fname = datapath+"/isochrones/dartmouth_{}_MH{}{}.iso".format(system,int(MH*10),alpha)
+    if not os.path.exists(fname):
+        import glob
+        fnames = glob.glob(datapath+"/isochrones/dartmouth*")
+        print(fname)
+        raise ValueError("System {} MH {} alpha {} not in fnames: {}".format(system, MH, alpha, fnames))
+    cols = ["EEP","Mini","logTe","logg","logL"] + coldict[system] + ["age"]
+    tab = ascii.read(fname, names=cols)
+    isodict = {}
+    logZsun = MH
+    for age in np.unique(tab["age"]):
+        selection = tab["age"]==age
+        isodict[(age,logZsun)] = tab[selection]
+    return isodict
