@@ -18,3 +18,4 @@ from . import motions
 from .spectrum import Spectrum1D
 from .rv import *
 from .utils import *
+from .continuum import fit_continuum_lsq
