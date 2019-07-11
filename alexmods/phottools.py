@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 __all__ = []
 
 from .read_data import datapath
-from .read_data import load_parsec_isochrones
+from .read_data import load_parsec_isochrones, load_dartmouth_isochrones
 
 
 def eval_BC(Teff,logg,FeH,filt="g",allBCs=None):
@@ -480,7 +480,11 @@ def dartmouth_des_stellar_params(dmod=0,ages=[10.0,11.0,12.0,13.0,14.0],logZs=[-
     """ Uses label=2 and 3 (subgiant/RGB) to create gmag, rmag->Teff,logg """
     isos = {}
     for MH in [-2.5,-2.0,-1.5]:
-        isos.update(load_dartmouth_isochrones(MH,alpha,"DECAM")
+        _isos = load_dartmouth_isochrones(MH,alpha,"DECAM")
+        for key in _isos.keys():
+            tab = _isos[key]
+            tab = tab[tab["EEP"] > 111]
+            isos[key] = tab
     g_Teff_funcs = {}
     g_logg_funcs = {}
     r_Teff_funcs = {}
@@ -488,9 +492,6 @@ def dartmouth_des_stellar_params(dmod=0,ages=[10.0,11.0,12.0,13.0,14.0],logZs=[-
     gmr_Teff_funcs = {}
     gmr_logg_funcs = {}
     interp_kwargs = {"bounds_error":False,"fill_value":np.nan}
-    for age in ages:
-        for logZ in logZs:
-            
     for key in isos.keys():
         tab = isos[key]
         gmag, rmag = tab["gmag"], tab["rmag"]

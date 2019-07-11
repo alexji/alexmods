@@ -772,7 +772,7 @@ def load_parsec_isochrones(system="DECAM"):
         import glob
         fnames = glob.glob(datapath+"/isochrones/parsec*")
         raise ValueError("System {} not in fnames: {}".format(system, fnames))
-    cols = ["Zini","MH","logAge","Mini","int_IMF","Mass","logL","logTe","logg","label","McoreTP","C_O","period0","period1","pmode","Mloss","tau1m","X","Y","Xc","Xn","Xo","Cexcess","Z","mbolmag"] + coldict[system]
+    cols = ["Zini","MH","logAge","Mini","int_IMF","Mass","logL","logTe","logg","label","mbolmag"] + coldict[system]
     tab = ascii.read(fname, names=cols)
     isodict = {}
     ages = np.unique(tab["logAge"])
