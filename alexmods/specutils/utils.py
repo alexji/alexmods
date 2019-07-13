@@ -17,7 +17,7 @@ from scipy.stats import pearsonr
 from astropy.modeling import models, fitting
 from astropy.stats import sigma_clip, biweight_scale, median_absolute_deviation
 from ..robust_polyfit import polyfit as rpolyfit
-from .spectrum import Spectrum1D
+from .spectrum import Spectrum1D, common_dispersion_map2
 from collections import OrderedDict
 
 def calculate_fractional_overlap(interest_range, comparison_range):
@@ -537,3 +537,82 @@ def rescale_snr(specwave, flux=None, ivar=None,
         return fig, outspec, noise
     
     return outspec, noise
+
+def weighted_coadd(spectra, common_dispersion=None, mask_cosmics=False,
+                   sigma=5, TINY_NUMBER=1e-12, verbose=True):
+    ## Interpolate spectra onto a common dispersion
+    if common_dispersion is None:
+        common_dispersion = common_dispersion_map2(spectra)
+    Nspecs = len(spectra)
+    Npix = len(common_dispersion)
+    fluxs = np.zeros((Nspecs, Npix))
+    ivars = np.zeros((Nspecs, Npix))
+    for i, spec in enumerate(spectra):
+        newspec = spec.linterpolate(common_dispersion)
+        fluxs[i] = newspec.flux
+        ivars[i] = newspec.ivar
+    ## Remove bad values
+    fluxs[np.isnan(fluxs)] = 0.
+    ivars[np.isnan(ivars) | (ivars < TINY_NUMBER)] = TINY_NUMBER
+    ## Normalize to a common scale so we can take a weighted mean
+    total_flux = np.median(fluxs, axis=1)
+    normfluxs = fluxs/total_flux[:,np.newaxis]
+    normivars = ivars*total_flux[:,np.newaxis]**2
+    normerrss = normivars**-0.5
+    ## Remove outlier pixels if desired
+    if mask_cosmics:
+        orig_masked = normivars <= TINY_NUMBER
+        mednormflux = np.median(normfluxs, axis=0)
+        mask = np.abs(normfluxs - mednormflux)/normerrss > sigma
+        normfluxs[mask] = 0.
+        normivars[mask] = 0.
+        if verbose:
+            print("Masked {} pixels (added {})".format(mask.sum(), mask.sum()-orig_masked.sum()))
+    ## Perform weighted coadd
+    num_nonzero = np.sum(normivars > TINY_NUMBER, axis=0)
+    avgflux = np.sum(normfluxs*normivars,axis=0)/np.sum(normivars,axis=0)
+    #avgerrs = np.sqrt(np.sum((normfluxs-avgflux[np.newaxis,:])**2*normivars,axis=0)/np.sum(normivars,axis=0))
+    #avgerrs = avgerrs/np.sqrt(num_nonzero-1)
+    #avgivar = avgerrs**-2.
+    #avgivar[~np.isfinite(avgivar)] = TINY_NUMBER
+    avgivar = np.sum(normivars, axis=0)
+    ## Renormalize to original units
+    totnorm = np.sum(total_flux)
+    finalflux = totnorm * avgflux
+    finalivar = avgivar / totnorm**2
+    
+    return Spectrum1D(common_dispersion, finalflux, finalivar, spectra[0].metadata)
+    
+
+def make_multispec(outfname, bands, bandids, header=None):
+    assert len(bands) == len(bandids)
+    Nbands = len(bands)
+    # create output image array
+    # Note we have to reverse the order of axes in a fits file
+    shape = bands[0].shape
+    output = np.zeros((Nbands, shape[1], shape[0]))
+    for k, (band, bandid) in enumerate(zip(bands, bandids)):
+        output[k] = band.T
+    if Nbands == 1:
+        output = output[0]
+        klist = [1,2]
+        wcsdim = 2
+    else:
+        klist = [1,2,3]
+        wcsdim = 3
+    
+    hdu = fits.PrimaryHDU(output)
+    header = hdu.header
+    for k in klist:
+        header.append(("CDELT"+str(k), 1.))
+        header.append(("CD{}_{}".format(k,k), 1.))
+        header.append(("LTM{}_{}".format(k,k), 1))
+        header.append(("CTYPE"+str(k), "MULTISPE"))
+    header.append(("WCSDIM", wcsdim))
+    for k, bandid in enumerate(bandids):
+        header.append(("BANDID{}".format(k+1), bandid))
+    # Do not fill in wavelength/WAT2 yet
+    
+    hdulist = fits.HDUList([hdu])
+    hdulist.writeto(outfname, overwrite=True)
+
