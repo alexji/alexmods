@@ -515,7 +515,11 @@ class Spectrum1D(object):
             if header is not None:
                 print("Writing text, cannot include header!")
             a = np.array([self.dispersion, self.flux, self.ivar]).T
-            np.savetxt(filename, a, fmt="%.4f".encode('ascii'))
+            if self.ivar.min() < 1e-4 and self.ivar.min() > 0.000000000001:
+                fmt = "%.12f"
+            else:
+                fmt = "%.4f"
+            np.savetxt(filename, a, fmt=fmt.encode('ascii'))
             return
         
         else:
@@ -555,13 +559,13 @@ class Spectrum1D(object):
                 else:
                     headers = header
 
-                dispcol = fits.Column(name=b"WAVELENGTH[COORD]",
+                dispcol = fits.Column(name="WAVELENGTH[COORD]",
                                       format="D",
                                       array=self.dispersion)
-                fluxcol = fits.Column(name=b"SPECTRUM[FLUX]",
+                fluxcol = fits.Column(name="SPECTRUM[FLUX]",
                                       format="D",
                                       array=self.flux)
-                errscol = fits.Column(name=b"SPECTRUM[SIGMA]",
+                errscol = fits.Column(name="SPECTRUM[SIGMA]",
                                       format="D",
                                       array=(self.ivar)**-0.5)
                 

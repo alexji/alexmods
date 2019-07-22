@@ -76,13 +76,29 @@ def XFecolnames(df):
 def epscol(elem):
     return 'eps'+getelem(elem,lower=True)
 def errcol(elem):
-    return 'e_'+getelem(elem,lower=True)
+    try:
+        return 'e_'+getelem(elem,lower=True)
+    except ValueError:
+        if elem=="alpha": return "e_alpha"
+        else: raise
 def ulcol(elem):
-    return 'ul'+getelem(elem,lower=True)
+    try:
+        return 'ul'+getelem(elem,lower=True)
+    except ValueError:
+        if elem=="alpha": return "ulalpha"
+        else: raise
 def XHcol(elem,keep_species=False):
-    return '['+getelem(elem,keep_species=keep_species)+'/H]'
+    try:
+        return '['+getelem(elem,keep_species=keep_species)+'/H]'
+    except ValueError:
+        if elem=="alpha": return "[alpha/H]"
+        else: raise
 def XFecol(elem,keep_species=False):
-    return '['+getelem(elem,keep_species=keep_species)+'/Fe]'
+    try:
+        return '['+getelem(elem,keep_species=keep_species)+'/Fe]'
+    except ValueError:
+        if elem=="alpha": return "[alpha/Fe]"
+        else: raise
 def ABcol(elems):
     """ Note: by default the data does not have [A/B] """
     A,B = elems
@@ -810,3 +826,8 @@ def load_dartmouth_isochrones(MH,alpha="ap4",system="DECAM"):
         selection = tab["age"]==age
         isodict[(age,logZsun)] = tab[selection]
     return isodict
+
+def load_pritzl():
+    df = ascii.read(datapath+"/abundance_tables/J_AJ_130_2140/table2.dat", readme=datapath+"/abundance_tables/J_AJ_130_2140/ReadMe").to_pandas()
+    df = df[df["f_[Fe/H]"]=="b"]
+    return df

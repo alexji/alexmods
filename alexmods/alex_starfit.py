@@ -153,7 +153,7 @@ def plot_chi2_all(hw10, valid_ul, chi2, axes=None):
 def plot_abund_fit(epsval, epserr, epslim, logNmodel, offset=0.,
                    fmt="s", color="r", ms=6,
                    model_only=False,
-                   mcolor = 'k', mlw=1, mls='-', mlabel=None,
+                   mcolor = 'k', mlw=1, mls='-', mlabel=None, mkws={},
                    ax = None, plot_XH=False):
     if ax is None:
         fig, ax = plt.subplots()
@@ -162,12 +162,12 @@ def plot_abund_fit(epsval, epserr, epslim, logNmodel, offset=0.,
     Zii = np.array([isinstance(x, int) and x > 5 for x in logNmodel.index])
     if plot_XH:
         solar = rd.get_solar(logNmodel.index[Zii])
-        ax.plot(logNmodel.index[Zii], logNmodel[Zii]-solar, color=mcolor, lw=mlw, ls=mls, label=mlabel)
+        ax.plot(logNmodel.index[Zii], logNmodel[Zii]-solar, color=mcolor, lw=mlw, ls=mls, label=mlabel, **mkws)
         if not model_only:
             ax.errorbar(epsval.index, epsval.values-solar.loc[epsval.index], yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms, label=None)
             ax.errorbar(epslim.index, epslim.values-solar.loc[epslim.index], yerr=.1, fmt='none', color=color, ecolor=color, uplims=True, label=None)
     else:
-        ax.plot(logNmodel.index[Zii], logNmodel[Zii], color=mcolor, lw=mlw, ls=mls, label=mlabel)
+        ax.plot(logNmodel.index[Zii], logNmodel[Zii], color=mcolor, lw=mlw, ls=mls, label=mlabel, **mkws)
         if not model_only:
             ax.errorbar(epsval.index, epsval.values, yerr=epserr.values, fmt=fmt, color=color, ecolor=color, ms=ms)
             ax.errorbar(epslim.index, epslim.values, yerr=.1, fmt='none', color=color, ecolor=color, uplims=True)
