@@ -299,16 +299,19 @@ def construct_dictionaries(color,marker,size,
     kws = {'color':color,'edgecolors':scatter_ecolor,'marker':marker,'s':size,'alpha':alpha,
            'e_kws':e_kws,'ulkws':ulkws}
     return kws
-def add_ufd_legend(fig, ax, hbuffer=.09, height=.09, nrow=3):
+def add_ufd_legend(fig, ax, hbuffer=.09, height=.09, nrow=3, lax=None,
+                   fontsize=12, loc='center', **kwargs):
     handles,labels = ax.get_legend_handles_labels()
     for handle,label in zip(handles,labels):
         try:
             if label=='CVn II': handle.set_sizes([60])
         except:
             continue
-    lax = fig.add_axes([hbuffer,0,1.-2*hbuffer,height],frameon=False)
+                
+    if lax is None:
+        lax = fig.add_axes([hbuffer,0,1.-2*hbuffer,height],frameon=False)
     ncol = int(len(handles)/nrow)#+(len(handles) % nrow)
     if len(handles) > nrow*ncol: ncol += 1
-    lax.legend(handles,labels,fontsize=12,scatterpoints=1,ncol=ncol,loc='center')
+    lax.legend(handles,labels,fontsize=fontsize,scatterpoints=1,ncol=ncol,loc=loc, **kwargs)
     lax.set_xticks([])
     lax.set_yticks([])

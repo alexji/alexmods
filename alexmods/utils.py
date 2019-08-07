@@ -10,6 +10,7 @@ import numpy as np
 from .robust_polyfit import gaussfit
 from scipy import interpolate, signal
 import emcee
+import time
 
 def struct2array(x):
     """ Convert numpy structured array of simple type to normal numpy array """
@@ -236,7 +237,8 @@ def box_select(x,y,topleft,topright,botleft,botright):
 
     return selection
 
-def linefit_2d(x, y, ex, ey, fit_outliers=False, full_output=False):
+def linefit_2d(x, y, ex, ey, fit_outliers=False, full_output=False,
+               nwalkers=20, Nburn=200, Nrun=1000, percentiles=[5,16,50,84,95]):
     """
     Fits a line to a set of data (x, y) with independent gaussian errors (ex, ey) using MCMC.
     Based on Hogg et al. 2010
@@ -247,10 +249,51 @@ def linefit_2d(x, y, ex, ey, fit_outliers=False, full_output=False):
     Then also returns estimates for 
     
     If full_output=True, return the full MCMC sampler
+    
+    y = m x + b
     """
     assert len(x)==len(y)==len(ex)==len(ey)
+    assert np.all(np.isfinite(x))
+    assert np.all(np.isfinite(y))
+    X = np.vstack([x,y]).T
+    ex2 = ex**2
+    ey2 = ey**2
+    
+    # m = tan(theta)
+    # bt = b cos(theta)
     if fit_outliers:
-        pass
+        raise NotImplementedError
     else:
-        pass
-    raise NotImplementedError
+        def lnprior(params):
+            theta, bt = params
+            if theta < -np.pi/2 or theta >= np.pi/2: return -np.inf
+            return 0
+        def lnlkhd(params):
+            theta, bt = params
+            v = np.array([-np.sin(theta), np.cos(theta)])
+            Delta = X.dot(v) - bt
+            Sigma2 = v[0]*v[0]*ex2 + v[1]*v[1]*ey2
+            return lnprior(params) - 0.5 * np.sum(Delta**2/Sigma2)
+    
+    # Initialize walkers
+    ymin, ymax = np.min(y), np.max(y)
+    bt0 = np.random.uniform(ymin,ymax,nwalkers)
+    theta0 = np.random.uniform(-np.pi/2,np.pi/2,nwalkers)
+    p0 = np.vstack([theta0,bt0]).T
+    
+    ndim = 2
+    sampler = emcee.EnsembleSampler(nwalkers,ndim,lnlkhd)
+    sampler.run_mcmc(p0,Nburn)
+    pos = sampler.chain[:,-1,:]
+    sampler.reset()
+    sampler.run_mcmc(pos,Nrun)
+    
+    theta, bt = sampler.flatchain.T
+    m = np.tan(theta)
+    b = bt/np.cos(theta)
+    m_out = np.nanpercentile(m, percentiles)
+    b_out = np.nanpercentile(b, percentiles)
+    
+    if full_output:
+        return m_out, b_out, m, b, sampler
+    return m_out, b_out
