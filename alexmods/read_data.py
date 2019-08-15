@@ -811,6 +811,7 @@ def load_dartmouth_isochrones(MH,alpha="ap4",system="DECAM"):
     assert alpha in ["ap0","ap4"]
     coldict = {
         "DECAM":["{}mag".format(x) for x in ["u","g","r","i","z","Y"]],
+        "UBVRIJHK":["{}mag".format(x) for x in ["U","B","V","R","I","J","H","Ks","Kp","D51"]],
     }
     fname = datapath+"/isochrones/dartmouth_{}_MH{}{}.iso".format(system,int(MH*10),alpha)
     if not os.path.exists(fname):
