@@ -245,3 +245,19 @@ def calculate_actions(w0,pot=gp.MilkyWayPotential(), dt=0.5, n_steps=10000, full
         result = gd.find_actions(w, N_max=8, toy_potential=toy_potential)
     if full_output: return result, w
     return result["actions"]
+
+def query_and_match(coo, columns=full_columns):
+    """
+    Query gaia given coordinates
+    Return a table that is sorted, and an array saying which rows actually matched an object in gaia
+    """
+    from pyia import GaiaDataNew
+    query = create_source_query_from(coo, columns=columns)
+    gaia = GaiaDataNew.from_query(query)
+    gcoo = SkyCoord(gaia.ra, gaia.dec)
+    idx, d2d, _ = coo.match_to_catalog_sky(gcoo)
+    iimatch = d2d.arcsec < 1
+    gtab = gaia.data[idx]
+    if iimatch.sum() != len(gtab):
+        print("Warning: only matched {}/{} stars".format(iimatch.sum(),len(gtab)))
+    return gtab, iimatch
