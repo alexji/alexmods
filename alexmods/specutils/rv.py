@@ -207,7 +207,7 @@ def measure_order_velocities(orders, template, norm_kwargs, **kwargs):
     """
     N = len(orders)
     rv_output = np.zeros((N,5))
-    for i, order in enumerate(orders):
+    for i, order in enumerate(orders[::-1]):
         if norm_kwargs is None:
             normorder = order
         else:
@@ -235,6 +235,8 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
     """
     Calculate velocity using naive chi^2.
     Gives a good velocity error estimate.
+    
+    To mask pixels, put in 0 for ivar in the observed spectrum.
     """
     
     wave = observed_spectrum.dispersion
@@ -287,6 +289,7 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
     return vfit, err1, err2, voff, chi2arr
 
 def iterative_velocity_measurement(norm, template, wlrange=None,
+                                   masks=None,
                                    dvlist=[10,1,.1], vmin=-500., vmax=500., vspanmin=15.):
     """
     Iteratively determine velocity with chi^2 based cross-correlation (cross_correlate_2).
@@ -313,28 +316,33 @@ def iterative_velocity_measurement(norm, template, wlrange=None,
         chi2min = min(chi2arr.min(), chi2min)
     return rv, e1, e2, varr, chi2arr, chi2min
 
-def measure_order_velocities_2(orders, template, norm_kwargs, **kwargs):
+def measure_order_velocities_2(orders, template, norm_kwargs,
+                               order_min=-np.inf, order_max = np.inf,
+                               **kwargs):
     """
     Run cross correlation 2 against a list of orders
     Return Nx5 array, where columns are order_num, rv, e_rv, wlmin, wlmax
     """
     N = len(orders)
     rv_output = np.zeros((N,5))
-    for i, order in enumerate(orders):
+    ## Orders are opposite ECORD by number so go backwards
+    for i, order in enumerate(orders[::-1]):
         if norm_kwargs is None:
             normorder = order
         else:
             normorder = order.fit_continuum(**norm_kwargs)
-        try:
-            rv, e_rv1, e_rv2, varr, chi2arr, chi2min = iterative_velocity_measurement(normorder, template, **kwargs)
-            e_rv = max(abs(e_rv1), abs(e_rv2))
-        except Exception as e:
-            print("FAILED at",i, e)
-            rv, e_rv = np.nan, np.nan
+        
         try:
             order_num = order.metadata["ECORD{}".format(i)]
         except:
             order_num = i
+        
+        try:
+            rv, e_rv1, e_rv2, varr, chi2arr, chi2min = iterative_velocity_measurement(normorder, template, **kwargs)
+            e_rv = max(abs(e_rv1), abs(e_rv2))
+        except Exception as e:
+            print("FAILED at",order_num, e)
+            rv, e_rv = np.nan, np.nan
         rv_output[i,0] = order_num
         rv_output[i,1] = rv
         rv_output[i,2] = e_rv
@@ -348,5 +356,5 @@ def process_rv_output(rv_output):
     """
     finite = np.isfinite(rv_output[:,1])
     rvdata = rv_output[finite,:]
-    
-    pass
+    raise NotImplementedError
+

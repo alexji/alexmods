@@ -225,7 +225,8 @@ class ContinuumModel(object):
         specs = self.all_specs[order]
         knots = self.get_knots(order)
         exclude = self.all_exclude_regions[order]
-        fconts, dconts = fit_continuum_to_spectra(specs, knots, k=self.degree, exclude=exclude)
+        fconts, dconts = fit_continuum_to_spectra(specs, knots, k=self.degree, exclude=exclude,
+                                                  sigma_lo=self.sigma_lo, sigma_hi=self.sigma_hi)
         self.all_continuum_functions[order] = fconts
         self.all_continuum_data[order] = dconts
         # Update y_knots
@@ -409,7 +410,7 @@ def plot_normalized_order_regions(model, xlims, ylims, **kwargs):
     colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     colordict = {}
     for i,label in enumerate(model.labels):
-        colordict[label] = colors[i]
+        colordict[label] = colors[i % len(colors)]
 
     for xlim, ylim, ax in zip(xlims, ylims, axes):
         for order, specs in normalized_specs.items():
@@ -432,7 +433,7 @@ def plot_all_normalized_orders(model, Nrow, Ncol, **kwargs):
     colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     colordict = {}
     for i,label in enumerate(model.labels):
-        colordict[label] = colors[i]
+        colordict[label] = colors[i % len(colors)]
     
     normalized_orders = model.get_normalized_orders()
     
@@ -483,7 +484,7 @@ class ContinuumNormalizationApp(QMainWindow):
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         self.colordict = {}
         for i,label in enumerate(self.model.labels):
-            self.colordict[label] = colors[i]
+            self.colordict[label] = colors[i % len(colors)]
         
         self.all_knots = self.model.all_knots
         self.all_y_knots = self.model.all_y_knots
@@ -511,19 +512,19 @@ class ContinuumNormalizationApp(QMainWindow):
         self.fit_continuums()
         self.update_plot()
     
-    def update_plot(self):
+    def update_plot(self, reset_limits=True):
         self.canvas.clear_plot()
-        self.plot_data()
+        self.plot_data(reset_limits=reset_limits)
         self.plot_continuums()
         self.plot_exclude_regions()
         self.canvas.draw()
-    def plot_data(self):
+    def plot_data(self, reset_limits=True):
         self.canvas.clear_plot()
         specs = self.all_orders[self.order]
         for label, spec in specs.items():
             self.canvas.plot(spec.dispersion, spec.flux, ',-', label=label, lw=.2,
                              color=self.colordict[label])
-        self.canvas.reset_limits()
+        if reset_limits: self.canvas.reset_limits()
         self.canvas.legend()
     def plot_continuums(self):
         try:
@@ -613,12 +614,12 @@ class ContinuumNormalizationApp(QMainWindow):
         if event.key in "aA":
             # add knot
             self.model.add_knot(self.order, event.xdata)
-            self.update_plot()
+            self.update_plot(reset_limits=False)
             return
         if event.key in "dD":
             # delete knot
             self.model.delete_nearest_knot(self.order, event.xdata)
-            self.update_plot()
+            self.update_plot(reset_limits=False)
             return
         if event.key in "cC":
             # refit continuum with default settings
@@ -717,7 +718,7 @@ class ContinuumNormalizationApp(QMainWindow):
         self._figure_key_press_cid = self.canvas.mpl_connect("key_press_event", self.figure_key_press)
         
         self.fit_continuums()
-        self.update_plot()
+        self.update_plot(reset_limits=False)
         
 
 class PlotCanvas(FigureCanvas):

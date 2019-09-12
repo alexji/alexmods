@@ -299,8 +299,12 @@ class Spectrum1D(object):
                 "extensions (bands) {}/{}".format(flux_ext, noise_ext))
 
             flux = image[0].data[flux_ext]
-            ivar = image[0].data[noise_ext]**(-2)
-
+            if flux_ext == 6:
+                flat = image[0].data[1]/image[0].data[6]
+                ivar = (flat/image[0].data[2])**2.
+            else:
+                ivar = image[0].data[noise_ext]**(-2)
+            
         elif is_apo_product:
             flux_ext = flux_ext or 0
             noise_ext = ivar_ext or -1
@@ -1711,9 +1715,6 @@ def write_fits_linear(fname, wmin, dwave, flux):
             'CDELT1': dwave
     })
     for k,v in headers.items():
-        try:
-            hdu.header[key] = value
-        except:
-            pass
+        hdu.header[k] = v
     hdu.writeto(fname, overwrite=True)
     
