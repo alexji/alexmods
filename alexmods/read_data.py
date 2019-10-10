@@ -334,6 +334,37 @@ def load_jinabase(key=None,p=1,load_eps=True,load_ul=True,load_XH=True,load_XFe=
     if name_as_index:
         data.index = data["Name"]
     return data
+def load_halo(**kwargs):
+    """ load_jinabase, remove stars with loc DW and UF """
+    halo = load_jinabase(**kwargs)
+    halo = halo[halo["Loc"] != "DW"]
+    halo = halo[halo["Loc"] != "UF"]
+    return halo
+def load_cldw(**kwargs):
+    cldw = load_jinabase(**kwargs)
+    cldw = cldw[cldw["Loc"] == "DW"]
+    def get_gal(row):
+        ## These are papers from a single galaxy
+        refgalmap = {"AOK07b":"UMi","COH10":"UMi","URA15":"UMi",
+                     "FRE10a":"Scl","GEI05":"Scl","JAB15":"Scl","SIM15":"Scl","SKU15":"Scl",
+                     "AOK09":"Sex",
+                     "FUL04":"Dra","COH09":"Dra","TSU15":"Dra","TSU17":"Dra",
+                     "NOR17":"Car","VEN12":"Car",
+                     "HAN18":"Sgr"}
+        ref = row["Reference"]
+        if ref in refgalmap:
+            return refgalmap[ref]
+        ## These are papers with multiple galaxies
+        assert ref in ["SHE01","SHE03","TAF10","KIR12"], ref
+        name = row["Name"]
+        name = name[0].upper() + name[1:3].lower()
+        if name == "Umi": return "UMi"
+        return name
+    #allrefs = np.unique(cldw["Reference"])
+    #multirefs = ["SHE01","SHE03","TAF10","KIR12"]
+    gals = [get_gal(x) for i,x in cldw.iterrows()]
+    cldw["galaxy"] = gals
+    return cldw
 
 def load_roed(match_anna_elems=True,load_eps=True,load_ul=True,load_XH=True,load_XFe=True):
     """ Load from Ian's 2014 table (TODO: add stellar parameters etc) """
@@ -812,6 +843,7 @@ def load_dartmouth_isochrones(MH,alpha="ap4",system="DECAM"):
     coldict = {
         "DECAM":["{}mag".format(x) for x in ["u","g","r","i","z","Y"]],
         "UBVRIJHK":["{}mag".format(x) for x in ["U","B","V","R","I","J","H","Ks","Kp","D51"]],
+        "SDSS":["{}mag".format(x) for x in ["u","g","r","i","z"]]
     }
     fname = datapath+"/isochrones/dartmouth_{}_MH{}{}.iso".format(system,int(MH*10),alpha)
     if not os.path.exists(fname):
