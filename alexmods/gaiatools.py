@@ -261,3 +261,21 @@ def query_and_match(coo, match_radius=1, columns=full_columns):
     if iimatch.sum() != len(gtab):
         print("Warning: only matched {}/{} stars".format(iimatch.sum(),len(gtab)))
     return gtab, iimatch
+
+def query_and_match_sourceid(source_ids, match_radius=1, columns=full_columns):
+    """
+    Query gaia given source_ids
+    Return a table in the order of the source_ids
+    """
+    from pyia import GaiaDataNew
+    unique_arr, indexes = np.unique(source_ids, return_inverse=True)
+    assert len(unique_arr) == len(source_ids), "Not all IDs are unique"
+    query = create_source_query_from_ids(source_ids, columns=columns)
+    gaia = GaiaDataNew.from_query(query)
+    # Sort by source id, find indices, then resort
+    gdat = gaia.data
+    gdat.sort("source_id")
+    assert np.all(unique_arr == gdat["source_id"])
+    gdat = gdat[indexes]
+    assert np.all(gdat["source_id"]==source_ids)
+    return gdat
