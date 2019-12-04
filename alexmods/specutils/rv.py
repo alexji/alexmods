@@ -237,6 +237,8 @@ def cross_correlate_2(observed_spectrum, template_spectrum,
     Gives a good velocity error estimate.
     
     To mask pixels, put in 0 for ivar in the observed spectrum.
+
+    Returns vfit, err1, err2, voff, chi2arr
     """
     
     wave = observed_spectrum.dispersion

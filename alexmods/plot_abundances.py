@@ -277,14 +277,15 @@ def _plot_many_ufds_FeH(pltfn,ax,elem,ufds,skipgals=[],ufdsize=60,fill_scatter=F
 def construct_dictionaries(color,marker,size,
                            scatter_ecolor='k',
                            alpha=1.0,
-                           fill_scatter=False):
+                           fill_scatter=False,
+                           elinewidth=1,capsize=0):
     """
     Example usage:
     halo_kws = construct_dictionaries('k','o', 20, alpha=.3)
     pltabund.plot_XFe_XFe(ax, 'K', 'Mg', roed, plot_xlimit=True, plot_ylimit=True, label="Halo",
                           **halo_kws)
     """
-    e_kws = {'ecolor':color,'elinewidth':1}
+    e_kws = {'ecolor':color,'elinewidth':elinewidth,'capsize':capsize}
     if fill_scatter:
         ulkws = {'arrow_length':0.25,
                  'scatter_kws':{'marker':marker,'s':size,'facecolor':color,'alpha':alpha},
