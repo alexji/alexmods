@@ -23,7 +23,8 @@ from alexmods.specutils.spectrum import (Spectrum1D, read_mike_spectrum, stitch 
 
 ## GUI imports
 # https://pythonspot.com/pyqt5-matplotlib/
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox, QWidget, QPushButton, QDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenu, QVBoxLayout, QSizePolicy, QMessageBox
+from PyQt5.QtWidgets import QWidget, QPushButton, QDialog, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtCore, QtGui
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -73,7 +74,8 @@ def fit_continuum_lsq(spec, knots, exclude=[], maxiter=3, sigma_lo=2, sigma_hi=2
             raise
         # Iterative rejection
         cont = fcont(x)
-        sig = (y-cont) * np.sqrt(w)
+        sig = (cont-y) * np.sqrt(w)
+        sig /= np.nanstd(sig)
         mask[sig > sigma_hi] = False
         mask[sig < -sigma_lo] = False
     if get_edges:
@@ -121,12 +123,16 @@ def initialize_knots_from_spectra(specs, knot_spacing):
         wmax = min(wave.max(), wmax)
     return initialize_knots(wmin, wmax, knot_spacing)
 
-def fit_continuum_to_spectra(specs, knots, snip_edges=True, **kwargs):
+def fit_continuum_to_spectra(specs, knots, sigma_lo_dict, sigma_hi_dict,
+                             snip_edges=True, **kwargs):
     """ Run lsq spline fit on all spectra """
     cont_funcs = OrderedDict()
     cont_data = OrderedDict()
     for label, spec in specs.items():
-        fcont, left, right = fit_continuum_lsq(spec, knots, get_edges=True, **kwargs)
+        sigma_lo, sigma_hi = sigma_lo_dict[label], sigma_hi_dict[label]
+        fcont, left, right = fit_continuum_lsq(spec, knots, get_edges=True,
+                                               sigma_lo=sigma_lo, sigma_hi=sigma_hi,
+                                               **kwargs)
         cont_funcs[label] = fcont
         dcont = fcont(spec.dispersion)
         if snip_edges:
@@ -140,8 +146,8 @@ class ContinuumModel(object):
     def __init__(self, degree=3, knot_spacing=10., sigma_lo=2, sigma_hi=2):
         self.degree = degree
         self.knot_spacing = knot_spacing
-        self.sigma_lo = sigma_lo
-        self.sigma_hi = sigma_hi
+        self.sigma_lo_default = sigma_lo
+        self.sigma_hi_default = sigma_hi
         self._initialize()
     
     def _initialize(self):
@@ -161,6 +167,10 @@ class ContinuumModel(object):
         self.label_to_rv = {}
         self.rv_applied = False
         
+        # order -> sigma_lo/hi_dict
+        self.all_sigma_lo = OrderedDict()
+        self.all_sigma_hi = OrderedDict()
+
     def load_data(self, fnames, labels=None, fluxband=7,
                   label_to_rv=None):
         """
@@ -192,9 +202,14 @@ class ContinuumModel(object):
                     
                     self.all_knots[iord] = []
                     self.all_exclude_regions[iord] = []
+
+                    self.all_sigma_hi[iord] = OrderedDict()
+                    self.all_sigma_lo[iord] = OrderedDict()
                 self.all_specs[iord][label] = spec
                 self.all_continuum_data[iord][label] = None
                 self.all_continuum_functions[iord][label] = None
+                self.all_sigma_hi[iord][label] = self.sigma_hi_default
+                self.all_sigma_lo[iord][label] = self.sigma_lo_default
         self.all_order_numbers = list(np.sort(list(self.all_specs.keys())))
         
         self.fnames = [os.path.abspath(fname) for fname in fnames]
@@ -225,8 +240,11 @@ class ContinuumModel(object):
         specs = self.all_specs[order]
         knots = self.get_knots(order)
         exclude = self.all_exclude_regions[order]
-        fconts, dconts = fit_continuum_to_spectra(specs, knots, k=self.degree, exclude=exclude,
-                                                  sigma_lo=self.sigma_lo, sigma_hi=self.sigma_hi)
+        fconts, dconts = fit_continuum_to_spectra(specs, knots,
+                                                  self.all_sigma_lo[order],
+                                                  self.all_sigma_hi[order],
+                                                  k=self.degree, exclude=exclude,
+                                                  )
         self.all_continuum_functions[order] = fconts
         self.all_continuum_data[order] = dconts
         # Update y_knots
@@ -282,13 +300,25 @@ class ContinuumModel(object):
     def reset_exclude_regions(self, order):
         self.all_exclude_regions[order] = []
     
+    def get_order_labels(self, order):
+        """ Get the spectrum labels associated with this order """
+        specs = self.all_specs[order]
+        return list(specs.keys())
+    
+    def get_sigma_lohi(self, order, label):
+        return self.all_sigma_lo[order][label], self.all_sigma_hi[order][label]
+    def set_sigma_lo(self, order, label, sigma):
+        self.all_sigma_lo[order][label] = sigma
+    def set_sigma_hi(self, order, label, sigma):
+        self.all_sigma_hi[order][label] = sigma
+
     def save(self, fname):
         """
         Save the parameters (degree, knots, exclusion regions) 
         and filenames, but only the location of the original data filenames
         """
         output = [self.fnames, self.labels, self.fluxband,
-                  self.degree, self.knot_spacing, self.sigma_lo, self.sigma_hi,
+                  self.degree, self.knot_spacing, self.all_sigma_lo, self.all_sigma_hi,
                   self.all_knots, self.all_exclude_regions,
                   self.label_to_rv, self.rv_applied]
         np.save(fname, output)
@@ -300,14 +330,14 @@ class ContinuumModel(object):
         """
         model = cls()
         fnames, labels, fluxband, \
-            degree, knot_spacing, sigma_lo, sigma_hi, \
+            degree, knot_spacing, all_sigma_lo, all_sigma_hi, \
             all_knots, all_exclude_regions, \
             label_to_rv, rv_applied = \
             np.load(fname)
         model.degree = degree
         model.knot_spacing = knot_spacing
-        model.sigma_lo = sigma_lo
-        model.sigma_hi = sigma_hi
+        model.all_sigma_lo = all_sigma_lo
+        model.all_sigma_hi = all_sigma_hi
         
         print(fnames,labels,fluxband)
         model.load_data(fnames, labels, fluxband,
@@ -330,8 +360,9 @@ class ContinuumModel(object):
         """
         data = np.load(fname)
         assert data[2] == self.fluxband, (data[2], self.fluxband)
+        # TODO this will fail with the new dictionary stuff!
         self.degree, self.knot_spacing, \
-            self.sigma_lo, self.sigma_hi = data[3:7]
+            self.all_sigma_lo, self.all_sigma_hi = data[3:7]
         self.all_knots = data[7]
         self.all_exclude_regions = data[8]
 
@@ -469,6 +500,7 @@ class ContinuumNormalizationApp(QMainWindow):
                  default_stitched="stitched_spectrum.txt"):
         super().__init__()
 
+        self.initUI()
         self.default_save = default_save
         self.stitched_default_fname = default_stitched
         self.new_model(model)
@@ -492,12 +524,6 @@ class ContinuumNormalizationApp(QMainWindow):
         self.all_continuum_functions = self.model.all_continuum_functions
         self.all_exclude_regions = self.model.all_exclude_regions
         
-        self.title = "Continuum Normalization"
-        self.left = 10
-        self.top = 10
-        self.width = 1280
-        self.height = 800
-        self.initUI()
         
         self.set_order(np.max(self.all_order_numbers))
         
@@ -508,23 +534,76 @@ class ContinuumNormalizationApp(QMainWindow):
         """ Set which order to plot """
         assert order in self.all_order_numbers
         self.order = order
+        self.labels = self.model.get_order_labels(order)
+        self.set_label(order, self.labels[0])
         self.canvas.set_title("Order {}".format(self.order))
         self.fit_continuums()
         self.update_plot()
+    def set_order_gui(self):
+        """ Set which order to plot """
+        order = int(self.ledit_change_order.text())
+        self.set_order(order)
+    def set_next_label(self):
+        ix = self.labels.index(self.label)
+        self.set_label(self.order, self.labels[(ix+1) % len(self.labels)])
+    def set_prev_label(self):
+        ix = self.labels.index(self.label)
+        self.set_label(self.order, self.labels[(ix-1) % len(self.labels)])
+    def set_label(self, order, label):
+        ## Update label
+        self.label = label
+        self.label_label.setText(label)
+        ## Update sigma_lo/hi
+        slo, shi = self.model.get_sigma_lohi(order, label)
+        self.ledit_siglo.setText(str(slo))
+        self.ledit_sighi.setText(str(shi))
+        return
+    def set_sigma_lo(self, siglo=None):
+        siglo = siglo or float(self.ledit_siglo.text())
+        assert siglo >= 0, siglo
+        self.model.set_sigma_lo(self.order, self.label, siglo)
+        self.fit_continuums()
+        self.update_plot(False)
+        self.ledit_siglo.setText(str(siglo))
+    def set_sigma_hi(self, sighi=None):
+        sighi = sighi or float(self.ledit_sighi.text())
+        assert sighi >= 0, sighi
+        self.model.set_sigma_hi(self.order, self.label, sighi)
+        self.fit_continuums()
+        self.update_plot(False)
+        self.ledit_sighi.setText(str(sighi))
+    def increment_sigma_lo(self):
+        siglo, _ = self.model.get_sigma_lohi(self.order, self.label)
+        self.set_sigma_lo(round(siglo+0.1,1))
+    def decrement_sigma_lo(self):
+        siglo, _ = self.model.get_sigma_lohi(self.order, self.label)
+        self.set_sigma_lo(round(siglo-0.1,1))
+    def increment_sigma_hi(self):
+        _, sighi = self.model.get_sigma_lohi(self.order, self.label)
+        self.set_sigma_hi(round(sighi+0.1,1))
+    def decrement_sigma_hi(self):
+        _, sighi = self.model.get_sigma_lohi(self.order, self.label)
+        self.set_sigma_hi(round(sighi-0.1,1))
     
     def update_plot(self, reset_limits=True):
-        self.canvas.clear_plot()
+        self.canvas.textinfo("")
         self.plot_data(reset_limits=reset_limits)
+        self.canvas2.axhline(1,color='k',ls=':',lw=1, zorder=-9)
         self.plot_continuums()
         self.plot_exclude_regions()
         self.canvas.draw()
+        self.canvas2.draw()
     def plot_data(self, reset_limits=True):
         self.canvas.clear_plot()
+        self.canvas2.clear_plot()
         specs = self.all_orders[self.order]
         for label, spec in specs.items():
             self.canvas.plot(spec.dispersion, spec.flux, ',-', label=label, lw=.2,
                              color=self.colordict[label])
-        if reset_limits: self.canvas.reset_limits()
+        if reset_limits:
+            self.canvas.reset_limits()
+            self.canvas2.set_xlim(self.canvas.get_xlim())
+            self.canvas2.set_ylim(0,1.2)
         self.canvas.legend()
     def plot_continuums(self):
         try:
@@ -537,6 +616,8 @@ class ContinuumNormalizationApp(QMainWindow):
                 self.canvas.plot(spec.dispersion, cont, '-', lw=1.5, alpha=.5, color=self.colordict[label])
                 yknots = y_knots[label]
                 self.canvas.plot(knots, yknots, 'o', color=self.colordict[label])
+                # Plot normalized data
+                self.canvas2.plot(spec.dispersion, spec.flux/cont, '-', lw=.5, alpha=.5, color=self.colordict[label])
         except:
             print("Error plotting continuum {}".format(self.order))
     def plot_exclude_regions(self):
@@ -548,28 +629,97 @@ class ContinuumNormalizationApp(QMainWindow):
         self.model.fit_continuums(self.order)
         
     def initUI(self):
+        self.title = "Continuum Normalization"
+        self.left = 10
+        self.top = 10
+        self.width = 1380
+        self.height = 700+200
+        
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         
-        canvas = PlotCanvas(self, width=11, height=8)
-        canvas.move(0,0)
+        ## Create master layout
+        hbox = QHBoxLayout()
+        
+        ## Create plots
+        canvas = PlotCanvas(self, width=12, height=7)
+        #canvas.move(0,0)
         canvas.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.canvas = canvas
+        
+        canvas2 = PlotCanvas(self, width=12, height=2)
+        #canvas2.move(0,700)
+        self.canvas2 = canvas2
         
         # Create toolbar
         ## TODO there are some problems linking this to the actual canvas...
         toolbar = NavigationToolbar(self.canvas, self, False)
+        self.addToolBar(QtCore.Qt.LeftToolBarArea, toolbar)
         self.toolbar = toolbar
         
-        #button = QPushButton('Fit All Continuums', self)
+        # Add to layout
+        vbox = QVBoxLayout()
+        vbox.addWidget(canvas)
+        vbox.addWidget(canvas2)
+        hbox.addLayout(vbox)
+
+        ## Create parameter editing
+        vbox = QVBoxLayout()
+        
+        # Save output
         button = QPushButton('Save Stitched Spectrum', self)
         button.setToolTip('')
-        button.move(1100,0)
         button.resize(120,50)
-        #button.clicked.connect(self.fit_all_continuums)
-        #button.clicked.connect(self.update_plot)
         button.clicked.connect(self.save_stitched_spectrum)
         self.button = button
+        
+        # Jump to order
+        # TODO add a validator
+        ledit_change_order = QLineEdit()
+        btn_change_order = QPushButton('Change Order To', self)
+        btn_change_order.setToolTip('')
+        btn_change_order.resize(120,50)
+        self.ledit_change_order = ledit_change_order
+        self.btn_change_order = btn_change_order
+        self.btn_change_order.clicked.connect(self.set_order_gui)
+        self.ledit_change_order.returnPressed.connect(self.set_order_gui)
+        
+        # Change sigma lo/hi
+        label_label = QLabel("Hello World",self)
+        self.label_label = label_label
+        label_siglo = QLabel("σlo",self)
+        ledit_siglo = QLineEdit()
+        label_sighi = QLabel("σhi",self)
+        ledit_sighi = QLineEdit()
+        self.ledit_siglo = ledit_siglo
+        self.ledit_sighi = ledit_sighi
+        self.ledit_siglo.returnPressed.connect(self.set_sigma_lo)
+        self.ledit_sighi.returnPressed.connect(self.set_sigma_hi)
+        
+        # Add to layout
+        vbox.addWidget(button)
+        
+        vb = QVBoxLayout()
+        vb.addWidget(btn_change_order)
+        vb.addWidget(ledit_change_order)
+        vbox.addLayout(vb)
+
+        vb = QVBoxLayout()
+        vb.addWidget(label_label)
+        hb = QHBoxLayout()
+        hb.addWidget(label_siglo); hb.addWidget(ledit_siglo)
+        vb.addLayout(hb)
+        hb = QHBoxLayout()
+        hb.addWidget(label_sighi); hb.addWidget(ledit_sighi)
+        vb.addLayout(hb)
+        vbox.addLayout(vb)
+        
+        hbox.addLayout(vbox)
+        
+        ## Add all this stuff to a QWidget wrapper
+        self.window = QWidget(self)
+        self.window.setLayout(hbox)
+        self.setCentralWidget(self.window)
         
         self.activate_keyboard_shortcuts()
 
@@ -590,15 +740,30 @@ class ContinuumNormalizationApp(QMainWindow):
         """
         Keyboard Shortcuts
         """
-        print("Pressed '{}'".format(event.key))
+        #print("Pressed '{}'".format(event.key))
         ## Change orders (it is reversed on purpose!)
         if event.key in ("left", "j", "J", "right", "k", "K"):
             offset = -1 if event.key in ("right", "k", "K") else +1
             if (self.order + offset) in self.all_order_numbers:
                 self.canvas.clear_plot()
+                self.canvas2.clear_plot()
                 self.set_order(self.order+offset)
+            else:
+                print("Order {} not available".format(self.order + offset))
             return
-        if event.key == " ":
+        elif event.key == "up":
+            self.set_next_label()
+        elif event.key == "down":
+            self.set_prev_label()
+        elif event.key == "1":
+            self.decrement_sigma_lo()
+        elif event.key == "2":
+            self.increment_sigma_lo()
+        elif event.key == "3":
+            self.decrement_sigma_hi()
+        elif event.key == "4":
+            self.increment_sigma_hi()
+        elif event.key == " ":
             # print mouse and knot location
             iknot, xknot, yknots = self.model.get_nearest_knot(self.order, event.xdata, gety=True)
             if xknot is not None:
@@ -611,7 +776,7 @@ class ContinuumNormalizationApp(QMainWindow):
             colors = [self.colordict[label] for label in self.model.labels]
             #self.canvas.select_points(xknots, yknots, colors=colors)
             return
-        if event.key in "aA":
+        elif event.key in "aA":
             # add knot
             self.model.add_knot(self.order, event.xdata)
             self.update_plot(reset_limits=False)
@@ -621,41 +786,56 @@ class ContinuumNormalizationApp(QMainWindow):
             self.model.delete_nearest_knot(self.order, event.xdata)
             self.update_plot(reset_limits=False)
             return
-        if event.key in "cC":
+        elif event.key in "cC":
             # refit continuum with default settings
             self.model.reset_exclude_regions(self.order)
             self.model.reset_knots(self.order)
             self.update_plot()
             return
-        if event.key in "rR":
+        elif event.key in "rR":
             # redraw
             self.update_plot()
             return
-        if event.key in "fF":
+        elif event.key in "fF":
             # fit
             self.fit_continuums()
             self.update_plot()
             return
-        if event.key in "eE":
+        elif event.key in "eE":
             # exclude region
             xmin, xmax = self.canvas.ax.get_xlim()
             if xmin < event.xdata and event.xdata < xmax:
                 self.start_interactive_exclude_region(event.xdata)
             return
-        if event.key in "sS":
+        elif event.key in "sS":
             # save
             self.model.save(self.default_save)
             print("Saved to {}".format(self.default_save))
             return
-        if event.key in "qQ":
+        elif event.key in "qQ":
             # save and quit
             self.model.save(self.default_save)
             print("Saved to {}".format(self.default_save))
             self.close()
-        if event.key in "!":
+        elif event.key in "!":
             # quit without saving
             print("Quitting without saving (NOT IMPLEMENTED FOR SAFETY)")
             #self.close()
+        elif event.key in "hH":
+            print("Keyboard shortcuts:")
+            print("left/right (j/k): increase/decrease order")
+            print("up/down: increase/decrease label (for sigma)")
+            print("1/2: decrease/increase siglo")
+            print("3/4: decrease/increase sighi")
+            print("spacebar: print mouse and knot location")
+            print("a: add knot")
+            print("d: delete knot")
+            print("r: redraw plot")
+            print("f: refit")
+            print("e: start exclude region")
+            print("s: save to {}".format(self.default_save))
+            print("q: save and quit")
+            print("!: quit without saving (NOT IMPLEMENTED FOR SAFETY)")
     def start_interactive_exclude_region(self, x):
         # Disconnect all other signals
         self.canvas.mpl_disconnect(self._figure_key_press_cid)
@@ -753,17 +933,18 @@ class PlotCanvas(FigureCanvas):
     def select_points(self, x, y, colors):
         self._selected_points.set_offsets(np.array([x, y]).T)
         self._selected_points.set_edgecolors(colors)
-        self.draw()
+        #self.draw()
     def deselect_points(self):
         self._selected_points.set_offsets(np.array([[np.nan],[np.nan]]).T)
-        self.draw()
+        #self.draw()
 
     def plot(self, *args, **kwargs):
         self.ax.plot(*args, **kwargs)
-        self.draw()
-    def plot_norefresh(self, *args, **kwargs):
-        self.ax.plot(*args, **kwargs)
-        
+        #self.draw()
+    def axhline(self, *args, **kwargs):
+        self.ax.axhline(*args, **kwargs)
+        #self.draw()
+    
     def vspan(self, xmin, xmax):
         try:
             patch = self._vspans[self._next_vspan]
@@ -783,10 +964,11 @@ class PlotCanvas(FigureCanvas):
         self.draw()
     
     def clear_plot(self):
-        for l in self.ax.lines:
-            l.remove()
-        for l in self.ax.lines:
-            l.remove()
+        ## I don't really understand why I have to call l.remove() so many times
+        ## But it seems needed or plotting errors arise
+        for l in self.ax.lines: l.remove()
+        for l in self.ax.lines: l.remove()
+        for l in self.ax.lines: l.remove()
         try:
             self.ax.legend_.remove()
         except:
@@ -816,6 +998,10 @@ class PlotCanvas(FigureCanvas):
     def set_ylim(self, *args, **kwargs):
         self.ax.set_ylim(*args, **kwargs)
         self.draw()
+    def get_xlim(self):
+        return self.ax.get_xlim()
+    def get_ylim(self):
+        return self.ax.get_ylim()
     def legend(self, *args, **kwargs):
         self.ax.legend(*args, **kwargs)
         self.draw()
