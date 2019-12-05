@@ -333,7 +333,7 @@ class ContinuumModel(object):
             degree, knot_spacing, all_sigma_lo, all_sigma_hi, \
             all_knots, all_exclude_regions, \
             label_to_rv, rv_applied = \
-            np.load(fname)
+            np.load(fname, allow_pickle=True)
         model.degree = degree
         model.knot_spacing = knot_spacing
         model.all_sigma_lo = all_sigma_lo
@@ -358,7 +358,7 @@ class ContinuumModel(object):
         e.g. check that all the orders are there,
         or that orders roughly match up in wavelength.
         """
-        data = np.load(fname)
+        data = np.load(fname, allow_pickle=True)
         assert data[2] == self.fluxband, (data[2], self.fluxband)
         # TODO this will fail with the new dictionary stuff!
         self.degree, self.knot_spacing, \
@@ -584,6 +584,14 @@ class ContinuumNormalizationApp(QMainWindow):
     def decrement_sigma_hi(self):
         _, sighi = self.model.get_sigma_lohi(self.order, self.label)
         self.set_sigma_hi(round(sighi-0.1,1))
+    def apply_sigma_to_order(self):
+        siglo = float(self.ledit_siglo.text())
+        sighi = float(self.ledit_sighi.text())
+        for label in self.labels:
+            self.model.set_sigma_lo(self.order, label, siglo)
+            self.model.set_sigma_hi(self.order, label, sighi)
+        self.fit_continuums()
+        self.update_plot(False)
     
     def update_plot(self, reset_limits=True):
         self.canvas.textinfo("")
@@ -695,6 +703,8 @@ class ContinuumNormalizationApp(QMainWindow):
         self.ledit_sighi = ledit_sighi
         self.ledit_siglo.returnPressed.connect(self.set_sigma_lo)
         self.ledit_sighi.returnPressed.connect(self.set_sigma_hi)
+        self.btn_apply_sig_order = QPushButton("Apply To Order")
+        self.btn_apply_sig_order.clicked.connect(self.apply_sigma_to_order)
         
         # Add to layout
         vbox.addWidget(button)
@@ -712,6 +722,7 @@ class ContinuumNormalizationApp(QMainWindow):
         hb = QHBoxLayout()
         hb.addWidget(label_sighi); hb.addWidget(ledit_sighi)
         vb.addLayout(hb)
+        vb.addWidget(self.btn_apply_sig_order)
         vbox.addLayout(vb)
         
         hbox.addLayout(vbox)
@@ -763,6 +774,8 @@ class ContinuumNormalizationApp(QMainWindow):
             self.decrement_sigma_hi()
         elif event.key == "4":
             self.increment_sigma_hi()
+        elif event.key == "0":
+            self.apply_sigma_to_order()
         elif event.key == " ":
             # print mouse and knot location
             iknot, xknot, yknots = self.model.get_nearest_knot(self.order, event.xdata, gety=True)
@@ -827,6 +840,7 @@ class ContinuumNormalizationApp(QMainWindow):
             print("up/down: increase/decrease label (for sigma)")
             print("1/2: decrease/increase siglo")
             print("3/4: decrease/increase sighi")
+            print("0: apply siglo/sighi to all in this order")
             print("spacebar: print mouse and knot location")
             print("a: add knot")
             print("d: delete knot")
