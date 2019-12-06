@@ -336,12 +336,12 @@ class ContinuumModel(object):
             np.load(fname, allow_pickle=True)
         model.degree = degree
         model.knot_spacing = knot_spacing
-        model.all_sigma_lo = all_sigma_lo
-        model.all_sigma_hi = all_sigma_hi
         
         print(fnames,labels,fluxband)
         model.load_data(fnames, labels, fluxband,
                         label_to_rv = label_to_rv)
+        model.all_sigma_lo = all_sigma_lo
+        model.all_sigma_hi = all_sigma_hi
         model.all_knots = all_knots
         model.all_exclude_regions = all_exclude_regions
         model.fit_all_continuums()
