@@ -297,3 +297,46 @@ def linefit_2d(x, y, ex, ey, fit_outliers=False, full_output=False,
     if full_output:
         return m_out, b_out, m, b, sampler
     return m_out, b_out
+
+def parse_m2fs_fibermap(fname):
+    import pandas as pd
+    from astropy.coordinates import SkyCoord
+    
+    def mungehms(hmsstr,sep=':'):
+        h,m,s = hmsstr.split(sep)
+        return h+'h'+m+'m'+s+'s'
+    def mungedms(dmsstr,sep=':'):
+        d,m,s = dmsstr.split(sep)
+        return d+'d'+m+'m'+s+'s'
+    def parse_assignments(cols, assignments):
+        colnames = cols.split()
+        data = []
+        for line in assignments:
+            data.append(line.split())
+        return pd.DataFrame(data, columns=colnames)
+    
+    with open(fname,"r") as fp:
+        lines = fp.readlines()
+    center_radec = lines[3]
+    center_radec = center_radec.split()
+    center_ra = mungehms(center_radec[2])
+    center_dec= mungedms(center_radec[3])
+    center = SkyCoord(ra=center_ra, dec=center_dec)
+    for i, line in enumerate(lines):
+        if "[assignments]" in line: break
+    lines = lines[i+1:]
+    line = lines[0]
+    cols_assignments = lines[0]
+    assignments = []
+    for i,line in enumerate(lines[1:]):
+        if "]" in line: break
+        assignments.append(line)
+    lines = lines[i+2:]
+    cols_guides = lines[0]
+    guides = []
+    for i,line in enumerate(lines[1:]):
+        if "]" in line: break
+        guides.append(line)
+    df1 = parse_assignments(cols_assignments, assignments)
+    df2 = parse_assignments(cols_guides, guides)
+    return df1, df2

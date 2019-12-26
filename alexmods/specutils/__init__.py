@@ -18,4 +18,7 @@ from . import motions
 from .spectrum import Spectrum1D
 from .rv import *
 from .utils import *
-from .continuum import fit_continuum_lsq
+try:
+    from .continuum import fit_continuum_lsq
+except:
+    print("Could not import continuum GUI (you are probably in python 2)")
