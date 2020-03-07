@@ -20,7 +20,7 @@ sns.set_style({"xtick.direction":"in","ytick.direction":"in"})
 ######################
 _galaxies = ['Bootes I', 'Bootes II', 'CVn II', 'ComBer', 'Hercules', 'Leo IV',
              'Ret II', 'Segue 1', 'Segue 2', 'Tri II', 'Tuc II', 'UMa II',
-             'Tuc III', 'Hor I', 'Gru I', 'Psc II']
+             'Tuc III', 'Hor I', 'Gru I', 'Psc II', 'Car II', 'Car III']
 _colors = ['#ad8150', #light brown
            (0.86, 0.71786666666666665, 0.33999999999999997),
            (0.65546666666666642, 0.86, 0.33999999999999997),
@@ -37,9 +37,11 @@ _colors = ['#ad8150', #light brown
            "#ffb7ce", #baby pink
            '#6e750e', #olive
            '#8e82fe', #periwinkle
+           'blue',
+           'orange',
           ]
 _markers = ['D', '^', '*', 'o', 'H', 's', '*', 'p', '*', '^', 'v', 'h',
-            'v', 's', 's','^']
+            'v', 's', 's','^','o','s']
 assert len(_galaxies) == len(_colors)
 assert len(_galaxies) == len(_markers)
 ufd_color = dict(zip(_galaxies, _colors))
