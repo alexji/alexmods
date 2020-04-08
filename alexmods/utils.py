@@ -340,3 +340,18 @@ def parse_m2fs_fibermap(fname):
     df1 = parse_assignments(cols_assignments, assignments)
     df2 = parse_assignments(cols_guides, guides)
     return df1, df2
+
+def quick_healpix(coo, nside, galactic=False):
+    import healpy as hp
+    from astropy import units as u
+    npix = hp.nside2npix(nside)
+    area = hp.nside2pixarea(nside, degrees=True)
+    hpmap = np.zeros(npix)
+    if galactic:
+        theta, phi = np.pi/2 - coo.b.radian, coo.l.wrap_at(180*u.deg).radian
+    else:
+        theta, phi = np.pi/2 - coo.dec.radian, coo.ra.wrap_at(180*u.deg).radian
+    pixels = hp.ang2pix(nside, theta, phi)
+    np.add.at(hpmap, pixels, 1)
+    hp.mollview(hpmap)
+    return hpmap, area
