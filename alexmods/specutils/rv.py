@@ -12,8 +12,9 @@ import logging
 import numpy as np
 from scipy import interpolate, optimize
 from scipy.optimize import leastsq
+from astropy.stats.biweight import biweight_scale
 
-from . import spectrum
+from . import spectrum, motions
 
 logger = logging.getLogger(__name__)
 
@@ -360,3 +361,95 @@ def process_rv_output(rv_output):
     rvdata = rv_output[finite,:]
     raise NotImplementedError
 
+def mask_tellurics(orders, telluric_regions):
+    # Mask tellurics
+    for order in orders:
+        wave = order.dispersion
+        ivar = order.ivar
+        for wl1,wl2 in telluric_regions:
+            ivar[(wl1 < wave) & (wave < wl2)] = 0.
+        order._ivar = ivar
+    return orders
+
+def measure_mike_velocities(template, blue_fname, red_fname,
+                            outfname_fig=None, outfname_data=None,
+                            vmin=-500, vmax=500, vspanmin=10, dvlist=[10,1,.1],
+                            norm_kwargs={"exclude":None, "function":"spline", "high_sigma_clip": 1.0,
+                                         "include":None, "knot_spacing": 20, "low_sigma_clip": 2.0,
+                                         "max_iterations": 5, "order": 2, "scale": 1.0},
+                            telluric_regions=[]):
+    
+    name = blue_fname.split("/")[-1].split("blue")[0]
+    name2 = red_fname.split("/")[-1].split("red")[0]
+
+    if not isinstance(template, spectrum.Spectrum1D):
+        # Assume it's a filename to load
+        template = spectrum.Spectrum1D.read(template)
+    
+    ## Blue
+    orders = spectrum.Spectrum1D.read(blue_fname)
+    orders = mask_tellurics(orders, telluric_regions)
+    
+    try:
+        v_helio, v_bary = motions.corrections_from_headers(orders[0].metadata)
+        vhelcorr = v_helio.to("km/s").value
+    except Exception as e:
+        print("vhel failed:")
+        print(e)
+        vhelcorr = np.nan
+
+    rv_output1 = measure_order_velocities_2(orders, template, norm_kwargs,
+                                            vmin=vmin, vmax=vmax, vspanmin=vspanmin,
+                                            dvlist=dvlist)
+    
+    ## Red
+    orders = spectrum.Spectrum1D.read(red_fname)
+    orders = mask_tellurics(orders, telluric_regions)
+    rv_output2 = measure_order_velocities_2(orders, template, norm_kwargs,
+                                            vmin=vmin, vmax=vmax, vspanmin=vspanmin,
+                                            dvlist=dvlist)
+
+    
+    o_all = np.array(list(rv_output1[:,0]) + list(rv_output2[:,0]))
+    v_all = np.array(list(rv_output1[:,1]) + list(rv_output2[:,1]))
+    e_all = np.array(list(rv_output1[:,2]) + list(rv_output2[:,2]))
+    w_all = np.array(list((rv_output1[:,3]+rv_output1[:,4])/2.) + list((rv_output2[:,3]+rv_output2[:,4])/2.))
+    keep = np.isfinite(e_all) & np.isfinite(v_all) & (o_all <= 95) & (o_all >= 50)
+    
+    for iter_clip in range(5):
+        w = e_all[keep]**-2
+        v_avg = np.sum(w*v_all[keep])/np.sum(w)
+        v_err = (np.sum(w))**-0.5
+        v_std = biweight_scale(v_all[keep])
+        v_med = np.median(v_all[keep])
+        new_keep = keep & (np.abs(v_all-v_med) < 5*v_std)
+        print("===============iter_clip={}, {}->{}".format(iter_clip+1,keep.sum(),new_keep.sum()))
+        if keep.sum()==new_keep.sum():
+            break
+        keep = new_keep
+    v_blue = np.median(v_all[keep & (o_all > 70)])
+    v_red = np.median(v_all[keep & (o_all <= 70)])
+    
+    if outfname_fig is not None:
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(8,4))
+        
+        yrange = max(5,5*v_std)
+        wave1, wave2 = (rv_output1[:,3]+rv_output1[:,4])/2, (rv_output2[:,3]+rv_output2[:,4])/2
+        ax.errorbar(wave1, rv_output1[:,1], yerr=rv_output1[:,2], fmt='o', color='b', ecolor='b')
+        ax.errorbar(wave2, rv_output2[:,1], yerr=rv_output2[:,2], fmt='o', color='r', ecolor='r')
+        ax.plot(w_all[keep], v_all[keep], 'ko', mfc='none', mec='k', mew=2, ms=10)
+        
+        ax.set_ylim(v_avg - yrange, v_avg + yrange)         
+        ax.yaxis.set_minor_locator(plt.MultipleLocator(0.5))
+        ax.yaxis.set_major_locator(plt.MultipleLocator(2))
+        ax.axhline(v_avg, color='k', zorder=-9)
+        
+        fig.tight_layout()
+        fig.savefig(outfname_fig)
+        plt.close(fig)
+
+    if outfname_data is not None:
+        np.save(outfname_data, [(v_avg, v_med, v_err, v_std, v_blue, v_red, vhelcorr), (o_all, v_all, e_all, w_all, keep), rv_output1, rv_output2])
+    
+    return v_avg, v_med, v_err, v_std, v_blue, v_red, vhelcorr
