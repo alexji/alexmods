@@ -318,3 +318,50 @@ def add_ufd_legend(fig, ax, hbuffer=.09, height=.09, nrow=3, lax=None,
     lax.legend(handles,labels,fontsize=fontsize,scatterpoints=1,ncol=ncol,loc=loc, **kwargs)
     lax.set_xticks([])
     lax.set_yticks([])
+
+def confidence_ellipse(ax, x, y, var_x, var_y, cov_xy, n_std=1.0, **kwargs):
+    """
+    Create a plot of the covariance confidence ellipse
+    given variance of x, y, and their covariance
+
+    https://matplotlib.org/devdocs/gallery/statistics/confidence_ellipse.html
+    
+    ax : matplotlib.axes.Axes
+        The axes object to draw the ellipse into.
+
+    x, y : float
+        where to center the ellipse
+
+    var_x, var_y, cov_xy : float
+        parameters of the ellipse
+
+    n_std : float (default 1.0)
+        The number of standard deviations to determine the ellipse's radiuses.
+
+    **kwargs
+        Forwarded to `~matplotlib.patches.Ellipse`
+
+    Returns
+    -------
+    matplotlib.patches.Ellipse
+    """
+    from matplotlib.patches import Ellipse
+    import matplotlib.transforms as transforms
+    
+    pearson = cov_xy/np.sqrt(var_x * var_y)
+    # Using a special case to obtain the eigenvalues of this
+    # two-dimensionl dataset.
+    ell_radius_x = np.sqrt(1 + pearson)
+    ell_radius_y = np.sqrt(1 - pearson)
+    ellipse = Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
+                      **kwargs)
+    scale_x = np.sqrt(var_x) * n_std
+    scale_y = np.sqrt(var_y) * n_std
+
+    transf = transforms.Affine2D() \
+        .rotate_deg(45) \
+        .scale(scale_x, scale_y) \
+        .translate(x, y)
+    ellipse.set_transform(transf + ax.transData)
+    return ax.add_patch(ellipse)
+
