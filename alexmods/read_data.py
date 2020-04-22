@@ -872,6 +872,7 @@ def load_venn04():
     tab.rename_column("__Fe_H_","[Fe/H]")
     for elem in ["Mg","Ca","Ti","Na","Ni","Y","Ba","La","Eu"]:
         tab.rename_column("__{}_Fe_".format(elem), "[{}/Fe]".format(elem))
+        tab["ul"+elem.lower()] = False
     ## There is an [alpha/Fe] that I am not using here
     df = tab.to_pandas()
     XH_from_XFe(df)
