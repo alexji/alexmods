@@ -864,3 +864,30 @@ def load_pritzl():
     df = ascii.read(datapath+"/abundance_tables/J_AJ_130_2140/table2.dat", readme=datapath+"/abundance_tables/J_AJ_130_2140/ReadMe").to_pandas()
     df = df[df["f_[Fe/H]"]=="b"]
     return df
+
+def load_venn04():
+    tab = Table.read(datapath+"/abundance_tables/venn04.fits")
+    for col in ["Name","n_Name","SimbadName"]:
+        tab[col] = tab[col].astype(str)
+    tab.rename_column("__Fe_H_","[Fe/H]")
+    for elem in ["Mg","Ca","Ti","Na","Ni","Y","Ba","La","Eu"]:
+        tab.rename_column("__{}_Fe_".format(elem), "[{}/Fe]".format(elem))
+    ## There is an [alpha/Fe] that I am not using here
+    df = tab.to_pandas()
+    XH_from_XFe(df)
+    eps_from_XH(df)
+    tab.rename_column("__a_Fe_","[alpha/Fe]")
+    return df
+def load_venn04_halo():
+    df = load_venn04()
+    return df[df["Halo"] > 0.5]
+def load_venn04_thin():
+    df = load_venn04()
+    return df[df["Thin"] > 0.5]
+def load_venn04_thick():
+    df = load_venn04()
+    return df[df["Thick"] > 0.5]
+def load_venn04_dsph():
+    df = load_venn04()
+    return df[(df["Halo"] + df["Thin"] + df["Thick"]) == 0]
+
