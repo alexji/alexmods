@@ -891,4 +891,63 @@ def load_venn04_thick():
 def load_venn04_dsph():
     df = load_venn04()
     return df[(df["Halo"] + df["Thin"] + df["Thick"]) == 0]
+def load_venn04_mw():
+    df = load_venn04()
+    return df[(df["Halo"] + df["Thin"] + df["Thick"]) > 0]
 
+def load_hill19_sculptor():
+    tab = Table.read(datapath+"/abundance_tables/hill19_sculptor.fits")
+    tab["Star"] = tab["Star"].astype(str)
+    tab.rename_column("__Fe_H_", "[Fe/H]")
+    tab.rename_column("e__Fe_H_", "e_fe")
+    tab["ulfe"] = False
+    for elem in ["O","Na","Mg","Si","Ca","Sc","Cr","Co","Ni","Zn","Ba","La","Nd","Eu"]:
+        tab.rename_column("__{}_Fe_".format(elem), "[{}/Fe]".format(elem))
+        tab.rename_column("e__{}_Fe_".format(elem), "e_{}".format(elem.lower()))
+        tab["ul"+elem.lower()] = False
+    tab.rename_column("__TiII_Fe_", "[Ti/Fe]")
+    tab.rename_column("e__TiII_Fe_", "e_ti")
+    tab["ulti"] = False
+    
+    df = tab.to_pandas()
+    XH_from_XFe(df)
+    eps_from_XH(df)
+    
+    df.rename(columns={"__TiI_Fe_":"[Ti I/Fe]",
+                       "e__TiI_Fe_":"e_ti1",
+                       "__FeII_Fe_":"[Fe II/Fe]",
+                       "e__FeII_Fe_":"e_fe2"}, inplace=True)
+    return df
+def load_letarte10_fornax():
+    tab = Table.read(datapath+"/abundance_tables/letarte10_fornax.fits")
+    tab["Star"] = tab["Star"].astype(str)
+    for col in tab.colnames:
+        if col.startswith("o__"): tab.remove_column(col)
+    elemmap = {"NaI":"Na", "MgI":"Mg", "SiI":"Si", "TiII":"Ti",
+               "CrI":"Cr", "NiI":"Ni", "YII":"Y",
+               "BaII":"Ba","LaII":"La","NdII":"Nd","EuII":"Eu"}
+    #"FeI":"Fe"
+    for e1, e2 in elemmap.items():
+        tab.rename_column("__{}_Fe_".format(e1), "[{}/Fe]".format(e2))
+        tab.rename_column("e__{}_Fe_".format(e1), "e_{}".format(e2.lower()))
+    tab.rename_column("__FeI_H_", "[Fe/H]")
+    tab.rename_column("e__FeI_H_", "e_fe")
+    df = tab.to_pandas()
+    XH_from_XFe(df)
+    eps_from_XH(df)
+    df.rename(columns={"__FeII_H_":"[Fe II/H]",
+                       "e__FeII_H_":"e_fe2"},
+              inplace=True)
+    return df
+
+def load_battaglia17():
+    df = Table.read(datapath+"/abundance_tables/battaglia17.txt", format="ascii.fixed_width_two_line").to_pandas()
+    XH_from_XFe(df)
+    eps_from_XH(df)
+    for col in epscolnames(df):
+        ul = ulcol(col)
+        if ul in df:
+            df[ul] = df[ul] == 1
+        else:
+            df[ul] = False
+    return df
