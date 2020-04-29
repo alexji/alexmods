@@ -1,0 +1,362 @@
+SIMPLE  =                    T / Standard FITS Format                           BITPIX  =                    8 / Character data                                 NAXIS   =                    0 / No Image --- just extension(s)                 EXTEND  =                    T / There are standard extensions                  ORIGIN  = 'xml2fits_v1.95'     / Converted from XML-Astrores to FITS                                     e-mail: question@simbad.u-strasbg.fr                   COMMENT  ARG='-rm'                                                              LONGSTRN= 'OGIP 1.0'           / Long string convention (&/CONTINUE) may be usedDATE    = '2020-04-22'         / Written on 2020-04-22:23:13:11 (GMT)                                        by: apache@vizier.u-strasbg.fr                              **********************************************************                          EXCERPT from catalogues stored in VizieR (CDS)                                             with the following conditions:                                   **********************************************************                                                                                                      VizieR Astronomical Server vizier.u-strasbg.fr                                  Date: 2020-04-22T23:13:11 [V1.99+ (14-Oct-2013)]                                Explanations and Statistics of UCDs: See LINK below                             In case of problem, please report to: cds-question@unistra.fr                                                                                          INFO    = 'votable-version=1.99+ (14-Oct-2013)' / #                             INFO    = '-ref=VIZ5ea0cf66a8a5' / #                                            INFO    = '-out.max=unlimited' / #                                              Q-PARAMS=                   47 / Number of queryParameters (followed by list)            -oc.form=dec                                                                    -out.max=unlimited                                                              #out.form=FITS (binary) Table                                                   -out.all=2                                                                      -nav=cat:J/A+A/626/A15&tab:{J/A+A/626/A15/tablec5}&key:source=J/A+A/626         /A15/tablec5&HTTPPRM:&                                                          -source=J/A+A/626/A15/tablec5                                                   -order=I                                                                        -out=Star                                                                       -out=[Fe/H]                                                                     -out=e_[Fe/H]                                                                   -out=[O/Fe]                                                                     -out=e_[O/Fe]                                                                   -out=[Na/Fe]                                                                    -out=e_[Na/Fe]                                                                  -out=[Mg/Fe]                                                                    -out=e_[Mg/Fe]                                                                  -out=[Si/Fe]                                                                    -out.all=2                                                                      -out=e_[Si/Fe]                                                                  -out=[Ca/Fe]                                                                    -out=e_[Ca/Fe]                                                                  -out=[Sc/Fe]                                                                    -out=e_[Sc/Fe]                                                                  -out=[TiI/Fe]                                                                   -out=e_[TiI/Fe]                                                                 -out=[TiII/Fe]                                                                  -out=e_[TiII/Fe]                                                                -out=[Cr/Fe]                                                                    -out=e_[Cr/Fe]                                                                  -out=[FeII/Fe]                                                                  -out=e_[FeII/Fe]                                                                -out.all=2                                                                      -out=[Co/Fe]                                                                    -out=e_[Co/Fe]                                                                  -out=[Ni/Fe]                                                                    -out=e_[Ni/Fe]                                                                  -out=[Zn/Fe]                                                                    -out=e_[Zn/Fe]                                                                  -out=[Ba/Fe]                                                                    -out=e_[Ba/Fe]                                                                  -out=[La/Fe]                                                                    -out=e_[La/Fe]                                                                  -out=[Nd/Fe]                                                                    -out=e_[Nd/Fe]                                                                  -out=[Eu/Fe]                                                                    -out=e_[Eu/Fe]                                                                  -out.all=2                                                                      #                                                                               #RESOURCE=yCat_36260015                                                         #Name: J/A+A/626/A15                                                            #Title: Sculptor Red Giant Branch stars abundances (Hill+, 2019)       END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'BINTABLE'           / Binary Table Extension                         BITPIX  =                    8 / binary data                                    NAXIS   =                    2 / Simple 2-D matrix                              NAXIS1  =                  151 / Number of bytes per record                     NAXIS2  =                   99 / Number of records                              PCOUNT  =                    0 / Get rid of random parameters                   GCOUNT  =                    1 / Only one group (isn't it obvious?)             TFIELDS =                   37 / Number of data fields (columns)                CDS-CAT = 'J/A+A/626/A15'      / Catalogue designation in CDS nomenclature               Sculptor Red Giant Branch stars abundances (Hill+, 2019)               EXTNAME = 'J_A_A_626_A15_tablec5' / Identification of the table                 CDS-NAME= 'J/A+A/626/A15/tablec5' / Table name in METAtab                                Chemical abundances                                                    UCD__1  = 'meta.id;meta.main'  / ................................byte#0         TDISP1  = 'A7      '           / Display Fortran Format                         TFORM1  = '7A      '           / Ascii string                                   TTYPE1  = 'Star    '           / Star ID (link)                                 UCD__2  = 'phys.abund.Fe'      / ................................byte#7         TDISP2  = 'F5.2    '           / Display Fortran Format                         TFORM2  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE2  = '__Fe_H_ '           / Fe abundance                                   UCD__3  = 'stat.error;phys.abund.Fe' / ..........................byte#11        TDISP3  = 'F5.2    '           / Display Fortran Format                         TFORM3  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE3  = 'e__Fe_H_'           / Error on [Fe/H]                                UCD__4  = 'phys.abund'         / ................................byte#15        TDISP4  = 'F5.2    '           / Display Fortran Format                         TFORM4  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE4  = '__O_Fe_ '           / ? O abundance                                  UCD__5  = 'phys.abund'         / ................................byte#19        TDISP5  = 'F5.2    '           / Display Fortran Format                         TFORM5  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE5  = 'e__O_Fe_'           / ? Error on [O/Fe]                              UCD__6  = 'phys.abund'         / ................................byte#23        TDISP6  = 'F5.2    '           / Display Fortran Format                         TFORM6  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE6  = '__Na_Fe_'           / ? Na abundance                                 UCD__7  = 'phys.abund'         / ................................byte#27        TDISP7  = 'F5.2    '           / Display Fortran Format                         TFORM7  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE7  = 'e__Na_Fe_'          / ? Error on [Na/Fe]                             UCD__8  = 'phys.abund'         / ................................byte#31        TDISP8  = 'F5.2    '           / Display Fortran Format                         TFORM8  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE8  = '__Mg_Fe_'           / ? Mg abundance                                 UCD__9  = 'phys.abund'         / ................................byte#35        TDISP9  = 'F5.2    '           / Display Fortran Format                         TFORM9  = 'E       '           / 32-bit floating-point (simple precision)       TTYPE9  = 'e__Mg_Fe_'          / ? Error on [Mg/Fe]                             UCD__10 = 'phys.abund'         / ................................byte#39        TDISP10 = 'F5.2    '           / Display Fortran Format                         TFORM10 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE10 = '__Si_Fe_'           / ? Si abundance                                 UCD__11 = 'phys.abund'         / ................................byte#43        TDISP11 = 'F5.2    '           / Display Fortran Format                         TFORM11 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE11 = 'e__Si_Fe_'          / ? Error on [Si/Fe]                             UCD__12 = 'phys.abund'         / ................................byte#47        TDISP12 = 'F5.2    '           / Display Fortran Format                         TFORM12 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE12 = '__Ca_Fe_'           / Ca abundance                                   UCD__13 = 'phys.abund'         / ................................byte#51        TDISP13 = 'F5.2    '           / Display Fortran Format                         TFORM13 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE13 = 'e__Ca_Fe_'          / Error on [Ca/Fe]                               UCD__14 = 'phys.abund'         / ................................byte#55        TDISP14 = 'F5.2    '           / Display Fortran Format                         TFORM14 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE14 = '__Sc_Fe_'           / ? Sc abundance                                 UCD__15 = 'phys.abund'         / ................................byte#59        TDISP15 = 'F5.2    '           / Display Fortran Format                         TFORM15 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE15 = 'e__Sc_Fe_'          / ? Error on [Sc/Fe]                             UCD__16 = 'phys.abund'         / ................................byte#63        TDISP16 = 'F5.2    '           / Display Fortran Format                         TFORM16 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE16 = '__TiI_Fe_'          / ? TiI abundance                                UCD__17 = 'stat.error;phys.abund' / .............................byte#67        TDISP17 = 'F5.2    '           / Display Fortran Format                         TFORM17 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE17 = 'e__TiI_Fe_'         / ? Error on [TiI/Fe]                            UCD__18 = 'phys.abund'         / ................................byte#71        TDISP18 = 'F5.2    '           / Display Fortran Format                         TFORM18 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE18 = '__TiII_Fe_'         / TiII abundance                                 UCD__19 = 'stat.error;phys.abund' / .............................byte#75        TDISP19 = 'F5.2    '           / Display Fortran Format                         TFORM19 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE19 = 'e__TiII_Fe_'        / Error on [TiII/Fe]                             UCD__20 = 'phys.abund'         / ................................byte#79        TDISP20 = 'F5.2    '           / Display Fortran Format                         TFORM20 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE20 = '__Cr_Fe_'           / ? Cr abundance                                 UCD__21 = 'phys.abund'         / ................................byte#83        TDISP21 = 'F5.2    '           / Display Fortran Format                         TFORM21 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE21 = 'e__Cr_Fe_'          / ? Error on [Cr/Fe]                             UCD__22 = 'phys.abund'         / ................................byte#87        TDISP22 = 'F5.2    '           / Display Fortran Format                         TFORM22 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE22 = '__FeII_Fe_'         / FeII abundance                                 UCD__23 = 'stat.error;phys.abund' / .............................byte#91        TDISP23 = 'F5.2    '           / Display Fortran Format                         TFORM23 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE23 = 'e__FeII_Fe_'        / Error on [FeII/Fe]                             UCD__24 = 'phys.abund'         / ................................byte#95        TDISP24 = 'F5.2    '           / Display Fortran Format                         TFORM24 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE24 = '__Co_Fe_'           / ? Co abundance                                 UCD__25 = 'phys.abund'         / ................................byte#99        TDISP25 = 'F5.2    '           / Display Fortran Format                         TFORM25 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE25 = 'e__Co_Fe_'          / ? Error on [Co/Fe]                             UCD__26 = 'phys.abund'         / ................................byte#103       TDISP26 = 'F5.2    '           / Display Fortran Format                         TFORM26 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE26 = '__Ni_Fe_'           / ? Ni abundance                                 UCD__27 = 'phys.abund'         / ................................byte#107       TDISP27 = 'F5.2    '           / Display Fortran Format                         TFORM27 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE27 = 'e__Ni_Fe_'          / ? Error on [Ni/Fe]                             UCD__28 = 'phys.abund'         / ................................byte#111       TDISP28 = 'F5.2    '           / Display Fortran Format                         TFORM28 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE28 = '__Zn_Fe_'           / ? Zn abundance                                 UCD__29 = 'phys.abund'         / ................................byte#115       TDISP29 = 'F5.2    '           / Display Fortran Format                         TFORM29 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE29 = 'e__Zn_Fe_'          / ? Error on [Zn/Fe]                             UCD__30 = 'phys.abund'         / ................................byte#119       TDISP30 = 'F5.2    '           / Display Fortran Format                         TFORM30 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE30 = '__Ba_Fe_'           / ? Ba abundance                                 UCD__31 = 'phys.abund'         / ................................byte#123       TDISP31 = 'F5.2    '           / Display Fortran Format                         TFORM31 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE31 = 'e__Ba_Fe_'          / ? Error on [Ba/Fe]                             UCD__32 = 'phys.abund'         / ................................byte#127       TDISP32 = 'F5.2    '           / Display Fortran Format                         TFORM32 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE32 = '__La_Fe_'           / ? La abundance                                 UCD__33 = 'phys.abund'         / ................................byte#131       TDISP33 = 'F5.2    '           / Display Fortran Format                         TFORM33 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE33 = 'e__La_Fe_'          / ? Error on [La/Fe]                             UCD__34 = 'phys.abund'         / ................................byte#135       TDISP34 = 'F5.2    '           / Display Fortran Format                         TFORM34 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE34 = '__Nd_Fe_'           / ? Nd abundance                                 UCD__35 = 'phys.abund'         / ................................byte#139       TDISP35 = 'F5.2    '           / Display Fortran Format                         TFORM35 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE35 = 'e__Nd_Fe_'          / ? Error on [Nd/Fe]                             UCD__36 = 'phys.abund'         / ................................byte#143       TDISP36 = 'F5.2    '           / Display Fortran Format                         TFORM36 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE36 = '__Eu_Fe_'           / ? Eu abundance                                 UCD__37 = 'phys.abund'         / ................................byte#147       TDISP37 = 'F5.2    '           / Display Fortran Format                         TFORM37 = 'E       '           / 32-bit floating-point (simple precision)       TTYPE37 = 'e__Eu_Fe_'          / ? Error on [Eu/Fe]                             END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ET0009 ¿×
+=>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?ë…>aG®ÿÿÿÿÿÿÿÿ>LÌÍ=\)ÿÿÿÿÿÿÿÿ<£×
+=áG®=ÌÌÍ>…¸½¸Qì>™š=uÂ>\)=ÌÌÍ>8Qì¼£×
+>™šÿÿÿÿÿÿÿÿ¾aG®>aG®>™š>aG®ÿÿÿÿÿÿÿÿ>ž¸R>\)ET0013 ¿×
+=>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?®>Š=qÿÿÿÿÿÿÿÿ>\)=ÌÌÍÿÿÿÿÿÿÿÿ=¸Qì>8Qì?+…>”zá½\)>8Qì>¸>³33ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾”zá>£×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0024 ¿ž¸R=ÌÌÍ½ÌÌÍ>LÌÍ¿ÌÍ>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ    >\)¿(ö>aG®½LÌÍ>\)¾k…>k…¾…¸>aG®>.{>”zá½\)>8Qì¾Ç®>¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾™™š>#×
+ÿÿÿÿÿÿÿÿ¾.{>aG®ET0026 ¿æff>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>áG®>B\ÿÿÿÿÿÿÿÿ=\)=uÂÿÿÿÿÿÿÿÿ½¸Qì=õÂ<õÂ>aG®¾£×
+>™š=\)>€  ½õÂ>#×
+½\)>B\ÿÿÿÿÿÿÿÿ¾uÂ>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0027 ¿À  >¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=õÂ>™šÿÿÿÿÿÿÿÿ½uÂ=#×
+¾õÂ>W
+=¾aG®>\)¾™š>LÌÍ¾€  >\)=uÂ>€  ÿÿÿÿÿÿÿÿ¾8Qì=ÌÌÍÿÿÿÿÿÿÿÿ¾B\>B\¾¨õÃ>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0028 ¿œ(ö=áG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½¸Qì>\)ÿÿÿÿÿÿÿÿ<õÂ=\)¿0£×>B\¾8Qì>\)¾k…>#×
+¾LÌÍ>\)=uÂ>\)<£×
+>\)¾B\=¸Qìÿÿÿÿÿÿÿÿ¾.{>8Qì¾”zá>™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0031 ¿×
+=>.{>…¸>k…ÿÿÿÿÿÿÿÿ?\>8Qìÿÿÿÿÿÿÿÿ>aG®=uÂ½uÂ>€  >B\=¸Qì>#×
+>k…½uÂ>¸=\)>€  =\)>™š=uÂ>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>k…>k…ÿÿÿÿÿÿÿÿ?ë…>uÂET0033 ¿â\>#×
+>™™š>k…ÿÿÿÿÿÿÿÿ>Š=q>™šÿÿÿÿÿÿÿÿ=ÌÌÍ=£×
+ÿÿÿÿÿÿÿÿ¾¸=áG®¼£×
+>k…¾Ü(ö>¸=\)>”zá¾k…>\)=£×
+>¸ÿÿÿÿÿÿÿÿ=áG®>LÌÍ>k…>uÂÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0035 ¿ù™š>k…ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?E¸>ž¸Rÿÿÿÿÿÿÿÿ>£×
+=ÌÌÍ<õÂ>Ñë…>aG®>™™š½áG®>ž¸R¾B\>”zá=ÌÌÍ>¨õÃÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¿zá>³33ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0039 Àff>€  ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?¸>™™šÿÿÿÿÿÿÿÿ>£×
+>¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=áG®>”zá¾”zá>™™š=áG®>£×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?
+=>ÌÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0043 ¿ž¸R>#×
+½£×
+>uÂÿÿÿÿÿÿÿÿ¾LÌÍ>B\ÿÿÿÿÿÿÿÿ<#×
+=¸Qì¾½p¤>…¸¾…¸=áG®<£×
+>aG®¾\)>\)=LÌÍ>”záÿÿÿÿÿÿÿÿ½ÌÌÍ>uÂÿÿÿÿÿÿÿÿ=\)>aG®¾.{>LÌÍÿÿÿÿÿÿÿÿ>W
+=>…¸ET0048 ¿ó33>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?zá>#×
+ÿÿÿÿÿÿÿÿ>€  =\)¾.{>…¸=¸Qì>\)=õÂ>k…¾uÂ>.{=\)>…¸<£×
+>\)>®{>\)ÿÿÿÿÿÿÿÿ>¸>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?¸>€  ET0051 ¿k…=õÂ¾Š=q>€  ÿÿÿÿÿÿÿÿ¼#×
+>k…¾\)>uÂ½ÌÌÍ>\)¿
+=>…¸¾®{>.{¾€  >k…¾Ñë…>€  =õÂ>ž¸R=uÂ>W
+=¾¸Qì>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾ÌÌÍ>8Qì¾Ç®>€  =£×
+>€  ET0054 ¿ç®>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>³33>.{ÿÿÿÿÿÿÿÿ>#×
+=uÂ½£×
+>€  ¼õÂ=õÂ>#×
+>k…¾\)=õÂ=\)>…¸¼õÂ>™š>B\>™šÿÿÿÿÿÿÿÿ¾#×
+>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>õÂ>uÂET0057 ¿ª=q>¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>¸>™šÿÿÿÿÿÿÿÿ<õÂ=¸Qì¾æff>LÌÍ¾™š=ÌÌÍ½¸Qì>.{¾8Qì>™š=uÂ>€  ½õÂ>¸¾€  >™šÿÿÿÿÿÿÿÿ¾\)>.{¾¸>™šÿÿÿÿÿÿÿÿ>B\>B\ET0059 ¿Ã×
+>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=uÂ>#×
+ÿÿÿÿÿÿÿÿ<#×
+=uÂ¾×
+=>uÂ¾™™š=ÌÌÍ¾™™š>W
+=½õÂ>¸=¸Qì>Š=q¾8Qì>\)½#×
+=õÂÿÿÿÿÿÿÿÿ¾.{>W
+=¾LÌÍ>B\ÿÿÿÿÿÿÿÿ>.{>uÂET0060 ¿Ç®>™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>æff=õÂÿÿÿÿÿÿÿÿ>k…=\)ÿÿÿÿÿÿÿÿ¾\)=¸Qì<õÂ>Š=q>#×
+>aG®=LÌÍ>€  ½õÂ=ÌÌÍ¼õÂ>¸ÿÿÿÿÿÿÿÿ½LÌÍ>W
+=¾…¸>W
+=ÿÿÿÿÿÿÿÿ>uÂ>aG®ET0062 ÀG®>8Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?+…>.{ÿÿÿÿÿÿÿÿ>Ç®=\)ÿÿÿÿÿÿÿÿ>\)>®{>™™š>…¸¾™š>…¸=õÂ>…¸ÿÿÿÿÿÿÿÿ?\>.{ÿÿÿÿÿÿÿÿ¾ž¸R>aG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0063 ¿—
+=>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>¸>uÂÿÿÿÿÿÿÿÿ    =ÌÌÍÿÿÿÿÿÿÿÿ¾LÌÍ>.{¾™™š>k…¾W
+=>…¸=áG®>\)¼£×
+>aG®¾LÌÍ>LÌÍÿÿÿÿÿÿÿÿ½õÂ>k…¾³33>uÂ¾Š=q>€  >¸Qì>\)ET0064 ¿°£×>\)ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>\)>™šÿÿÿÿÿÿÿÿ=\)=uÂ¾áG®>W
+=¾W
+==õÂ½£×
+>B\½¸Qì>¸=uÂ>uÂ¾\)=õÂÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¼#×
+>#×
+¾\)>#×
+ÿÿÿÿÿÿÿÿ>8Qì>LÌÍET0066 ¿¦ff>\)ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>™š>\)ÿÿÿÿÿÿÿÿ    =\)¾æff>aG®¾k…=áG®¾\)>8Qì¾k…>¸<õÂ>€  ¾ÌÌÍ>\)½õÂ=õÂÿÿÿÿÿÿÿÿ    >aG®¾aG®>.{ÿÿÿÿÿÿÿÿ=LÌÍ>W
+=ET0067 ¿Ó33>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>\)>.{ÿÿÿÿÿÿÿÿ>”zá=uÂÿÿÿÿÿÿÿÿ=#×
+=áG®>8Qì>W
+=½£×
+>¸=#×
+>…¸¾aG®>#×
+½uÂ>¸ÿÿÿÿÿÿÿÿ>Ç®>k…>Š=q>LÌÍ>Â\>B\?LÌÍ>uÂET0069 À
+=>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?ë…>W
+=ÿÿÿÿÿÿÿÿ>®{=¸Qìÿÿÿÿÿÿÿÿ>¸Qì>B\=ÌÌÍ>uÂ¾8Qì>aG®=#×
+>\)ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=\)>…¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0071 ¿¬ÌÍ>\)ÿÿÿÿÿÿÿÿ¾W
+=>#×
+    >#×
+ÿÿÿÿÿÿÿÿ>¸=£×
+ÿÿÿÿÿÿÿÿ¾™š=áG®¾”zá>\)¾”zá>™š=£×
+>€  ÿÿÿÿÿÿÿÿ¾uÂ=õÂÿÿÿÿÿÿÿÿ=uÂ>8QìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0073 ¿Ã×
+>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>¨õÃ>#×
+ÿÿÿÿÿÿÿÿ>€  <õÂ¾B\>€  ½uÂ=áG®=¸Qì>W
+=½£×
+=õÂ=\)>€  <õÂ>™š½ÌÌÍ>¸ÿÿÿÿÿÿÿÿ>8Qì>W
+==áG®>LÌÍÿÿÿÿÿÿÿÿ>ë…>uÂET0083 ¿ü(ö>8Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?
+=q>™šÿÿÿÿÿÿÿÿ>aG®=#×
+ÿÿÿÿÿÿÿÿ=áG®=áG®¼#×
+>…¸¾aG®>aG®<õÂ>…¸½\)>¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½uÂ>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0094 ¿î{>™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?#×
+>8Qìÿÿÿÿÿÿÿÿ>\)=LÌÍ½LÌÍ>…¸=#×
+=áG®=\)>k…¾ÌÌÍ>\)=ÌÌÍ>”zá¼#×
+>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾ž¸R>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0095 À
+=q>LÌÍ>³33>aG®ÿÿÿÿÿÿÿÿ?ë…=õÂÿÿÿÿÿÿÿÿ>B\=\)½ÌÌÍ>k…¼£×
+=áG®=¸Qì>uÂ½£×
+>™š=¸Qì>\)<£×
+=£×
+>€  =ÌÌÍÿÿÿÿÿÿÿÿ½¸Qì>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0097 ¿ôzá>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>B\>#×
+?8Qì>8Qì>uÂ=uÂÿÿÿÿÿÿÿÿ=¸Qì=ÌÌÍ=LÌÍ>uÂ½ÌÌÍ=õÂ=\)>…¸½#×
+>™š½#×
+=áG®ÿÿÿÿÿÿÿÿ½\)>B\>uÂ>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0103 ¿šáH>¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=\)>B\=LÌÍ>.{¼£×
+=\)¾½p¤>k…½ÌÌÍ>\)¾ž¸R>W
+=¾½p¤>W
+==uÂ>k…<£×
+>aG®¾ž¸R>\)ÿÿÿÿÿÿÿÿ=#×
+>W
+=¾8Qì>8Qì=LÌÍ>8Qì=LÌÍ>k…ET0104 ¿Ï\)>.{>¨õÃ>W
+=ÿÿÿÿÿÿÿÿ>½p¤>™šÿÿÿÿÿÿÿÿ>€  =\)¾aG®>uÂ    =£×
+=¸Qì>W
+=½\)>¸=uÂ>Š=q=£×
+>¸>™š>#×
+ÿÿÿÿÿÿÿÿ>™™š>B\<£×
+>B\>áG®>aG®?!G®>k…ET0109 ¿ìÌÍ=áG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?ÌÍ>\)ÿÿÿÿÿÿÿÿ>™š=uÂ¾B\>B\<£×
+>\)=áG®>B\¾…¸>#×
+>…¸>k…=¸Qì>¸<#×
+=¸Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½õÂ>#×
+ÿÿÿÿÿÿÿÿ?™š>B\ET0113 À…>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>æff>\)ÿÿÿÿÿÿÿÿ>k…=\)ÿÿÿÿÿÿÿÿ½uÂ>¸>¸>uÂ¾B\>”zá=¸Qì>”záÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½\)>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0121 Àff>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>Ñë…>.{ÿÿÿÿÿÿÿÿ>ž¸R=ÌÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=õÂ>€  ¾½p¤>™š=ÌÌÍ>™™š>ÌÌÍ>™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¿+…>k…ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0126 ¿Ž{>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½õÂ>B\ÿÿÿÿÿÿÿÿ¾\)=ÌÌÍÿÿÿÿÿÿÿÿ¾¸Qì>™š¾#×
+>LÌÍ¾8Qì>W
+==\)>\)¼£×
+>.{¾¨õÃ>™šÿÿÿÿÿÿÿÿ½uÂ>.{¾Ç®>LÌÍ½ÌÌÍ>W
+=>³33>k…ET0132 ¿À  >™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>LÌÍ>™šÿÿÿÿÿÿÿÿ>™š=uÂ¾Š=q>k…½uÂ=õÂ=#×
+>B\¾\)>LÌÍ<õÂ>Š=q½\)>¸¾W
+==õÂÿÿÿÿÿÿÿÿ>£×
+>8Qì=ÌÌÍ>8Qì>LÌÍ>aG®?.{>aG®ET0133 ¿ˆõÃ>™š¾B\>W
+=ÿÿÿÿÿÿÿÿ½£×
+>8Qì=¸Qì>aG®<õÂ=ÌÌÍ¾Â\>k…¾…¸>™š¾…¸>.{¾k…>W
+==£×
+>…¸    >.{¾™™š>k…ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾£×
+>B\ÿÿÿÿÿÿÿÿ>8Qì>k…ET0137 ¿c×
+>8Qì¾Š=q>€  ¿Tzá>Š=q½\)>W
+=ÿÿÿÿÿÿÿÿ½ÌÌÍ>\)¿(ö>…¸¾™™š>.{¾€  >aG®¾™™š>k…=ÌÌÍ>”zá=ÌÌÍ>LÌÍ¾¨õÃ>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾ž¸R>.{¾Ñë…>€  ¾aG®>…¸ET0138 ¿Ù™š>™š>\)>W
+=ÿÿÿÿÿÿÿÿ>™™š>#×
+ÿÿÿÿÿÿÿÿ>8Qì=uÂÿÿÿÿÿÿÿÿ=\)=ÌÌÍ    >B\¾£×
+=õÂ<õÂ>k…>™š>\)=#×
+=õÂÿÿÿÿÿÿÿÿ¾…¸>8Qì=õÂ>B\ÿÿÿÿÿÿÿÿ?   >k…ET0139 ¿´zá=áG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ<£×
+>W
+=ÿÿÿÿÿÿÿÿ¼£×
+=\)¾®{>€  ¾8Qì>¸¾uÂ>€  ¾LÌÍ>k…=õÂ>…¸    >B\¾£×
+>#×
+ÿÿÿÿÿÿÿÿ¾…¸>uÂ¾\)>aG®ÿÿÿÿÿÿÿÿ>aG®>€  ET0141 ¿×
+=>™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>æff>B\ÿÿÿÿÿÿÿÿ>B\=uÂ¾\)>…¸¾\)>¸¼#×
+>LÌÍ½#×
+>#×
+=uÂ>uÂ½uÂ>8Qì=#×
+>\)ÿÿÿÿÿÿÿÿ=ÌÌÍ>W
+==LÌÍ>W
+=ÿÿÿÿÿÿÿÿ?\)>€  ET0147 ¿“33>#×
+¾B\>£×
+ÿÿÿÿÿÿÿÿ<#×
+>uÂÿÿÿÿÿÿÿÿ¼õÂ=õÂÿÿÿÿÿÿÿÿ½áG®>™š=áG®>€  =£×
+>uÂ>LÌÍ>®{¾#×
+>aG®¾W
+=>.{ÿÿÿÿÿÿÿÿ¾\)>ž¸RÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0150 ¿n{=áG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾”zá>B\ÿÿÿÿÿÿÿÿ<£×
+=ÌÌÍ¿#×
+>aG®¾ÌÌÍ>\)½áG®>.{¾LÌÍ>aG®<#×
+>€  ½áG®>B\¾Â\>#×
+ÿÿÿÿÿÿÿÿ¾™š>#×
+¾®{>™šÿÿÿÿÿÿÿÿ½#×
+>aG®ET0151 ¿â\>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>®{>™šÿÿÿÿÿÿÿÿ>ž¸R=LÌÍ½uÂ>uÂ<£×
+=ÌÌÍ=áG®>aG®½uÂ>.{=\)>…¸½#×
+>\)<£×
+=ÌÌÍÿÿÿÿÿÿÿÿ½£×
+>Š=q=uÂ>B\ÿÿÿÿÿÿÿÿ?ÌÍ>uÂET0158 ¿æff>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>®{>W
+=ÿÿÿÿÿÿÿÿ>.{=£×
+ÿÿÿÿÿÿÿÿ>\)>™™š>™š>€  >\)>uÂ<õÂ>Š=q½#×
+>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>¸Qì>Š=qÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0160 ¿”zá>\)¾8Qì>B\ÿÿÿÿÿÿÿÿ½LÌÍ>.{ÿÿÿÿÿÿÿÿ<õÂ=ÌÌÍ¾™™š>aG®¾uÂ>¸½£×
+>LÌÍ¾aG®>.{=õÂ>”zá¾uÂ=õÂ¾™š>™šÿÿÿÿÿÿÿÿ=LÌÍ>.{¾B\>8Qìÿÿÿÿÿÿÿÿ>aG®>k…ET0163 ¿î{>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>¸Qì>.{ÿÿÿÿÿÿÿÿ>™š=ÌÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=uÂ>\)>#×
+>W
+==£×
+>¨õÃÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=#×
+>…¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0164 ¿ñë…>aG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>Š=q>B\ÿÿÿÿÿÿÿÿ>”zá=áG®ÿÿÿÿÿÿÿÿ>k…>¸>.{>”zá½õÂ>LÌÍ>¸>³33>¸>8Qì>\)>B\ÿÿÿÿÿÿÿÿ½#×
+>”záÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0165 ¿ŒÌÍ>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ<£×
+>W
+==£×
+>uÂ½LÌÍ=\)¾½p¤>…¸¾B\>¸¾…¸>LÌÍ¾\)>.{=õÂ>Š=qÿÿÿÿÿÿÿÿ¾\)>LÌÍÿÿÿÿÿÿÿÿ<£×
+>W
+=¾.{>B\=¸Qì>k…ÿÿÿÿÿÿÿÿET0166 ¿¾¸R>™šÿÿÿÿÿÿÿÿ=¸Qì>W
+=>™™š>#×
+ÿÿÿÿÿÿÿÿ>#×
+=LÌÍÿÿÿÿÿÿÿÿ=uÂ=ÌÌÍ=¸Qì>W
+=½áG®>™š=\)>Š=q½#×
+>¸=#×
+=áG®ÿÿÿÿÿÿÿÿ¼õÂ>LÌÍ=uÂ>8Qìÿÿÿÿÿÿÿÿ>æff>aG®ET0168 ¿ŒÌÍ>.{¾.{>\)ÿÿÿÿÿÿÿÿ¾8Qì>aG®ÿÿÿÿÿÿÿÿ=¸Qì=¸Qìÿÿÿÿÿÿÿÿ¾¸Qì>™š¼õÂ>ž¸R¾ž¸R>.{=uÂ>”zá¾8Qì>LÌÍ¾€  >aG®ÿÿÿÿÿÿÿÿ>¸>k…¾W
+=>k…ÿÿÿÿÿÿÿÿ>aG®>\)ET0173 ¿¼(ö=ÌÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>B\>8Qìÿÿÿÿÿÿÿÿ¼#×
+=ÌÌÍÿÿÿÿÿÿÿÿ¾¨õÃ>™š½LÌÍ>#×
+¾×
+=>W
+=>\)>Š=q>aG®>™š¾€  >\)ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾…¸>\)½\)>.{>Ñë…>W
+=ET0198 ¿”zá>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ<£×
+>B\ÿÿÿÿÿÿÿÿ½õÂ=\)ÿÿÿÿÿÿÿÿ¾k…=áG®¾B\>Š=q½uÂ>™š=£×
+>Š=q¾…¸>.{¾#×
+>LÌÍÿÿÿÿÿÿÿÿ>™š>B\¾aG®>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0200 ¿¾¸R>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>LÌÍ>k…ÿÿÿÿÿÿÿÿ>#×
+=\)ÿÿÿÿÿÿÿÿ¼õÂ=õÂ=õÂ>€  ¾8Qì>™š>¸>™™š½¸Qì>B\>ÌÌÍ>aG®ÿÿÿÿÿÿÿÿ>8Qì>Â\>aG®>uÂÿÿÿÿÿÿÿÿ?8Qì>™™šET0202 ¿¨õÃ>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=¸Qì>£×
+>¸Qì>uÂ>B\=£×
+ÿÿÿÿÿÿÿÿ½uÂ>\)<£×
+>€  ¾W
+=>.{=áG®>”záÿÿÿÿÿÿÿÿ½õÂ>B\ÿÿÿÿÿÿÿÿ¾”zá>ž¸R>LÌÍ>™™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0206 ¿ª=q>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=õÂ>B\ÿÿÿÿÿÿÿÿ=ÌÌÍ=¸Qìÿÿÿÿÿÿÿÿ¾\)>¸=uÂ>\)½¸Qì>\)=uÂ>…¸¾aG®>8Qì¾\)>™šÿÿÿÿÿÿÿÿ<£×
+>aG®<õÂ>W
+=ÿÿÿÿÿÿÿÿ?   >Š=qET0232 ¿€  >8Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½ÌÌÍ>.{½uÂ>B\<£×
+=\)¿ÌÍ>…¸¾ž¸R>¸¾³33>…¸¾8Qì>¸    >Š=q¾¸Qì>™š¾aG®>™šÿÿÿÿÿÿÿÿ=\)>aG®¾aG®>aG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0236 À=q>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>×
+=>aG®ÿÿÿÿÿÿÿÿ>”zá=õÂÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=¸Qì>¨õÃ¾Ç®>LÌÍ=ÌÌÍ>Â\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¿¸>™™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0237 ¿Î{>8Qì>…¸>ž¸Rÿÿÿÿÿÿÿÿ>®{>uÂÿÿÿÿÿÿÿÿ>³33=£×
+ÿÿÿÿÿÿÿÿ>.{=áG®>B\>ë…=¸Qì>Š=q=¸Qì>…¸½¸Qì>uÂ>¸>uÂÿÿÿÿÿÿÿÿ½áG®>€  ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0238 ¿ÈõÃ>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>Â\>#×
+ÿÿÿÿÿÿÿÿ>.{=uÂÿÿÿÿÿÿÿÿ¼#×
+=£×
+½\)>uÂ½£×
+=áG®=#×
+>Š=q½áG®>\)¼£×
+=áG®ÿÿÿÿÿÿÿÿ½õÂ>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0239 À£×>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?!G®>B\ÿÿÿÿÿÿÿÿ>¨õÃ>¸ÿÿÿÿÿÿÿÿ>\)>B\>Š=q>€  ¾LÌÍ>.{=uÂ>”záÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½¸Qì>…¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0240 ¿“33>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>™š>k…ÿÿÿÿÿÿÿÿ=uÂ=\)ÿÿÿÿÿÿÿÿ¾¨õÃ=õÂ>8Qì>aG®½#×
+>aG®=\)>…¸¾Ü(ö>LÌÍ½áG®>k…ÿÿÿÿÿÿÿÿ>™š>aG®¾uÂ>k…ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0241 ¿´zá>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>¸>.{ÿÿÿÿÿÿÿÿ=õÂ=LÌÍÿÿÿÿÿÿÿÿ¾B\>¸=\)>\)½#×
+=õÂ=\)>\)¾™š>™š=#×
+>¸ÿÿÿÿÿÿÿÿ=õÂ>k…ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>¸Qì>€  ET0242 ¿¨õÃ>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¼£×
+>¸ÿÿÿÿÿÿÿÿ=#×
+=uÂÿÿÿÿÿÿÿÿ¾\)=áG®½\)>aG®¾…¸=áG®<#×
+>…¸¾aG®>#×
+>W
+=>\)ÿÿÿÿÿÿÿÿ¼õÂ>8Qì¾.{>8QìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0244 ¿ž¸R>.{    >uÂÿÿÿÿÿÿÿÿ<#×
+>#×
+ÿÿÿÿÿÿÿÿ<õÂ=uÂÿÿÿÿÿÿÿÿ½õÂ=£×
+¾™š>k…¾8Qì>™š=\)>\)¾€  >\)¾¸>.{ÿÿÿÿÿÿÿÿ>LÌÍ>LÌÍ½ÌÌÍ>aG®ÿÿÿÿÿÿÿÿ>uÂ>€  ET0270 ¿Ç®>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>³33>#×
+ÿÿÿÿÿÿÿÿ>\)=LÌÍÿÿÿÿÿÿÿÿ<#×
+=ÌÌÍ=ÌÌÍ>LÌÍ½£×
+=õÂ=£×
+>uÂ=LÌÍ>\)¼#×
+>™šÿÿÿÿÿÿÿÿ>#×
+>B\½#×
+>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0275 ¿šáH>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½ÌÌÍ=£×
+ÿÿÿÿÿÿÿÿ¾Š=q>\)½#×
+>€  ¾Ü(ö>™š=£×
+>Š=q¾æff>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>8Qì>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>Ç®>Š=qET0299 ¿ê=q>8Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>LÌÍ=¸Qìÿÿÿÿÿÿÿÿ>³33>LÌÍ>®{>uÂ¾™š>.{    >Š=q>.{>8Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>áG®>aG®ÿÿÿÿÿÿÿÿ?333>Š=qÿÿÿÿÿÿÿÿET0300 ¿±ë…>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½uÂ>€  ÿÿÿÿÿÿÿÿ<õÂ=\)ÿÿÿÿÿÿÿÿ>\)>\)½ÌÌÍ>…¸¾®{>8Qì=õÂ>”zá¾\)>uÂ¾Š=q>€  ÿÿÿÿÿÿÿÿ=õÂ>Š=qÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0317 ¿ØQì>B\ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>LÌÍ>B\ÿÿÿÿÿÿÿÿ>¸=\)½õÂ>Š=q>8Qì=ÌÌÍ¼£×
+>€  ¼õÂ>.{=LÌÍ>Š=q¼£×
+>#×
+=LÌÍ>B\ÿÿÿÿÿÿÿÿ¾™š>€  >k…>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0320 ¿ÚáH>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>aG®>B\ÿÿÿÿÿÿÿÿ=#×
+=¸Qìÿÿÿÿÿÿÿÿ½\)>\)=£×
+>uÂ¾Š=q>B\=uÂ>\)ÿÿÿÿÿÿÿÿ>…¸>™šÿÿÿÿÿÿÿÿ>LÌÍ>k…>…¸>aG®ÿÿÿÿÿÿÿÿ?!G®>”záET0321 ¿÷
+=>8Qì>€  >€  ÿÿÿÿÿÿÿÿ?ÌÍ>.{ÿÿÿÿÿÿÿÿ>\)=\)ÿÿÿÿÿÿÿÿ>”zá>™š    >aG®¾Š=q>.{=¸Qì>Š=q½áG®>\)?
+=q=áG®ÿÿÿÿÿÿÿÿ¾LÌÍ>W
+=>¸>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0322 À\>Š=qÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?=p¤>€  ÿÿÿÿÿÿÿÿ>”zá>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ<#×
+>£×
+¾ž¸R>W
+=>¸>³33ÿÿÿÿÿÿÿÿ?
+=>k…ÿÿÿÿÿÿÿÿ¿™š>™™šÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0327 ¿¨õÃ>#×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½õÂ>8Qì>\)>aG®=uÂ=\)ÿÿÿÿÿÿÿÿ¾#×
+=ÌÌÍ¼#×
+>W
+=½\)>™š=\)>€  ¿\>.{½ÌÌÍ>™šÿÿÿÿÿÿÿÿ½\)>W
+=½LÌÍ>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0330 À   >uÂÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>ÌÌÍ>uÂÿÿÿÿÿÿÿÿ>.{=¸Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=£×
+>™™š¾¨õÃ>k…>\)>£×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¿hõÃ>Š=qÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0339 ¿Š=q>\)ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¿
+=q>8Qìÿÿÿÿÿÿÿÿ½ÌÌÍ=áG®ÿÿÿÿÿÿÿÿ¾áG®=áG®¾¸Qì>LÌÍ¾…¸>™š=£×
+>…¸¾Â\>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¾k…>uÂ½LÌÍ>k…ÿÿÿÿÿÿÿÿ>#×
+>uÂET0342 ¿¬ÌÍ>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½õÂ>uÂÿÿÿÿÿÿÿÿ=£×
+=áG®ÿÿÿÿÿÿÿÿ<£×
+>.{¾¸>ž¸R¾\)>€  =£×
+>™™š¾.{>W
+=>B\>W
+=ÿÿÿÿÿÿÿÿ>.{>…¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0350 ¿ó33>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>…¸>LÌÍÿÿÿÿÿÿÿÿ>Ç®=¸Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>€  >\)<õÂ>8Qì=ÌÌÍ>£×
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=õÂ>€  ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0354 ¿ˆõÃ>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¼£×
+>k…ÿÿÿÿÿÿÿÿ½LÌÍ=¸Qìÿÿÿÿÿÿÿÿ¾™š>\)½áG®>ÌÌÍ<õÂ>#×
+=LÌÍ>…¸¾æff>LÌÍ<õÂ>k…ÿÿÿÿÿÿÿÿ¼#×
+>k…<õÂ>€  ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0363 ¿£×
+>.{ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>#×
+>B\ÿÿÿÿÿÿÿÿ=LÌÍ=£×
+½uÂ>Š=q¾™š=õÂ=#×
+>Š=q¾ž¸R>\)=áG®>\)ÿÿÿÿÿÿÿÿ¾LÌÍ>8Qìÿÿÿÿÿÿÿÿ>Š=q>aG®>\)>k…ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0369 Àff>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>aG®>B\ÿÿÿÿÿÿÿÿ>ž¸R>\)ÿÿÿÿÿÿÿÿ?8Qì>Š=q¼#×
+>uÂ¾8Qì>™š=ÌÌÍ>\)ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ¿†ff>aG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0373 ¿úáH>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>®{>k…ÿÿÿÿÿÿÿÿ=áG®=ÌÌÍÿÿÿÿÿÿÿÿ>Ü(ö>8Qì=\)>…¸¾½p¤>aG®>¸>™™š<£×
+>k…?¸>aG®ÿÿÿÿÿÿÿÿ¾®{>Š=q?®>…¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0376 ¿•Â>.{<#×
+>ž¸Rÿÿÿÿÿÿÿÿ¾k…>€  ÿÿÿÿÿÿÿÿ<#×
+=¸Qìÿÿÿÿÿÿÿÿ¾Š=q>\)=õÂ>k…¾LÌÍ>8Qì=ÌÌÍ>£×
+¾®{>k…¾aG®>B\ÿÿÿÿÿÿÿÿ>™š>³33½£×
+>…¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0378 ¿—
+=>™šÿÿÿÿÿÿÿÿ=\)>€  =áG®>€  ÿÿÿÿÿÿÿÿ½\)=\)ÿÿÿÿÿÿÿÿ¾aG®>\)¾#×
+>uÂ<£×
+>B\=£×
+>”zá¾k…>aG®¾”zá>8Qìÿÿÿÿÿÿÿÿ¼õÂ>k…¾.{>uÂÿÿÿÿÿÿÿÿ>ž¸R>”záET0379 ¿Ó33>8Qìÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½\)>k…ÿÿÿÿÿÿÿÿ>#×
+=uÂÿÿÿÿÿÿÿÿ½#×
+>\)¼#×
+>€  ¾™™š>LÌÍ=#×
+>…¸¾k…>k…>Ü(ö>aG®ÿÿÿÿÿÿÿÿ¾ÌÌÍ>uÂÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0382 ¿Þ¸R>k…ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>³33>aG®ÿÿÿÿÿÿÿÿ>\)=¸Qìÿÿÿÿÿÿÿÿ>ž¸R>#×
+>¸Qì>Š=q>Š=q>”zá=LÌÍ>™™š<£×
+>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>®{>½p¤ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?O\)>ž¸RET0384 ¿ºáH>aG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½£×
+>€  ÿÿÿÿÿÿÿÿ=\)=ÌÌÍ=áG®>¨õÃ>™š>W
+=>\)>¨õÃ>\)>8Qì=£×
+>”zá¾8Qì>…¸=¸Qì>8Qìÿÿÿÿÿÿÿÿ>ž¸R>”záÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿET0389 ¿ÌÌÍ>aG®ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ>k…>™™šÿÿÿÿÿÿÿÿ>€  =£×
+ÿÿÿÿÿÿÿÿ¼õÂ>B\>Ñë…>€  >LÌÍ>…¸>¸>™™š>k…>”zá>B\>™™šÿÿÿÿÿÿÿÿ>Ü(ö>ž¸R>Ñë…>”záÿÿÿÿÿÿÿÿ?Tzá>¸QìET0392 ¿½p¤>LÌÍÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ=¸Qì>aG®ÿÿÿÿÿÿÿÿ>k…=uÂ>#×
+>ž¸R=uÂ>#×
+=áG®>uÂ<#×
+>™š=\)>\)¾.{>W
+=ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ½ÌÌÍ>”zá>Ç®>…¸ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿUET0049À…>LÌÍ?&ff>…¸>#×
+>k…>Ñë…>\)ÿÿÿÿÿÿÿÿ>Š=q=£×
+¾k…>¨õÃ¼£×
+>™š>k…>k…¾ÌÌÍ>k…>™š>”zá=#×
+>.{<#×
+>®{¾k…>¨õÃ¾”zá>€  >LÌÍ>Š=qÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿUET0065¿•Â>™š¼õÂ>B\¿B\>\)    >.{¾W
+=>.{<£×
+=ÌÌÍ¾k…>W
+=¾ž¸R>¸¾\)>8Qìÿÿÿÿÿÿÿÿ=uÂ>uÂ¾áG®>#×
+¾.{>#×
+¾k…>W
+=¼õÂ>…¸¾#×
+>.{<£×
+>.{<õÂ>€  UET0074¿“33>.{¼#×
+>”zá¿c×
+>…¸¼£×
+>ž¸R¾…¸>\)    =¸Qì¾Š=q>ž¸R¿   =ÌÌÍ¾\)>W
+==\)>¸Qì=uÂ>€  ¿0£×>€  ¾Š=q>8Qì¾Š=q>ž¸R>×
+=>uÂ½uÂ>LÌÍ>\)>k…=õÂ>™™šUET0082¿“33>™š    >8Qì¾ð£×>8Qì    >.{¾³33>k…½£×
+=áG®¾ð£×>€  ¾Ç®>\)½#×
+>.{ÿÿÿÿÿÿÿÿ=ÌÌÍ>aG®¿¸>#×
+¾Ñë…>B\¾ð£×>€  >€  >k…¾Š=q>™š<£×
+>8Qì=¸Qì>uÂUET0112À\>8Qì?+…>B\ÿÿÿÿÿÿÿÿ>Ü(ö>¸ÿÿÿÿÿÿÿÿ=£×
+=£×
+ÿÿÿÿÿÿÿÿ<£×
+=õÂ>k…>LÌÍ¾×
+=>®{=¸Qì>uÂ=áG®>.{¾W
+=>¸Qìÿÿÿÿÿÿÿÿ¾aG®>uÂÿÿÿÿÿÿÿÿ>ë…>k…ÿÿÿÿÿÿÿÿUET0127¿Ü(ö>.{>ž¸R>…¸¾aG®>W
+==\)>”zá>k…>™™š¼#×
+=£×
+¾B\>£×
+½uÂ=áG®?™š>W
+=½\)>Â\>¸>uÂ=LÌÍ>”zá>™š>W
+=¾B\>£×
+=LÌÍ>Š=q>\)>\)>\)>\)ÿÿÿÿÿÿÿÿUET0130ÀÌÍ>W
+=?O\)>k…?W
+=>B\>¸Qì>k…ÿÿÿÿÿÿÿÿ>\)=áG®=¸Qì>B\½\)>¸>×
+=>aG®¼õÂ>k…>8Qì>…¸ÿÿÿÿÿÿÿÿ>8Qì>³33=¸Qì>B\¾.{>uÂÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ?fff>\)UET0143¿â\>8Qì=\)>uÂ¾£×
+>€  >.{>€  ?¸>aG®?\=¸Qì½LÌÍ>™™š¾aG®>\)<õÂ>W
+=¾Š=q>”zá=¸Qì>…¸=ÌÌÍ>€  >\)>Â\½LÌÍ>™™š>ž¸R>”zá¼#×
+>…¸>ð£×>ž¸R>õÂ>ž¸RUET0145¿ÁG®>8Qì½ÌÌÍ>uÂ¾æff>…¸    >…¸ÿÿÿÿÿÿÿÿ½£×
+=\)¿   >£×
+¿&ff=õÂ=uÂ>aG®½ÌÌÍ>ÌÌÍ=¸Qì>\)¾B\>8Qìÿÿÿÿÿÿÿÿ¿   >£×
+¿:áH>uÂ¾™™š>™™š¾\)>€  >¸>£×
+UET0152¿}p¤>#×
+½\)>€  ¿}p¤>W
+=¾æff>\)¾uÂ>™™š>.{>¸¾™™š>£×
+¿E¸>.{¿®>LÌÍÿÿÿÿÿÿÿÿ=áG®>\)¿xQì>Š=q¾×
+=>8Qì¾™™š>£×
+>Ç®>×
+=¿   >W
+=½áG®>€  ½LÌÍ>£×
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           

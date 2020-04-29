@@ -340,7 +340,7 @@ def load_halo(**kwargs):
     halo = halo[halo["Loc"] != "DW"]
     halo = halo[halo["Loc"] != "UF"]
     return halo
-def load_cldw(**kwargs):
+def load_cldw(add_all=False, **kwargs):
     cldw = load_jinabase(**kwargs)
     cldw = cldw[cldw["Loc"] == "DW"]
     def get_gal(row):
@@ -364,6 +364,12 @@ def load_cldw(**kwargs):
     #multirefs = ["SHE01","SHE03","TAF10","KIR12"]
     gals = [get_gal(x) for i,x in cldw.iterrows()]
     cldw["galaxy"] = gals
+
+    if add_all:
+        fnx = load_letarte10_fornax()
+        scl = load_hill19_sculptor()
+        sgr = load_apogee_sgr()
+        cldw = pd.concat([cldw,fnx,scl,sgr],axis=0)
     return cldw
 
 def load_roed(match_anna_elems=True,load_eps=True,load_ul=True,load_XH=True,load_XFe=True):
@@ -898,6 +904,7 @@ def load_venn04_mw():
 def load_hill19_sculptor():
     tab = Table.read(datapath+"/abundance_tables/hill19_sculptor.fits")
     tab["Star"] = tab["Star"].astype(str)
+    tab.rename_column("Star","Name")
     tab.rename_column("__Fe_H_", "[Fe/H]")
     tab.rename_column("e__Fe_H_", "e_fe")
     tab["ulfe"] = False
@@ -908,6 +915,7 @@ def load_hill19_sculptor():
     tab.rename_column("__TiII_Fe_", "[Ti/Fe]")
     tab.rename_column("e__TiII_Fe_", "e_ti")
     tab["ulti"] = False
+    tab["ulfe"] = False
     
     df = tab.to_pandas()
     XH_from_XFe(df)
@@ -917,10 +925,14 @@ def load_hill19_sculptor():
                        "e__TiI_Fe_":"e_ti1",
                        "__FeII_Fe_":"[Fe II/Fe]",
                        "e__FeII_Fe_":"e_fe2"}, inplace=True)
+    df["galaxy"] = "Scl"
+    df["Loc"] = "DW"
+    df["Reference"] = "HIL19"
     return df
 def load_letarte10_fornax():
     tab = Table.read(datapath+"/abundance_tables/letarte10_fornax.fits")
     tab["Star"] = tab["Star"].astype(str)
+    tab.rename_column("Star","Name")
     for col in tab.colnames:
         if col.startswith("o__"): tab.remove_column(col)
     elemmap = {"NaI":"Na", "MgI":"Mg", "SiI":"Si", "TiII":"Ti",
@@ -930,6 +942,8 @@ def load_letarte10_fornax():
     for e1, e2 in elemmap.items():
         tab.rename_column("__{}_Fe_".format(e1), "[{}/Fe]".format(e2))
         tab.rename_column("e__{}_Fe_".format(e1), "e_{}".format(e2.lower()))
+        tab[ulcol(e2)] = False
+    tab["ulfe"] = False
     tab.rename_column("__FeI_H_", "[Fe/H]")
     tab.rename_column("e__FeI_H_", "e_fe")
     df = tab.to_pandas()
@@ -938,6 +952,9 @@ def load_letarte10_fornax():
     df.rename(columns={"__FeII_H_":"[Fe II/H]",
                        "e__FeII_H_":"e_fe2"},
               inplace=True)
+    df["galaxy"] = "Fnx"
+    df["Loc"] = "DW"
+    df["Reference"] = "LET10"
     return df
 
 def load_battaglia17():
@@ -950,4 +967,43 @@ def load_battaglia17():
             df[ul] = df[ul] == 1
         else:
             df[ul] = False
+    return df
+
+def load_apogee_sgr():
+    """
+    APOGEE_DR16 
+    
+    STARFLAG == 0, ASPCAPFLAG == 0, VERR < 0.2, SNR > 70
+    TEFF > 3700, LOGG < 3.5
+    (142775 STARS)
+    
+    Within 1.5*342.7 arcmin of (RA, Dec) = (283.747, -30.4606)
+    (2601 STARS)
+
+    100 < VHELIO_AVG < 180
+    -3.2 < GAIA_PMRA < -2.25
+    -1.9 < GAIA_PMDEC < -0.9
+    (400 STARS)
+    """
+    tab = Table.read(datapath+"/abundance_tables/apogee_sgr.fits")
+    tab.rename_column("APOGEE_ID","Name")
+    cols_to_keep = ["Name","RA","DEC","M_H","M_H_ERR","ALPHA_M","ALPHA_M_ERR","TEFF","TEFF_ERR","LOGG","LOGG_ERR",
+                    "VMICRO",]
+    tab.rename_column("FE_H","[Fe/H]"); cols_to_keep.append("[Fe/H]")
+    tab.rename_column("FE_H_ERR","e_fe"); cols_to_keep.append("e_fe")
+    tab["ulfe"] = False; cols_to_keep.append("ulfe")
+    for el in ["C","N","O","NA","MG","AL","SI","P","S","K","CA","TI","V","CR","MN","CO","NI","CU","CE"]:
+        elem = getelem(el)
+        tab[f"{el}_FE_ERR"][tab[f"{el}_FE"] < -9000] = np.nan
+        tab[f"{el}_FE"][tab[f"{el}_FE"] < -9000] = np.nan
+        tab.rename_column(f"{el}_FE",f"[{elem}/Fe]")
+        tab.rename_column(f"{el}_FE_ERR",f"e_{elem}")
+        tab[ulcol(elem)] = False
+        cols_to_keep.extend([f"[{elem}/Fe]",f"e_{elem}",ulcol(elem)])
+    df = tab[cols_to_keep].to_pandas()
+    XH_from_XFe(df)
+    eps_from_XH(df)
+    df["galaxy"] = "Sgr"
+    df["Loc"] = "DW"
+    df["Reference"] = "APOGEE_DR16"
     return df
