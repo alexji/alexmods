@@ -11,6 +11,7 @@ from .robust_polyfit import gaussfit
 from scipy import interpolate, signal
 import emcee
 import time
+from astropy.stats.biweight import biweight_location, biweight_scale
 
 def struct2array(x):
     """ Convert numpy structured array of simple type to normal numpy array """
@@ -355,3 +356,59 @@ def quick_healpix(coo, nside, galactic=False):
     np.add.at(hpmap, pixels, 1)
     hp.mollview(hpmap)
     return hpmap, area
+
+def xbin_yscat(x, y, xbins, q=[2.5,16,50,84,97.5], Nmin=1):
+    """
+    Take x,y pairs. Bin in x, find percentiles in y.
+    
+    Input: x and y, xbins
+    
+    q : default [2.5, 16, 50, 84, 97.5]
+        percentiles to compute (passed to np.percentile)
+    Nmin : default 1
+        minimum number of points per bin to be used (otherwise nan)
+    
+    Return: xbins centers, ydata percentiles (Nbin x Npercentile)
+    """
+    assert len(x) == len(y)
+    
+    xp = (xbins[1:]+xbins[:-1])/2
+    Nbins = len(xp)
+    ydat = np.zeros((Nbins, len(q))) + np.nan
+    
+    bin_nums = np.digitize(x, xbins)
+    for ibin in range(Nbins):
+        bin_num = ibin + 1
+        vals = y[bin_nums == bin_num]
+        if len(vals) < Nmin: continue
+        ydat[ibin, :] = np.percentile(vals, q)
+    
+    return xp, ydat
+
+def xbin_ybwt(x, y, xbins, Nmin=1):
+    """
+    Take x,y pairs. Bin in x, find biweight location and scale
+    
+    Input: x and y, xbins
+    
+    Nmin : default 1
+        minimum number of points per bin to be used (otherwise nan)
+    
+    Return: xbins centers, yloc, yscale
+    """
+    assert len(x) == len(y)
+    
+    xp = (xbins[1:]+xbins[:-1])/2
+    Nbins = len(xp)
+    yloc = np.zeros(Nbins) + np.nan
+    yscale = np.zeros(Nbins) + np.nan
+    
+    bin_nums = np.digitize(x, xbins)
+    for ibin in range(Nbins):
+        bin_num = ibin + 1
+        vals = y[bin_nums == bin_num]
+        if len(vals) < Nmin: continue
+        yloc[ibin] = biweight_location(vals)
+        yscale[ibin] = biweight_scale(vals)
+    
+    return xp, yloc, yscale
