@@ -151,13 +151,13 @@ def plot_elem_pair(ax, elem_x, elem_y, data, xtype, ytype,
         ulxcol = rd.ulcol(elem_x)
         if plot_xlimit: assert ulxcol in data, ulxcol
     else:
-        print("Assuming no upper limits for xtype=AB")
+        ## print("Assuming no upper limits for xtype=AB")
         ulxcol = None
     if ytype != "AB":
         ulycol = rd.ulcol(elem_y)
         if plot_ylimit: assert ulycol in data, ulycol
     else:
-        print("Assuming no upper limits for ytype=AB")
+        ## print("Assuming no upper limits for ytype=AB")
         ulycol = None
         
     ## Load data to plot
@@ -198,10 +198,38 @@ def plot_elem_pair(ax, elem_x, elem_y, data, xtype, ytype,
         # TODO make smart defaults about e_kws based on kwargs if not specified
         ax.errorbar(xplot,yplot,xerr=xerr,yerr=yerr,fmt='none',**e_kws)
     ## Plot upper limits if requested
-    if plot_xlimit:
+    if xtype != "AB" and plot_xlimit:
         plot_limits(ax,xlimit_x,xlimit_y,direction='-x',**ulkws)
-    if plot_ylimit:
+    if ytype != "AB" and plot_ylimit:
         plot_limits(ax,ylimit_x,ylimit_y,direction='-y',**ulkws)
+    ## Plot AB limits
+    if xtype == "AB" and plot_xlimit:
+        A, B = xcol[1:-1].split("/")
+        Acol, Bcol = rd.XHcol(A), rd.XHcol(B)
+        Aplot, Bplot = np.array(data[Acol].copy()), np.array(data[Bcol].copy())
+        ABplot = Aplot - Bplot
+        ulAcol, ulBcol = rd.ulcol(A), rd.ulcol(B)
+        ulA, ulB = np.array(data[ulAcol],dtype=bool), np.array(data[ulBcol],dtype=bool)
+        ## Upper limits
+        ii = ulA & (~ulB)
+        plot_limits(ax, ABplot[ii], yplot[ii], direction="-x", **ulkws)
+        ## Lower limits
+        ii = (~ulA) & ulB
+        plot_limits(ax, ABplot[ii], yplot[ii], direction="+x", **ulkws)
+    if ytype == "AB" and plot_ylimit:
+        A, B = ycol[1:-1].split("/")
+        Acol, Bcol = rd.XHcol(A), rd.XHcol(B)
+        Aplot, Bplot = np.array(data[Acol].copy()), np.array(data[Bcol].copy())
+        ABplot = Aplot - Bplot
+        ulAcol, ulBcol = rd.ulcol(A), rd.ulcol(B)
+        ulA, ulB = np.array(data[ulAcol],dtype=bool), np.array(data[ulBcol],dtype=bool)
+        ## Upper limits
+        ii = ulA & (~ulB)
+        plot_limits(ax, xplot[ii], ABplot[ii], direction="-y", **ulkws)
+        ## Lower limits
+        ii = (~ulA) & ulB
+        plot_limits(ax, xplot[ii], ABplot[ii], direction="+y", **ulkws)
+    
 
 def plot_limits(ax,xplot,yplot,direction='-y',arrow_length=0.4,scatter_kws={},arrow_kws={}):
     assert len(xplot)==len(yplot)
