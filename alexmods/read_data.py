@@ -871,6 +871,11 @@ def load_pritzl():
     df = df[df["f_[Fe/H]"]=="b"]
     return df
 
+def load_roediger_gcs():
+    """ Processed from https://www.physics.queensu.ca/Astro/people/Stephane_Courteau/roediger2014/index.html """
+    df = ascii.read(datapath+"/globular_clusters/roediger_tab.csv").to_pandas()
+    return df
+
 def load_venn04():
     tab = Table.read(datapath+"/abundance_tables/venn04.fits")
     for col in ["Name","n_Name","SimbadName"]:
@@ -1007,3 +1012,4 @@ def load_apogee_sgr():
     df["Loc"] = "DW"
     df["Reference"] = "APOGEE_DR16"
     return df
+

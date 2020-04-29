@@ -1,0 +1,195 @@
+  AL81: Alcaino & Liller 1981, AJ, 86, 1480
+  AL86: Alcaino & Liller 1986, A&A, 161, 61
+  Al89: Alcaino et al. 1989, A&A, 216, 68
+ Al90a: Alcaino et al. 1990a, AJ, 99, 817
+ Al90b: Alcaino et al. 1990b, ApJS, 72, 693
+ Al90c: Alcaino et al. 1990c, A&AS, 83, 269
+  Al94: Alcaino et al. 1994, AJ, 107, 230
+  Al99: Alcaino et al. 1999, A&AS, 136, 461
+  AB05: Alves-Brito et al. 2005, A&A, 435, 657
+  AB06: Alves-Brito et al. 2006, A&A, 460, 269
+  AZ88: Armandroff & Zinn 1988, AJ, 96, 92
+  Ar94: Armosky et al. 1994, AJ, 108, 1364
+  Ba92: Barbuy et al. 1992, A&A, 259, 607
+  Ba99: Barbuy et al. 1999, A&A, 341, 539
+  Ba09: Barbuy et al. 2009, A&A, 507, 405
+  Be90: Beers et al. 1990, AJ, 100, 849
+  Be03: Behr 2003, ApJS, 149, 67
+  BD80: Bell & Dickens 1980, ApJ, 242, 657
+  BS09: Bergbusch & Stetson 2009, AJ, 138, 1455
+  Bo10: Bono et al. 2010, ApJL, 708, L74
+  Br10: Bragaglia et al. 2010, ApJL, 720, L41
+  Br92: Briley et al. 1992, ApJ, 387, 612
+  Br04: Briley et al. 2004, AJ, 127, 1588
+  Br99: Brocato et al. 1999, ApJ, 527, 230
+  BW92: Brown & Wallerstein 1992, AJ, 104, 1818
+  Br90: Brown et al. 1990, AJ, 100, 1561
+  Bu84: Buonanno et al. 1984, AJ, 89, 365
+  Bu89: Buonanno et al. 1989, A&A, 216, 80
+  Ca84: Cacciari 1984, AJ, 89, 231
+  Ca85: Caputo et al. 1985, A&A, 143, 8
+ Ca06a: Carretta 2006, AJ, 131, 1766
+  Ca01: Carretta et al. 2001, AJ, 122, 1469
+  Ca03: Carretta et al. 2003, A&A, 410, 143
+Car04a: Carretta et al. 2004a, A&A, 416, 925
+Car04b: Carretta et al. 2004b, ApJL, 610, L25
+  Ca05: Carretta et al. 2005, A&A, 433, 597
+ Ca06b: Carretta et al. 2006, A&A, 450, 523
+ Ca07a: Carretta et al. 2007a, A&A, 464, 927
+ Ca07b: Carretta et al. 2007b, A&A, 464, 939
+ Ca07c: Carretta et al. 2007c, A&A, 464, 967
+ Ca09a: Carretta et al. 2009a, A&A, 505, 117
+ Ca09b: Carretta et al. 2009b, A&A, 505, 139
+ Ca09c: Carretta et al. 2009c, A&A, 508, 695
+  Ca11: Carretta et al. 2011, A&A, 533, A69
+  Ca12: Carretta et al. 2012, ApJL, 750, L14
+ Cav04: Cavallo et al. 2004, AJ, 127, 3411
+  CK95: Chaboyer & Kim 1995, ApJ, 454, 767
+  Ch92: Chaboyer et al. 1992, ApJ, 394, 515
+  Ch00: Chaboyer et al. 2000, AJ, 120, 3102
+  Cl05: Clementini et al. 2005, ApJL, 630, L145
+  Co01: Coelho et al. 2001, A&A, 376, 136
+  Co79: Cohen 1979, ApJ, 231, 751
+  Co99: Cohen et al. 1999, ApJ, 523, 739
+  Co02: Cohen et al. 2002, AJ, 123, 2525
+  Co05: Cohen et al. 2005, AJ, 130, 1177
+ DCC80: Da Costa & Cottrell 1980, ApJL, 236, L83
+ DCA95: Da Costa & Armandroff 1995, AJ, 109, 2533
+  DC84: Da Costa et al. 1984, ApJ, 282, 125
+  DA09: D'Antona et al. 2009, MNRAS, 399, L151
+  Da00: Davidge 2000, AJ, 120, 1853
+  DA05: De Angeli et al. 2005, AJ, 130, 116
+  DL92: Demarque & Lee 1992, A&A, 265, 40
+  DO10: D'Orazi et al. 2010, ApJL, 713, L1
+  Do89: Dorman et al. 1989, ApJ, 343, 750
+  Dr92: Drake et al. 1992, ApJL, 395, L95
+  Dr94: Drake et al. 1994, ApJ, 430, 610
+  Fe09: Feltzing et al. 2009, A&A, 493, 913
+  FP92: Ferraro & Piotto 1992, MNRAS, 255, 71
+  Fe91: Ferraro et al. 1991, MNRAS, 252, 357
+  Fe95: Ferraro et al. 1995, A&A, 298, 461
+  Fr91: Francois 1991, A&A, 247, 56
+  Fu96: Fullton 1996, PASP, 108, 545
+  Fu95: Fullton et al. 1995, AJ, 110, 652
+  Ge84: Geisler 1984, ApJL, 287, L85
+  Ge97: Geisler et al. 1997, PASP, 109, 799
+  GL97: Gonzalez & Lambert 1997, AJ, 114, 341
+  GW98: Gonzalez & Wallerstein 1998, AJ, 116, 765
+  Gr82: Gratton 1982, A&A, 115, 171
+  Gr87: Gratton 1987, A&A, 179, 181
+  GO86: Gratton & Ortolani 1986, A&AS, 65, 63
+  GO89: Gratton & Ortolani 1989, A&A, 211, 41
+  Gr86: Gratton et al. 1986, A&A, 169, 208
+  Gr01: Gratton et al. 2001, A&A, 369, 87
+  Gr03: Gratton et al. 2003, A&A, 408, 529
+  Gr05: Gratton et al. 2005, A&A, 442, 947
+  Gr06: Gratton et al. 2006, A&A, 455, 271
+  Gr07: Gratton et al. 2007, A&A, 464, 953
+  Gr11: Gratton et al. 2011, A&A, 534, A123
+ Gr12b: Gratton et al. 2012b, A&A, 539, A19
+ Gr12c: Gratton et al. 2012c, A&A, 544, A12
+  Gr02: Grundahl et al. 2002, A&A, 395, 481
+  Gu98: Guarnieri et al. 1998, A&A,  331, 70
+  Ha04: Hargis et al. 2004, ApJ, 608, 243
+  Ha83: Harris et al. 1983, ApJL, 268, L111
+  Ha08: Haynes et al. 2008, PASP, 120, 1097
+  He86: Heasley et al. 1986, AJ, 91, 1108
+  He00: Heasley et al. 2000, AJ, 120, 879
+  He87: Hesser et al. 1987, PASP, 99, 739
+  Hu07: Hughes et al. 2007, AJ, 134, 229
+  Hu89: Hurley et al. 1989, AJ, 98, 2124
+  Iv99: Ivans et al. 1999, AJ, 118, 1273
+  Iv01: Ivans et al. 2001, AJ, 122, 1438
+  JH88: Janes & Heasley 1988, AJ, 95, 762
+  Ja04: Jasniewicz et al. 2004, A&A, 423, 353
+  JP98: Jimenez & Padoan 1998, ApJ, 498, 704
+  Ji96: Jimenez et al. 1996, MNRAS, 282, 926
+  JP06: Johnson & Pilachowski 2006, AJ, 132, 2346
+  KS01: Klochkova & Samus 2001, A&A, 378, 455
+ KMW08: Koch & McWilliam 2008, AJ, 135, 1551
+ KMW10: Koch & McWilliam 2010, AJ, 139, 2289
+  Kr95: Kraft et al. 1995, AJ, 109, 2586
+  Kr97: Kravtsov et al. 1997, A&AS, 125, 1
+  La11: Lai et al. 2011, AJ, 141, 62
+  La85: Langer et al. 1985, PASP, 97, 373
+  La12: Lardo et al. 2012, A&A, 541, A141
+  LS03: Layden & Sarajedini 2003, AJ, 125, 208
+Mari08: Marino et al. 2008, A&A, 490, 625
+  Ma11: Marino et al. 2011, ApJL, 730, L16
+Mart08: Martell et al. 2008, AJ, 136, 2522
+  Ma95: Mazzitelli et al. 1995, A&A, 302, 382
+ MBW08: McWilliam & Bernstein 2008, ApJ, 684, 326
+  MW92: McWilliam et al. 1992, PASP, 104, 1193
+  Me03: Melendez et al. 2003, A&A, 411, 417
+ Mi95a: Minniti 1995a, A&AS, 113, 299
+ Mi95b: Minniti 1995b, A&A, 303, 468
+  Mi93: Minniti et al. 1993, ApJ, 413, 548
+  Mi96: Minniti et al. 1996, ApJ, 470, 953
+  Mi03: Mishenina et al. 2003, Astronomy Reports, 47, 248
+  Mo03: Momany et al. 2003, A&A, 402, 607
+  Mo12: Monaco et al. 2012, A&A, 539, A157
+  Mo09: Moretti et al. 2009, A&A, 493, 539
+ NDC95: Norris & Da Costa 1995, ApJ, 447, 680
+  OC11: O''Connell et al. 2011, PASP, 123, 1139
+  Or05: Origlia et al. 2005, MNRAS, 356, 1276
+  Or08: Origlia et al. 2008, MNRAS, 388, 1419
+  Or92: Ortolani et al. 1992, A&AS, 92, 441
+  Or95: Ortolani et al. 1995, Nature, 377, 701
+  Or01: Ortolani et al. 2001, A&A, 376, 878
+  Pa08: Pasquini et al. 2008, A&A, 489, 315
+  Pi80: Pilachowski et al. 1980, ApJ, 236, 508
+  Pi83: Pilachowski et al. 1983, ApJS, 52, 241
+  Pi99: Piotto et al. 1999, AJ, 117, 264
+  Pr06: Preston et al. 2006, AJ, 132, 85
+  Pu03: Pulone et al. 2003, A&A, 399, 121
+  RC03: Ramirez & Cohen 2003, AJ, 125, 224
+  RF87: Richer & Fahlman 1987, ApJ, 316, 189
+  Ri94: Richtler et al. 1994, A&A, 290, 412
+  Ri98: Richtler et al. 1998, A&AS, 127, 167
+  Sa88: Sagar et al. 1988, MNRAS, 232, 131
+  SW98: Salaris & Weiss 1998, A&A, 335, 943
+  Sa07: Salaris et al. 2007, A&A, 476, 243
+  Sa95: Samus et al. 1995, A&AS, 112, 439
+  SR84: Sandage & Roques 1984, AJ, 89, 1166
+  Sa96: Sandquist et al. 1996, ApJ, 470, 910
+  Sa89: Sato et al. 1989, AJ, 98, 1335
+  SZ78: Searle & Zinn 1978, ApJ, 225, 357
+  Sh96: Shetrone 1996, AJ, 112, 1517
+  Sm97: Smith et al. 1997, PASP, 109, 236
+ SmG05: Smith et al. 2005, AJ, 129, 1589
+  SS86: Smith & Stryker 1986, PASP, 98, 453
+ SmV05: Smith et al. 2005, ApJ, 633, 392
+  Sn91: Sneden et al. 1991, AJ, 102, 2001
+  Sn92: Sneden et al. 1992, AJ, 104, 2121
+  Sn97: Sneden et al. 1997, AJ, 114, 1964
+ Sn00a: Sneden et al. 2000a, ApJL, 536, L85
+ Sn00b: Sneden et al. 2000b, AJ, 120, 1351
+  So06: Sobeck et al. 2006, AJ, 131, 2949
+  So11: Sobeck et al. 2011, AJ, 141, 175
+  SC91: Straniero & Chieffi 1991, ApJS, 76, 525
+  SS91: Suntzeff & Smith 1991, ApJ, 381, 160
+  Ta09: Takeda et al. 2009, PSAJ, 61, 563
+  Va11: Valenti et al. 2011, MNRAS, 414, 2690
+  VG11: Villanova & Geisler 2011, A&A, 535, A31
+  Vi09: Villanova et al. 2009, A&A, 499, 755
+  Vi10: Villanova et al. 2010, ApJL, 722, L18
+  Vi12: Villanova et al. 2012, ApJ, 748, 62
+ vBM01: von Braun & Mateo 2001, AJ, 121, 1522
+  vB02: von Braun et al. 2002, AJ, 124, 2067
+  Wa92: Walker 1992, PASP, 104, 1063
+  Wa07: Wallerstein et al. 2007, AJ, 133, 1373
+  WC10: Worley & Cottrell 2010, MNRAS, 406, 2504
+  WC12: Worley & Cottrell 2012, PASA, 29, 29
+  Wo09: Worley et al. 2009, MNRAS, 400, 1039
+  Wy06: Wylie et al. 2006, ApJ, 649, 248
+  YG08: Yong & Grundahl 2008, ApJL, 672, L29
+  Yo03: Yong et al. 2003, A&A, 402, 985
+  Yo05: Yong et al. 2005, A&A, 438, 875
+  Yo06: Yong et al. 2006, ApJ, 639, 918
+Yon08a: Yong et al. 2008a, ApJ, 673, 854
+Yon08b: Yong et al. 2008b, ApJ, 684, 1159
+Yon08c: Yong et al. 2008c, ApJ, 689, 1031
+  Yo09: Yong et al. 2009, ApJL, 695, L62
+  Zo01: Zoccali et al. 2001, ApJ, 553, 733
+  Zo04: Zoccali et al. 2004, A&A, 423, 507
+  Zo09: Zorotovic et al. 2009, AJ, 137, 257
