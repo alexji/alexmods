@@ -1,0 +1,12 @@
+I have taken these values from Table 6 in Schlafly and Finkbeiner 2011
+https://ui.adsabs.harvard.edu/abs/2011ApJ...737..103S
+
+However in DES, the values are updated using the DES DR1 results.
+https://ui.adsabs.harvard.edu/abs/2018ApJS..239...18A
+
+SF11 grizY
+3.237 2.176 1.595 1.217 1.058
+DES DR1
+3.186 2.140 1.569 1.196 1.048
+
+I think the main differences is the template and reddening law. SF11 uses a RV=3.1 law with a 7000K source spectrum. DES uses a constant source spectrum with a Fitzpatrick reddening law.
