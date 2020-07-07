@@ -1034,7 +1034,7 @@ def load_apogee_sgr():
         tab["{}_FE_ERR".format(el)][tab["{}_FE".format(el)] < -9000] = np.nan
         tab["{}_FE".format(el)][tab["{}_FE".format(el)] < -9000] = np.nan
         tab.rename_column("{}_FE".format(el),"[{}/Fe]".format(elem))
-        tab.rename_column("{}_FE_ERR".format(elem),"e_{}".format(elem.lower()))
+        tab.rename_column("{}_FE_ERR".format(el),"e_{}".format(elem.lower()))
         tab[ulcol(elem)] = False
         cols_to_keep.extend(["[{}/Fe]".format(elem),"e_{}".format(elem.lower()),ulcol(elem)])
     df = tab[cols_to_keep].to_pandas()
