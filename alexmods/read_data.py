@@ -368,8 +368,9 @@ def load_cldw(add_all=False, **kwargs):
     if add_all:
         fnx = load_letarte10_fornax()
         scl = load_hill19_sculptor()
+        car = load_lemasle12_carina()
         sgr = load_apogee_sgr()
-        cldw = pd.concat([cldw,fnx,scl,sgr],axis=0)
+        cldw = pd.concat([cldw,fnx,scl,car,sgr],axis=0)
     return cldw
 
 def load_roed(match_anna_elems=True,load_eps=True,load_ul=True,load_XH=True,load_XFe=True):
@@ -940,7 +941,7 @@ def load_letarte10_fornax():
     tab.rename_column("Star","Name")
     for col in tab.colnames:
         if col.startswith("o__"): tab.remove_column(col)
-    elemmap = {"NaI":"Na", "MgI":"Mg", "SiI":"Si", "TiII":"Ti",
+    elemmap = {"NaI":"Na", "MgI":"Mg", "SiI":"Si", "CaI":"Ca", "TiII":"Ti",
                "CrI":"Cr", "NiI":"Ni", "YII":"Y",
                "BaII":"Ba","LaII":"La","NdII":"Nd","EuII":"Eu"}
     #"FeI":"Fe"
@@ -955,11 +956,42 @@ def load_letarte10_fornax():
     XH_from_XFe(df)
     eps_from_XH(df)
     df.rename(columns={"__FeII_H_":"[Fe II/H]",
-                       "e__FeII_H_":"e_fe2"},
+                       "e__FeII_H_":"e_fe2",
+                       "__TiI_Fe_":"[Ti I/Fe]",
+                       "e__TiI_Fe_":"e_ti1"},
               inplace=True)
     df["galaxy"] = "Fnx"
     df["Loc"] = "DW"
     df["Reference"] = "LET10"
+    return df
+def load_lemasle12_carina():
+    tab = Table.read(datapath+"/abundance_tables/lemasle12_carina.fits")
+    tab["Name"] = tab["Name"].astype(str)
+    #tab.rename_column("Star","Name")
+    for col in tab.colnames:
+        if col.startswith("o__"): tab.remove_column(col)
+    elemmap = {"Na1":"Na", "Mg1":"Mg", "Si1":"Si", "Ca1":"Ca", "Ti2":"Ti",
+               "Sc2":"Sc", "Cr1":"Cr", "Co1":"Co", "Ni1":"Ni", "Y2":"Y",
+               "Ba2":"Ba","La2":"La","Nd2":"Nd","Eu2":"Eu"}
+    #"FeI":"Fe"
+    for e1, e2 in elemmap.items():
+        tab.rename_column("__{}_H_".format(e1), "[{}/H]".format(e2))
+        tab.rename_column("e__{}_H_".format(e1), "e_{}".format(e2.lower()))
+        tab[ulcol(e2)] = False
+    tab["ulfe"] = False
+    tab.rename_column("__Fe1_H_", "[Fe/H]")
+    tab.rename_column("e__Fe1_H_", "e_fe")
+    df = tab.to_pandas()
+    XFe_from_XH(df)
+    eps_from_XH(df)
+    df.rename(columns={"__Fe2_H_":"[Fe II/H]",
+                       "e__Fe2_H_":"e_fe2",
+                       "__Ti1_H_":"[Ti I/H]",
+                       "e__Ti1_H_":"e_ti1"},
+              inplace=True)
+    df["galaxy"] = "Car"
+    df["Loc"] = "DW"
+    df["Reference"] = "LEM12"
     return df
 
 def load_battaglia17():
@@ -999,12 +1031,12 @@ def load_apogee_sgr():
     tab["ulfe"] = False; cols_to_keep.append("ulfe")
     for el in ["C","N","O","NA","MG","AL","SI","P","S","K","CA","TI","V","CR","MN","CO","NI","CU","CE"]:
         elem = getelem(el)
-        tab[f"{el}_FE_ERR"][tab[f"{el}_FE"] < -9000] = np.nan
-        tab[f"{el}_FE"][tab[f"{el}_FE"] < -9000] = np.nan
-        tab.rename_column(f"{el}_FE",f"[{elem}/Fe]")
-        tab.rename_column(f"{el}_FE_ERR",f"e_{elem}")
+        tab["{}_FE_ERR".format(el)][tab["{}_FE".format(el)] < -9000] = np.nan
+        tab["{}_FE".format(el)][tab["{}_FE".format(el)] < -9000] = np.nan
+        tab.rename_column("{}_FE".format(el),"[{}/Fe]".format(elem))
+        tab.rename_column("{}_FE_ERR".format(elem),"e_{}".format(elem.lower()))
         tab[ulcol(elem)] = False
-        cols_to_keep.extend([f"[{elem}/Fe]",f"e_{elem}",ulcol(elem)])
+        cols_to_keep.extend(["[{}/Fe]".format(elem),"e_{}".format(elem.lower()),ulcol(elem)])
     df = tab[cols_to_keep].to_pandas()
     XH_from_XFe(df)
     eps_from_XH(df)
