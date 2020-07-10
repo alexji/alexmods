@@ -4,6 +4,8 @@
 from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
 
-from . import radiative_transfer as rt
+try:
+    from . import radiative_transfer as rt
+except:
+    print("Problem with rt, will not work")
 from . import photospheres
-
