@@ -108,8 +108,16 @@ def synthesize(photosphere, transitions, abundances=None, isotopes=None,
         code, out, err = utils.moogsilent(moog_in, **kwargs)
 
         # Returned normally?
-        assert code == 0 # HACK # TODO
-
+        if code != 0:
+            print("ERROR: code, out, err")
+            print(code)
+            print(out)
+            print(err)
+            try:
+                spectra = _parse_synth_summary(kwds["summary_out"])
+            except:
+                raise RuntimeError("MOOG failed, check tmp directory for why")
+            
         # Parse the output.
         spectra = _parse_synth_summary(kwds["summary_out"])
 
