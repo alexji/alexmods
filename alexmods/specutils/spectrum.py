@@ -1479,6 +1479,54 @@ def stitch(spectra, new_dispersion=None, full_output=False):
     else:
         return newspec
 
+def stitch_weighted(spectra, new_dispersion=None, full_output=False):
+    """
+    Stitch spectra together, some of which may have overlapping dispersion
+    ranges. This is a crude (knowingly incorrect) approximation: we interpolate
+    fluxes without ensuring total conservation.
+    Even worse, we interpolate ivar, which is explicitly not conserved.
+    However the stitching is much better than before.
+
+    This one, compared to stitch(), uses the weighted standard error as the spectrum error.
+    This is instead of the inverse variance sum.
+    It is a more robust error estimate and accounts for differences between
+    different orders.
+    
+    :param spectra:
+        A list of potentially overlapping spectra.
+    """
+    if new_dispersion is None:
+        new_dispersion = common_dispersion_map2(spectra)
+    
+    N = len(spectra)
+    common_flux = np.zeros((N, new_dispersion.size))
+    common_ivar = np.zeros((N, new_dispersion.size))
+    
+    for i, spectrum in enumerate(spectra):
+        common_flux[i, :] = np.interp(
+            new_dispersion, spectrum.dispersion, spectrum.flux,
+            left=0, right=0)
+        common_ivar[i, :] = np.interp(
+            new_dispersion, spectrum.dispersion, spectrum.ivar,
+            left=0, right=0)
+
+    finite = np.isfinite(common_flux * common_ivar)
+    common_flux[~finite] = 0
+    common_ivar[~finite] = 0
+
+    numerator = np.sum(common_flux * common_ivar, axis=0)
+    denominator = np.sum(common_ivar, axis=0)
+    flux = numerator/denominator
+    numerator2 = np.sum((common_flux-flux[np.newaxis,:])**2 * common_ivar, axis=0)
+    meansquare = numerator2/denominator
+    ivar = 1/meansquare
+    newspec = Spectrum1D(new_dispersion, flux, ivar)
+
+    if full_output:
+        return newspec, (common_flux, common_ivar)
+    else:
+        return newspec
+
 def coadd(spectra, new_dispersion=None, full_output=False):
     """
     Add spectra together (using linear interpolation to do bad rebinning).

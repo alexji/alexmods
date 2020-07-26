@@ -417,7 +417,9 @@ class ContinuumModel(object):
             ordwave = waveeval
             ordivar = np.nansum(ordivars, axis=0)
             ordflux = np.nansum(ordfluxs*ordivars, axis=0)/ordivar
-            ordivar[np.isnan(ordflux)] = 0.
+            #ord_meansquare = np.nansum((ordfluxs-ordflux[np.newaxis,:])**2 * ordivars, axis=0)/ordivar
+            #ordivar = 1/ord_meansquare
+            ordivar[(np.isnan(ordflux)) | np.isnan(ordivar)] = 0.
             #meta = specs[0].metadata.copy()
             meta = {"labels":",".join(list(specs.keys()))}
             coadded_specs[order] = Spectrum1D(waveeval, ordflux, ordivar, meta)
