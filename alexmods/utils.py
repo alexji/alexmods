@@ -8,7 +8,7 @@ from __future__ import (division, print_function, absolute_import,
 from six import string_types
 import numpy as np
 from .robust_polyfit import gaussfit
-from scipy import interpolate, signal
+from scipy import interpolate, signal, stats
 import emcee
 import time
 from astropy.stats.biweight import biweight_location, biweight_scale
@@ -412,3 +412,41 @@ def xbin_ybwt(x, y, xbins, Nmin=1):
         yscale[ibin] = biweight_scale(vals)
     
     return xp, yloc, yscale
+
+def plot_gaussian_distrs(ax, df, xcol, ecol, xplot,
+                         plot_individual_stars=True, 
+                         color='k', lw=5, ls='-',
+                         scale_ind=1.0, ls_ind='-', lw_ind=0.5, label=None):
+    """
+    Plots the distribution assuming all data is sums of individual little Gaussians
+    
+    ax: where to plot
+    df: data frame
+    xcol, ecol: which columns to use for the mean and stdev of each individual datapoint
+    xplot: range of x to compute the total 
+    plot_individual_stars: if True, plots little gaussians for everything
+    
+    Other plotting kws:
+    label, color, lw, ls
+    ls_ind, lw_ind (for individual stars)
+    
+    """
+    x = df[xcol].values
+    err = df[ecol].values
+    finite = np.isfinite(x) & np.isfinite(err)
+    if np.sum(finite) != len(finite):
+        print("Dropping {} stars".format(len(finite)-np.sum(finite)))
+        print(df.index[~finite])
+    xs, errs = x[finite], err[finite]
+    N = len(xs)
+    all_yplot = np.zeros((len(xplot),N))
+    print(len(xplot), all_yplot.shape)
+    for i,(x,err) in enumerate(zip(xs,errs)):
+        all_yplot[:,i] = stats.norm.pdf(xplot,loc=x,scale=err)
+    total_yplot = np.ravel(np.nansum(all_yplot,axis=1))/N
+    
+    if plot_individual_stars:
+        for i in range(N):
+            ax.plot(xplot,scale_ind*all_yplot[:,i],'-',ls=ls_ind,lw=lw_ind,color=color,zorder=-9)
+    ax.plot(xplot,total_yplot,'-',ls=ls,lw=lw,color=color,zorder=9,label=label)
+
