@@ -845,14 +845,20 @@ def load_parsec_isochrones(system="DECAM"):
                 isodict[(age,logZsun)] = tab[selection]
     return isodict
 def load_dartmouth_isochrones(MH,alpha="ap4",system="DECAM"):
-    assert MH in [-2.5, -2.0, -1.5], MH
+    if system=="DECAM":
+        assert MH in [-2.5, -2.0, -1.5, -1.0, -0.5], MH
+    else:
+        assert MH in [-2.5, -2.0, -1.5], MH
     assert alpha in ["ap0","ap4"]
     coldict = {
         "DECAM":["{}mag".format(x) for x in ["u","g","r","i","z","Y"]],
         "UBVRIJHK":["{}mag".format(x) for x in ["U","B","V","R","I","J","H","Ks","Kp","D51"]],
         "SDSS":["{}mag".format(x) for x in ["u","g","r","i","z"]]
     }
-    fname = datapath+"/isochrones/dartmouth_{}_MH{}{}.iso".format(system,int(MH*10),alpha)
+    def make_str(MH):
+        if MH==-0.5: return "-05"
+        return "{}".format(int(10*MH))
+    fname = datapath+"/isochrones/dartmouth_{}_MH{}{}.iso".format(system,make_str(MH),alpha)
     if not os.path.exists(fname):
         import glob
         fnames = glob.glob(datapath+"/isochrones/dartmouth*")
