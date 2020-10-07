@@ -504,3 +504,42 @@ def dartmouth_des_stellar_params(dmod=0,ages=[10.0,11.0,12.0,13.0,14.0],logZs=[-
         gmr_Teff_funcs[key] = interpolate.interp1d(gmag-rmag,Teff,**interp_kwargs)
         gmr_logg_funcs[key] = interpolate.interp1d(gmag-rmag,logg,**interp_kwargs)
     return g_Teff_funcs, g_logg_funcs, r_Teff_funcs, r_logg_funcs, gmr_Teff_funcs, gmr_logg_funcs
+
+def photometric_stellarparam_derivatives(Teff, logg,
+                                         dTdcolor,dvtdlogg=None,
+                                         color=None, dTdcolor_func=None):
+    """
+    Computes dTeff/dlogg, dvt/dlogg assuming purely photometric determinations
+    This can be used to get the stellar parameter covariances/correlations.
+    
+    Input:
+      Teff: effective temperature in Kelvin
+      logg: surface gravity
+      dTdcolor: derivative of effective temperature with respect to color (e.g., g-r)
+                Currently you have to compute outside and specify it
+      dvtdlogg: derivative of microturbulence with respect to logg
+                By default, computes dvt/dlogg using B05 relation. You can specify a number
+                here to overwrite the behavior.
+    
+    Returns:
+      dloggdTeff, dvtdlogg
+    You can convert these to covariances with these formulas:
+      Cov(T,g) = dg/dT * sigma_T^2
+      Cov(v,g) = dv/dg * sigma_g^2
+      Cov(T,v) = dv/dg * dg/dT * sigma_T^2
+    Or correlations:
+      Corr(T,g) = dg/dT * sigma_T/sigma_g
+      Corr(v,g) = dv/dg * sigma_g/sigma_v
+      Corr(T,v) = Corr(T,g) * Corr(v,g)
+    """
+    
+    dloggdT = 4/(np.log(10) * Teff) + 0.4/dTdcolor
+    
+    if dvtdlogg is None or dvtdlogg=="B05":
+        # This is the analytic derivative of the Barklem+2005 relation
+        dvtdlogg = 0.173 * logg - 0.6897
+    elif dvtdlogg == "M08":
+        dvdtdlogg = -0.322
+    elif dvtdlogg == "K09":
+        dvdtdlogg = -0.23
+    return dloggdT, dvtdlogg

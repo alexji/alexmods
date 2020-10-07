@@ -721,7 +721,10 @@ class LineList(Table):
 
 ## Add to astropy.io registry
 def _moog_identifier(*args, **kwargs):
-    return isinstance(args[0], basestring) and args[0].lower().endswith(".moog")
+    try: # python 2
+        return isinstance(args[0], basestring) and args[0].lower().endswith(".moog")
+    except: # python 3
+        return isinstance(args[0], str) and args[0].lower().endswith(".moog")
 registry.register_writer("moog", LineList, LineList.write_moog)
 registry.register_reader("moog", LineList, LineList.read_moog)
 registry.register_identifier("moog", LineList, _moog_identifier)
