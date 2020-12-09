@@ -11,6 +11,7 @@ from .robust_polyfit import gaussfit
 from scipy import interpolate, signal, stats
 import emcee
 import time
+from astropy import units
 from astropy.stats.biweight import biweight_location, biweight_scale
 
 def struct2array(x):
@@ -449,4 +450,53 @@ def plot_gaussian_distrs(ax, df, xcol, ecol, xplot,
         for i in range(N):
             ax.plot(xplot,scale_ind*all_yplot[:,i],'-',ls=ls_ind,lw=lw_ind,color=color,zorder=-9)
     ax.plot(xplot,total_yplot,'-',ls=ls,lw=lw,color=color,zorder=9,label=label)
+
+def get_position_angle(coo1, coo2):
+    """
+    Based on https://idlastro.gsfc.nasa.gov/ftp/pro/astro/posang.pro
+    """
+    dRA = coo2.ra - coo1.ra
+    numer = np.sin(dRA)
+    denom = np.cos(coo1.dec)*np.tan(coo2.dec) - np.sin(coo1.dec)*np.cos(dRA)
+    PA = np.arctan2(numer,denom)
+    #print(PA)
+    if PA < 0: PA += 2*np.pi*units.rad
+    return PA
+
+def rv_to_gsr(c, v_sun=None):
+    """
+    Accessed 2020-12-09
+    https://docs.astropy.org/en/stable/generated/examples/coordinates/rv-to-gsr.html
+    
+    Transform a barycentric radial velocity to the Galactic Standard of Rest
+    (GSR).
+
+    The input radial velocity must be passed in as a
+
+    Parameters
+    ----------
+    c : `~astropy.coordinates.BaseCoordinateFrame` subclass instance
+        The radial velocity, associated with a sky coordinates, to be
+        transformed.
+    v_sun : `~astropy.units.Quantity`, optional
+        The 3D velocity of the solar system barycenter in the GSR frame.
+        Defaults to the same solar motion as in the
+        `~astropy.coordinates.Galactocentric` frame.
+
+    Returns
+    -------
+    v_gsr : `~astropy.units.Quantity`
+        The input radial velocity transformed to a GSR frame.
+
+    """
+    if v_sun is None:
+        v_sun = coord.Galactocentric().galcen_v_sun.to_cartesian()
+
+    gal = c.transform_to(coord.Galactic)
+    cart_data = gal.data.to_cartesian()
+    unit_vector = cart_data / cart_data.norm()
+
+    v_proj = v_sun.dot(unit_vector)
+
+    return c.radial_velocity + v_proj
 

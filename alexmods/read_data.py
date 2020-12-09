@@ -103,6 +103,51 @@ def ABcol(elems):
     """ Note: by default the data does not have [A/B] """
     A,B = elems
     return '['+getelem(A)+'/'+getelem(B)+']'
+def make_XHcol(species):
+    if species==22.0: return "[Ti I/H]"
+    if species==23.1: return "[V II/H]"
+    if species==26.1: return "[Fe II/H]"
+    if species==24.1: return "[Cr II/H]"
+    if species==38.0: return "[Sr I/H]"
+    if species==106.0: return "[C/H]"
+    if species==607.0: return "[N/H]"
+    return XHcol(species)
+def make_XFecol(species):
+    if species==22.0: return "[Ti I/Fe]"
+    if species==23.1: return "[V II/Fe]"
+    if species==26.1: return "[Fe II/Fe]"
+    if species==24.1: return "[Cr II/Fe]"
+    if species==38.0: return "[Sr I/Fe]"
+    if species==106.0: return "[C/Fe]"
+    if species==607.0: return "[N/Fe]"
+    return XFecol(species)
+def make_epscol(species):
+    if species==22.0: return "epsti1"
+    if species==23.1: return "epsv2"
+    if species==26.1: return "epsfe2"
+    if species==24.1: return "epscr2"
+    if species==38.0: return "epssr1"
+    if species==106.0: return "epsc"
+    if species==607.0: return "epsn"
+    return epscol(species)
+def make_errcol(species):
+    if species==22.0: return "e_ti1"
+    if species==23.1: return "e_v2"
+    if species==26.1: return "e_fe2"
+    if species==24.1: return "e_cr2"
+    if species==38.0: return "e_sr1"
+    if species==106.0: return "e_c"
+    if species==607.0: return "e_n"
+    return errcol(species)
+def make_ulcol(species):
+    if species==22.0: return "ulti1"
+    if species==23.1: return "ulv2"
+    if species==26.1: return "ulfe2"
+    if species==24.1: return "ulcr2"
+    if species==38.0: return "ulsr1"
+    if species==106.0: return "ulc"
+    if species==607.0: return "uln"
+    return ulcol(species)
 
 def _getcolnames(df,prefix):
     allnames = []
@@ -809,7 +854,19 @@ def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt"):
 
     return df
 
+def load_ezzeddine20(filename=datapath+"/abundance_tables/ezzeddine20.txt"):
+    df = ascii.read(filename).to_pandas()
+    return df
+
 def load_sakari18(filename=datapath+"/abundance_tables/sakari18_merged.txt"):
+    df = ascii.read(filename).to_pandas()
+    return df
+    
+def load_holmbeck20(filename=datapath+"/abundance_tables/holmbeck20.txt"):
+    df = ascii.read(filename).to_pandas()
+    return df
+    
+def load_hansen18(filename=datapath+"/abundance_tables/hansen18.txt"):
     df = ascii.read(filename).to_pandas()
     return df
     
