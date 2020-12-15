@@ -68,7 +68,7 @@ default_columns = ",".join(["source_id",cols_astrometry,ecol_astrometry,
                          
 
 def create_source_query_from_ids(ids, columns=default_columns,
-                             source="gaiadr2.gaia_source"):
+                                 source="gaiaedr3.gaia_source"):
     out = "SELECT {} FROM {} WHERE ".format(
         columns, source)
     idstrs = " or ".join(["source_id = {}".format(x) for x in ids])
@@ -77,7 +77,7 @@ def create_source_query_from_ids(ids, columns=default_columns,
 
 def create_source_query_from(coords, radius=1*u.arcsec,
                              columns=default_columns,
-                             source="gaiadr2.gaia_source",
+                             source="gaiaedr3.gaia_source",
                              Nmax=None):
     """
     Generate a string selecting specific list of coordinates.

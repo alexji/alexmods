@@ -13,6 +13,7 @@ import emcee
 import time
 from astropy import units
 from astropy.stats.biweight import biweight_location, biweight_scale
+from astropy import coordinates as coord
 
 def struct2array(x):
     """ Convert numpy structured array of simple type to normal numpy array """
@@ -500,3 +501,20 @@ def rv_to_gsr(c, v_sun=None):
 
     return c.radial_velocity + v_proj
 
+def reflex_correct(coords):
+    """ https://gala-astro.readthedocs.io/en/latest/_modules/gala/coordinates/reflex.html#reflex_correct """
+    galactocentric_frame = coord.Galactocentric()
+    c = coord.SkyCoord(coords)
+
+    # If not specified, use the Astropy default Galactocentric frame
+    if galactocentric_frame is None:
+        galactocentric_frame = get_galactocentric2019()
+
+    v_sun = galactocentric_frame.galcen_v_sun
+
+    observed = c.transform_to(galactocentric_frame)
+    rep = observed.cartesian.without_differentials()
+    rep = rep.with_differentials(observed.cartesian.differentials['s'] + v_sun)
+    fr = galactocentric_frame.realize_frame(rep).transform_to(c.frame)
+    return coord.SkyCoord(fr)
+    
