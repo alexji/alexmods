@@ -8,6 +8,8 @@ from __future__ import division, absolute_import, print_function
 
 __author__ = "Andy Casey <arc@ast.cam.ac.uk>"
 
+from six import string_types
+
 import logging
 from textwrap import dedent
 
@@ -106,7 +108,7 @@ def _moog_writer(photosphere, filename, **kwargs):
 
 
 def _moog_identifier(*args, **kwargs):
-    return isinstance(args[0], basestring) and args[0].lower().endswith(".moog")
+    return isinstance(args[0], string_types) and args[0].lower().endswith(".moog")
 
 # Register the MOOG writer and identifier
 astropy.io.registry.register_writer("moog", Photosphere, _moog_writer)
