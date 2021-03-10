@@ -287,6 +287,7 @@ class Spectrum1D(object):
         is_carpy_mike_product_old = (md5_hash == "e802331006006930ee0e60c7fbc66cec")
         is_carpy_mage_product = (md5_hash == "6b2c2ec1c4e1b122ccab15eb9bd305bc")
         is_apo_product = (image[0].header.get("OBSERVAT", None) == "APO")
+        is_iraf_4band_product = (md5_hash == "a4d8f6f51a7260fce1642f7b42012969")
 
         if is_carpy_mike_product or is_carpy_mage_product or is_carpy_mike_product_old:
             # CarPy gives a 'noise' spectrum, which we must convert to an
@@ -313,6 +314,17 @@ class Spectrum1D(object):
                 "Recognized APO product. Using zero-indexed flux/noise "
                 "extensions (bands) {}/{}".format(flux_ext, noise_ext))
 
+            flux = image[0].data[flux_ext]
+            ivar = image[0].data[noise_ext]**(-2)
+
+        elif is_iraf_4band_product:
+            flux_ext = flux_ext or 0
+            noise_ext = ivar_ext or 2
+            
+            logger.info(
+                "Recognized IRAF 4band product. Using zero-indexed flux/noise "
+                "extensions (bands) {}/{}".format(flux_ext, noise_ext))
+            
             flux = image[0].data[flux_ext]
             ivar = image[0].data[noise_ext]**(-2)
 

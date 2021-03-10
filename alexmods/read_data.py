@@ -833,7 +833,7 @@ def load_nkt13(as_number=True):
     df = pd.DataFrame(alloutput)
     return df
 
-def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt"):
+def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt", update_wrong=True):
     galdata = ascii.read(filename,
                          fill_values=[('-9.999','0','DRA'),('-9.999','0','DDEC'),
                                       ('-9.99','0','DELLIP_LOW'), ('-9.99','0','DELLIP_HIGH'),
@@ -852,6 +852,9 @@ def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt"):
     df["DMDYN_HIGH"] = 580. * (df["RHALF_PC"]+df["DRHALF_PC_HIGH"]) * (df["SIGMA"]+df["DSIGMA_HIGH"])**2 - df["MDYN"]
     df["DMDYN_LOW"] = df["MDYN"] - 580. * (df["RHALF_PC"]-df["DRHALF_PC_LOW"]) * (df["SIGMA"]-df["DSIGMA_LOW"])**2
 
+    if update_wrong:
+        print("Updating values that are known to be wrong in literature")
+        df.loc["Gru I", "FEH"] = -2.5
     return df
 
 def load_ezzeddine20(filename=datapath+"/abundance_tables/ezzeddine20.txt"):

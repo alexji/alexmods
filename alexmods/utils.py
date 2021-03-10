@@ -506,10 +506,6 @@ def reflex_correct(coords):
     galactocentric_frame = coord.Galactocentric()
     c = coord.SkyCoord(coords)
 
-    # If not specified, use the Astropy default Galactocentric frame
-    if galactocentric_frame is None:
-        galactocentric_frame = get_galactocentric2019()
-
     v_sun = galactocentric_frame.galcen_v_sun
 
     observed = c.transform_to(galactocentric_frame)
@@ -518,3 +514,8 @@ def reflex_correct(coords):
     fr = galactocentric_frame.realize_frame(rep).transform_to(c.frame)
     return coord.SkyCoord(fr)
     
+
+def medscat(x):
+    med = np.median(x)
+    scat = 0.5 * np.sum(np.diff(np.percentile(x, [16, 50, 84])))
+    return med, scat
