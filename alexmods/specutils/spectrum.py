@@ -288,7 +288,6 @@ class Spectrum1D(object):
         is_carpy_mage_product = (md5_hash == "6b2c2ec1c4e1b122ccab15eb9bd305bc")
         is_iraf_3band_product = (md5_hash == "a4d8f6f51a7260fce1642f7b42012969")
         is_apo_product = (image[0].header.get("OBSERVAT", None) == "APO")
-        print(md5_hash)
         
         if is_carpy_mike_product or is_carpy_mage_product or is_carpy_mike_product_old:
             # CarPy gives a 'noise' spectrum, which we must convert to an
