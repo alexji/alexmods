@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def cross_correlate(observed_spectrum, template_spectrum, dispersion_range=None,
-    use_weight=False, apodize=0, resample="template", verbose=False):
+    use_weight=False, apodize=0, resample="template", verbose=False, window=None):
     """
     Cross-correlate the observed spectrum against a rest-frame template spectrum
     and measure the radial velocity of the source.
