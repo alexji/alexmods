@@ -67,8 +67,7 @@ opacit: 0
 # synlimits, fluxlimits, coglimits, blenlimits, iraf
 
 # Others, not allowed to be passed through this:
-# obspectrum, iraf, plot, freeform, strong, plotpars
-# TODO: revisit strong
+# obspectrum, iraf, plot, freeform, plotpars
 
 # Additional keywords that will get formatted in by SMHr:
 
@@ -88,3 +87,8 @@ scat: 1
 # blenlimits:
 blend_dwl: 0.3
 blend_wspace: 0.001
+
+# strong:
+# if 0, normal moog
+# if 1, use stronglines_in (lines computed at all wavelengths)
+strong: 0
