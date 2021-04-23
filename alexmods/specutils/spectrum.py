@@ -1593,7 +1593,7 @@ def coadd(spectra, new_dispersion=None, full_output=False):
         return newspec
     
 
-def read_mike_spectrum(fname, fluxband=2):
+def read_mike_spectrum(fname, fluxband=2, skip_assert=False):
     """
     Output an OrderedDict of Spectrum1D, indexed by order number
     
@@ -1613,7 +1613,7 @@ def read_mike_spectrum(fname, fluxband=2):
     If fluxband==7, modifies ivar to account for flat
     Otherwise, just uses 1/fluxband
     """
-    assert fluxband in [1,2,3,4,5,6,7]
+    if not skip_assert: assert fluxband in [1,2,3,4,5,6,7]
     
     with fits.open(fname) as hdul:
         data = hdul[0].data
@@ -1627,7 +1627,7 @@ def read_mike_spectrum(fname, fluxband=2):
         assert metadata["CTYPE1"].upper().startswith("MULTISPE") \
             or metadata["WAT0_001"].lower() == "system=multispec"
     
-    assert data.shape[0] == 7, data.shape
+    if not skip_assert: assert data.shape[0] == 7, data.shape
     
     # Get order numbers
     order_nums = []
@@ -1636,7 +1636,7 @@ def read_mike_spectrum(fname, fluxband=2):
         order_nums.append(metadata[key_fmt.format(i)])
         i += 1
     
-    assert data.shape[1] == len(order_nums), (data.shape, len(order_nums))
+    if not skip_assert: assert data.shape[1] == len(order_nums), (data.shape, len(order_nums))
     Norder = data.shape[1]
     
     Npix = data.shape[2]
