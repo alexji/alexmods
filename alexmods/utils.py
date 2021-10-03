@@ -559,7 +559,7 @@ def correct_pm(ra, dec, pmra, pmdec, dist, vlsr=vlsr0, vz=0, split=None):
         return retpm1, retpm2
 
 
-def correct_pm0(ra, dec, pmra, pmdec, dist, vlsr=vlsr0, vz=0):
+def correct_pm0(ra, dec, pmra, pmdec, dist, vlsr=vlsr0, vx=0, vy=0, vz=0):
     """Corrects the proper motion for the speed of the Sun
     Arguments:
         ra - RA in deg
@@ -577,7 +577,7 @@ def correct_pm0(ra, dec, pmra, pmdec, dist, vlsr=vlsr0, vz=0):
                   pm_ra_cosdec=pmra * auni.mas / auni.year,
                   pm_dec=pmdec * auni.mas / auni.year)
     kw = dict(galcen_v_sun=acoo.CartesianDifferential(
-        np.array([11.1, vlsr + 12.24, vz + 7.25]) * auni.km / auni.s))
+        np.array([vx + 11.1, vy + vlsr + 12.24, vz + 7.25]) * auni.km / auni.s))
     frame = acoo.Galactocentric(**kw)
     Cg = C.transform_to(frame)
     Cg1 = acoo.Galactocentric(x=Cg.x,
@@ -624,3 +624,19 @@ def correct_vel(ra, dec, vel, vlsr=vlsr0, vz=0):
     C1 = Cg1.transform_to(acoo.ICRS())
     return np.asarray(((C.radial_velocity - C1.radial_velocity) /
                        (auni.km / auni.s)).decompose())
+
+def get_levels(H, pct = [68,95], zerocut=True):
+    """
+    Get levels for a contour plot. Default 68 and 95 percent contours.
+    """
+    HH = np.sort(np.ravel(H))
+    if zerocut: HH = HH[HH > 0]
+    return(np.percentile(HH, np.array(pct)))
+def contour_plot(ax, x, y, xbins, ybins, pct=[68,95], **kwargs):
+    """
+    Make a contour plot
+    """
+    H, xe, ye = np.histogram2d(x, y, bins=[xbins, ybins])
+    XX, YY = np.meshgrid((xe[1:]+xe[:-1])/2, (ye[1:]+ye[:-1])/2)
+    cs = ax.contour(XX, YY, H.T, levels=get_levels(H, pct), **kwargs)
+    return cs
