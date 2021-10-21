@@ -185,7 +185,7 @@ def _format_abundances(elemental_abundances=None, subtract_solar=False,
                              "or have one abundance per element (Z = {})"\
                              .format(atomic_number))
 
-    assert 5 >= max_synth
+    assert max_synth is None or 5 >= max_synth
 
     str_format = ["{0} {1}".format(len(sorted_atomic_numbers), max_synth)]
     for atomic_number in sorted_atomic_numbers:

@@ -9,4 +9,5 @@ try:
 except Exception as e:
     print("Problem with rt, will not work")
     print(e)
-from . import photospheres, synthesizer
+from . import photospheres
+from . import synthesizer
