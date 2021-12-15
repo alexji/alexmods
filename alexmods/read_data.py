@@ -848,9 +848,10 @@ def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt", update_wrong=T
     df["RHALF_PC"] = 1000.*df["DIST"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value
     df["DRHALF_PC_HIGH"] = 1000.*df["DDIST_HIGH"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value + 1000.*df["DIST"]*(np.array(df["DRHALF_HIGH"])*u.arcmin).to(u.radian).value
     df["DRHALF_PC_LOW"] = 1000.*df["DDIST_LOW"]*(np.array(df["RHALF"])*u.arcmin).to(u.radian).value + 1000.*df["DIST"]*(np.array(df["DRHALF_LOW"])*u.arcmin).to(u.radian).value
-    df["MDYN"] = 580. * df["RHALF_PC"] * df["SIGMA"]**2
+    df["MDYN"] = 580. * df["RHALF_PC"] * df["SIGMA"]**2 # wolf10
     df["DMDYN_HIGH"] = 580. * (df["RHALF_PC"]+df["DRHALF_PC_HIGH"]) * (df["SIGMA"]+df["DSIGMA_HIGH"])**2 - df["MDYN"]
     df["DMDYN_LOW"] = df["MDYN"] - 580. * (df["RHALF_PC"]-df["DRHALF_PC_LOW"]) * (df["SIGMA"]-df["DSIGMA_LOW"])**2
+    df["LOGMSTAR"] = (df["M_V"]-4.83)/-2.5 + np.log10(2) # estimating M/L = 2
 
     if update_wrong:
         print("Updating values that are known to be wrong in literature")
