@@ -415,6 +415,34 @@ def xbin_ybwt(x, y, xbins, Nmin=1):
     
     return xp, yloc, yscale
 
+def xbin_ymean(x, y, xbins, Nmin=1):
+    """
+    Take x,y pairs. Bin in x, find mean and stdev
+    
+    Input: x and y, xbins
+    
+    Nmin : default 1
+        minimum number of points per bin to be used (otherwise nan)
+    
+    Return: xbins centers, ymeans, ystdevs
+    """
+    assert len(x) == len(y)
+    
+    xp = (xbins[1:]+xbins[:-1])/2
+    Nbins = len(xp)
+    ymeans = np.zeros(Nbins) + np.nan
+    ystdevs = np.zeros(Nbins) + np.nan
+    
+    bin_nums = np.digitize(x, xbins)
+    for ibin in range(Nbins):
+        bin_num = ibin + 1
+        vals = y[bin_nums == bin_num]
+        if len(vals) < Nmin: continue
+        ymeans[ibin] = np.nanmean(vals)
+        ystdevs[ibin] = np.nanstd(vals)
+    
+    return xp, ymeans, ystdevs
+
 def plot_gaussian_distrs(ax, df, xcol, ecol, xplot,
                          plot_individual_stars=True, 
                          color='k', lw=5, ls='-',
