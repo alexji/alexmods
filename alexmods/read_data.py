@@ -616,6 +616,21 @@ def load_arlandini(model="stellar"):
     iisort = np.argsort(Zarr)
     rpat = np.log10(rarr[iisort])
     return rpat
+def load_arlandini():
+    df = ascii.read(datapath+"/rproc_patterns/arlandini99.txt").to_pandas()
+    df["Z"] = list(map(lambda x: int(element_to_species(x)), df["El"]))
+    df.index = zip(df["Z"].values.astype(int), df["A"].values.astype(int))
+    return df
+def load_lodders():
+    lodders = ascii.read(datapath+"/rproc_patterns/lodders10_isotopes.txt").to_pandas()
+    lodders.index = zip(lodders["Z"].values.astype(int), lodders["A"].values.astype(int))
+    return lodders    
+def load_arnould():
+    df = ascii.read(datapath+"/rproc_patterns/r_process_arnould_2007.txt",delimiter="&").to_pandas()
+    A = df["A"]
+    df["Z"] = list(map(lambda x: int(element_to_species(x)), df["Elem"]))
+    df.index = zip(df["Z"].values.astype(int), df["A"].values.astype(int))
+    return df    
 
 #######################
 # Load NearbyGalaxies #
