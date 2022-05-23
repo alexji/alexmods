@@ -574,6 +574,10 @@ def load_ufds(load_all=False,load_eps=True,load_ul=True,load_XH=True,load_XFe=Tr
             upper_limits = np.array(ufds[ulcol(col)]==1)
             ufds[col][upper_limits] = np.nan #raises warning, seems to be ok though
         ufds.drop(ulcols,axis=1,inplace=True)
+    else:
+        for col in ulcols:
+            ufds[col] = ufds[col]==1
+            ufds[col][pd.isnull(ufds[col])] = False
     if load_eps: eps_from_XFe(ufds)
     if load_XH:  XH_from_XFe(ufds)
     if not load_XFe: ufds.drop(XFecols,axis=1,inplace=True)
