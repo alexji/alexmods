@@ -6,15 +6,16 @@
 from __future__ import (division, print_function, absolute_import,
                         unicode_literals)
 
-__all__ = ["cross_correlate"]
+__all__ = ["cross_correlate","quick_measure_mike_velocities"]
 
 import logging
 import numpy as np
 from scipy import interpolate, optimize
 from scipy.optimize import leastsq
 from astropy.stats.biweight import biweight_scale
+import os
 
-from . import spectrum, motions
+from . import spectrum, motions, utils
 
 logger = logging.getLogger(__name__)
 
@@ -370,6 +371,95 @@ def mask_tellurics(orders, telluric_regions):
             ivar[(wl1 < wave) & (wave < wl2)] = 0.
         order._ivar = ivar
     return orders
+
+def quick_measure_mike_velocities(red_fname, template_spectrum=None,
+                                  wmin=5150, wmax=5200):
+    def _get_overlap_order(input_spectra, wavelength_regions, template_spectrum=None):
+        """
+        Find the order (and order index) that most overlaps with the template
+        spectrum in any of the wavelength_regions provided.
+
+        :param wavelength_regions:
+            A list of the wavelength regions to search for overlap between the 
+            template spectrum and the input spectra.
+
+        :param template_spectrum: [optional]
+            An optional template spectrum that should also overlap with the
+            requested ranges. The should be a `specutils.Spectrum1D` object.
+
+        :returns:
+            The overlapping order, the overlap index, and the wavelength_region
+            that matched.
+        """
+
+        # Check to see if wavelength region is a list of entries.
+        try:
+            int(wavelength_regions[0])
+        except (TypeError, ValueError):
+            # It is (probably) a list of 2-length tuples.
+            None
+        else:
+            wavelength_regions = [wavelength_regions]
+
+        # Find the order best suitable for the preferred wavelength region.
+        for wl_start, wl_end in wavelength_regions:
+            # Does the template cover this range?
+            if template_spectrum is not None and \
+                not (wl_start > template_spectrum.dispersion[0] \
+                and  wl_end   < template_spectrum.dispersion[-1]):
+                continue
+
+            # Do any observed orders cover any part of this range?
+            overlaps, indices = utils.find_overlaps(
+                input_spectra, (wl_start, wl_end), return_indices=True)
+            if not overlaps:
+                continue
+
+            # The first spectral index has the most overlap with the range.
+            overlap_index = indices[0]
+            overlap_order = overlaps[0]
+            break
+
+        else:
+            raise ValueError("no wavelength regions are common to the template "
+                             "and the observed spectra")
+
+        return (overlap_order, overlap_index, (wl_start, wl_end))
+    
+    if template_spectrum is None:
+        template_spectrum = spectrum.Spectrum1D.read(os.path.join(
+            os.path.dirname(__file__), "..", "data/spectra/hd122563.fits"))
+    elif isinstance(template_spectrum, spectrum.Spectrum1D):
+        pass
+    else:
+        template_spectrum = spectrum.Spectrum1D.read(template_spectrum)
+    
+    orders = spectrum.Spectrum1D.read(red_fname)
+    overlap_order, overlap_index, wavelength_region = _get_overlap_order(orders, [wmin, wmax], template_spectrum=template_spectrum)
+    
+    normalization_kwargs = dict(
+        #exclude=None,
+        #include=None,
+        function="spline",
+        high_sigma_clip=1.0,
+        knot_spacing=20,
+        low_sigma_clip=2.0,
+        max_iterations=5,
+        order=2,
+        scale=1.0
+    )
+    
+    observed_spectrum, continuum, _, __ = overlap_order.fit_continuum(
+        full_output=True, **normalization_kwargs)
+
+    rv, rv_uncertainty, ccf = cross_correlate(
+        observed_spectrum, template_spectrum, wavelength_region, 
+        apodize=0, resample="template")
+    
+    v_helio, v_bary = motions.corrections_from_headers(overlap_order.metadata)
+    v_helio = v_helio.to("km/s").value
+    v_bary = v_bary.to("km/s").value
+    return rv, v_helio
 
 def measure_mike_velocities(template, blue_fname, red_fname,
                             outfname_fig=None, outfname_data=None,
