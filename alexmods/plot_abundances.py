@@ -309,7 +309,10 @@ def construct_dictionaries(color,marker,size,
                            scatter_ecolor='k',
                            alpha=1.0,
                            fill_scatter=False,
-                           elinewidth=1,capsize=0):
+                           elinewidth=1,capsize=0,
+                           arrow_head_length=0.15,
+                           arrow_head_width=0.05,
+                           arrow_length=0.25):
     """
     Example usage:
     halo_kws = construct_dictionaries('k','o', 20, alpha=.3)
@@ -318,15 +321,15 @@ def construct_dictionaries(color,marker,size,
     """
     e_kws = {'ecolor':color,'elinewidth':elinewidth,'capsize':capsize}
     if fill_scatter:
-        ulkws = {'arrow_length':0.25,
+        ulkws = {'arrow_length':arrow_length,
                  'scatter_kws':{'marker':marker,'s':size,'facecolor':color,'alpha':alpha},
-                 'arrow_kws':{'color':color,'head_length':0.15,'head_width':0.05}
+                 'arrow_kws':{'color':color,'head_length':arrow_head_length,'head_width':arrow_head_width,'alpha':alpha}
                  }
     else:
-        ulkws = {'arrow_length':0.25,
+        ulkws = {'arrow_length':arrow_length,
                  'scatter_kws':{'marker':marker,'s':size,'facecolor':'none',
                                 'linewidths':1,'edgecolors':color,'alpha':alpha},
-                 'arrow_kws':{'color':color,'head_length':0.15,'head_width':0.05}
+                 'arrow_kws':{'color':color,'head_length':arrow_head_length,'head_width':arrow_head_width,'alpha':alpha}
                  }
     kws = {'color':color,'edgecolors':scatter_ecolor,'marker':marker,'s':size,'alpha':alpha,
            'e_kws':e_kws,'ulkws':ulkws}
