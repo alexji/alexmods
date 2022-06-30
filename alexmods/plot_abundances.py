@@ -307,6 +307,7 @@ def _plot_many_ufds_FeH(pltfn,ax,elem,ufds,skipgals=[],ufdsize=60,fill_scatter=F
               label=gal,**ufd_kws)
 def construct_dictionaries(color,marker,size,
                            scatter_ecolor='k',
+                           scatter_elinewidth=1.5,
                            alpha=1.0,
                            fill_scatter=False,
                            elinewidth=1,capsize=0,
@@ -331,7 +332,7 @@ def construct_dictionaries(color,marker,size,
                                 'linewidths':1,'edgecolors':color,'alpha':alpha},
                  'arrow_kws':{'color':color,'head_length':arrow_head_length,'head_width':arrow_head_width,'alpha':alpha}
                  }
-    kws = {'color':color,'edgecolors':scatter_ecolor,'marker':marker,'s':size,'alpha':alpha,
+    kws = {'color':color,'edgecolors':scatter_ecolor,'linewidths':scatter_elinewidth,'marker':marker,'s':size,'alpha':alpha,
            'e_kws':e_kws,'ulkws':ulkws}
     return kws
 def add_ufd_legend(fig, ax, hbuffer=.09, height=.09, nrow=3, lax=None,
