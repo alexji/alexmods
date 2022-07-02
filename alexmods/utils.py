@@ -9,7 +9,6 @@ from six import string_types
 import numpy as np
 from .robust_polyfit import gaussfit
 from scipy import interpolate, signal, stats
-import emcee
 import time
 from astropy import units
 from astropy.stats.biweight import biweight_location, biweight_scale
@@ -255,6 +254,7 @@ def linefit_2d(x, y, ex, ey, fit_outliers=False, full_output=False,
     
     y = m x + b
     """
+    import emcee
     assert len(x)==len(y)==len(ex)==len(ey)
     assert np.all(np.isfinite(x))
     assert np.all(np.isfinite(y))
