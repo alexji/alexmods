@@ -964,18 +964,22 @@ def load_roediger_gcs():
     return df
 
 def load_venn04():
-    tab = Table.read(datapath+"/abundance_tables/venn04.fits")
-    for col in ["Name","n_Name","SimbadName"]:
-        tab[col] = tab[col].astype(str)
-    tab.rename_column("__Fe_H_","[Fe/H]")
+    # tab = Table.read(datapath+"/abundance_tables/venn04.fits")
+    #for col in ["Name","n_Name","SimbadName"]:
+    #    tab[col] = tab[col].astype(str)
+    #tab.rename_column("__Fe_H_","[Fe/H]")
+    #for elem in ["Mg","Ca","Ti","Na","Ni","Y","Ba","La","Eu"]:
+    #    tab.rename_column("__{}_Fe_".format(elem), "[{}/Fe]".format(elem))
+    #    tab["ul"+elem.lower()] = False
+    tab = Table.read(datapath+"/abundance_tables/venn04.txt", format="ascii")
+    tab.rename_columns(["Tn","Tk","Ha"],["Thin","Thick","Halo"])
+    tab["Dwarf"] = (tab["Halo"] + tab["Thin"] + tab["Thick"] == 0).astype(float)
     for elem in ["Mg","Ca","Ti","Na","Ni","Y","Ba","La","Eu"]:
-        tab.rename_column("__{}_Fe_".format(elem), "[{}/Fe]".format(elem))
-        tab["ul"+elem.lower()] = False
-    ## There is an [alpha/Fe] that I am not using here
+        tab[ulcol(elem)] = False
+    tab.rename_column("[a/Fe]", "_a_Fe_")
     df = tab.to_pandas()
     XH_from_XFe(df)
     eps_from_XH(df)
-    tab.rename_column("__a_Fe_","[alpha/Fe]")
     return df
 def load_venn04_halo():
     df = load_venn04()
