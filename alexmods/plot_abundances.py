@@ -141,12 +141,18 @@ def plot_elem_pair(ax, elem_x, elem_y, data, xtype, ytype,
     assert ycol in data, ycol
     
     if plot_xerr:
-        assert xtype != "AB", "AB does not support errors"
-        e_xcol = rd.errcol(elem_x)
+        #assert xtype != "AB", "AB does not support errors"
+        if xtype == "AB":
+            e_xcol = rd.eABcol(elem_x)
+        else:
+            e_xcol = rd.errcol(elem_x)
         assert e_xcol in data, e_xcol
     if plot_yerr:
-        assert ytype != "AB", "AB does not support errors"
-        e_ycol = rd.errcol(elem_y)
+        #assert ytype != "AB", "AB does not support errors"
+        if ytype == "AB":
+            e_ycol = rd.eABcol(elem_y)
+        else:
+            e_ycol = rd.errcol(elem_y)
         assert e_ycol in data, e_ycol
     if xtype != "AB":
         ulxcol = rd.ulcol(elem_x)

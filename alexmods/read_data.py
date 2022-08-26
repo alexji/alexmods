@@ -81,6 +81,9 @@ def errcol(elem):
     except ValueError:
         if elem=="alpha": return "e_alpha"
         else: raise
+def eABcol(elems):
+    A,B = elems
+    return f"eAB_{getelem(A)}/{getelem(B)}"
 def ulcol(elem):
     try:
         return 'ul'+getelem(elem,lower=True)
@@ -264,50 +267,62 @@ def get_star_abunds(starname,data,type):
     return pd.Series(abunds,index=elems)
 
 def XH_from_eps(df):
-    epscols = epscolnames(df)
-    asplund = get_solar(epscols)
-    for col in epscols:
-        if XHcol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XHcol(col)))
-        df[XHcol(col)] = df[col] - float(asplund[col])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        epscols = epscolnames(df)
+        asplund = get_solar(epscols)
+        for col in epscols:
+            if XHcol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XHcol(col)))
+            df[XHcol(col)] = df[col] - float(asplund[col])
 def XFe_from_eps(df):
-    epscols = epscolnames(df)
-    assert 'epsfe' in epscols
-    asplund = get_solar(epscols)
-    feh = df['epsfe'] - float(asplund['epsfe'])
-    for col in epscols:
-        if col=='epsfe': continue
-        if XFecol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XFecol(col)))
-        XH = df[col]-float(asplund[col])
-        df[XFecol(col)] = XH - feh
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        epscols = epscolnames(df)
+        assert 'epsfe' in epscols
+        asplund = get_solar(epscols)
+        feh = df['epsfe'] - float(asplund['epsfe'])
+        for col in epscols:
+            if col=='epsfe': continue
+            if XFecol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XFecol(col)))
+            XH = df[col]-float(asplund[col])
+            df[XFecol(col)] = XH - feh
 def eps_from_XH(df):
-    XHcols = XHcolnames(df)
-    asplund = get_solar(XHcols)
-    for col in XHcols:
-        if epscol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(epscol(col)))
-        df[epscol(col)] = df[col] + float(asplund[col])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        XHcols = XHcolnames(df)
+        asplund = get_solar(XHcols)
+        for col in XHcols:
+            if epscol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(epscol(col)))
+            df[epscol(col)] = df[col] + float(asplund[col])
 def XFe_from_XH(df):
-    XHcols = XHcolnames(df)
-    assert '[Fe/H]' in XHcols
-    feh = df['[Fe/H]']
-    for col in XHcols:
-        if col=='[Fe/H]': continue
-        if XFecol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XFecol(col)))
-        df[XFecol(col)] = df[col] - feh
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        XHcols = XHcolnames(df)
+        assert '[Fe/H]' in XHcols
+        feh = df['[Fe/H]']
+        for col in XHcols:
+            if col=='[Fe/H]': continue
+            if XFecol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XFecol(col)))
+            df[XFecol(col)] = df[col] - feh
 def eps_from_XFe(df):
-    XFecols = XFecolnames(df)
-    assert '[Fe/H]' in df
-    asplund = get_solar(XFecols)
-    feh = df['[Fe/H]']
-    for col in XFecols:
-        df[epscol(col)] = df[col] + feh + float(asplund[col])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        XFecols = XFecolnames(df)
+        assert '[Fe/H]' in df
+        asplund = get_solar(XFecols)
+        feh = df['[Fe/H]']
+        for col in XFecols:
+            df[epscol(col)] = df[col] + feh + float(asplund[col])
 def XH_from_XFe(df):
-    XFecols = XFecolnames(df)
-    assert '[Fe/H]' in df
-    asplund = get_solar(XFecols)
-    feh = df['[Fe/H]']
-    for col in XFecols:
-        if XHcol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XHcol(col)))
-        df[XHcol(col)] = df[col] + feh
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        XFecols = XFecolnames(df)
+        assert '[Fe/H]' in df
+        asplund = get_solar(XFecols)
+        feh = df['[Fe/H]']
+        for col in XFecols:
+            if XHcol(col) in df: warnings.warn("{} already in DataFrame, replacing".format(XHcol(col)))
+            df[XHcol(col)] = df[col] + feh
 
 #########################
 # Load halo data tables #
