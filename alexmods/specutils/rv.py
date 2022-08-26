@@ -456,9 +456,13 @@ def quick_measure_mike_velocities(red_fname, template_spectrum=None,
         observed_spectrum, template_spectrum, wavelength_region, 
         apodize=0, resample="template")
     
-    v_helio, v_bary = motions.corrections_from_headers(overlap_order.metadata)
-    v_helio = v_helio.to("km/s").value
-    v_bary = v_bary.to("km/s").value
+    try:
+        v_helio, v_bary = motions.corrections_from_headers(overlap_order.metadata)
+        v_helio = v_helio.to("km/s").value
+        v_bary = v_bary.to("km/s").value
+    except Exception as e:
+        print(e)
+        v_helio = np.nan
     return rv, v_helio
 
 def measure_mike_velocities(template, blue_fname, red_fname,

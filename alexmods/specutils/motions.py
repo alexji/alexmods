@@ -380,6 +380,7 @@ def corrections(lon, lat, alt, ra, dec, mjd):
     return (vbar_correction, vhel_correction)
 
 
+
 def corrections_from_headers(headers):
     """
     Calculate heliocentric and barycentric velocity corrections based on
@@ -392,24 +393,34 @@ def corrections_from_headers(headers):
         A dictionary-like object.
     """
 
+    # APJ edit
+    observatories_dictionary = {
+        "MCDONALD":dict(longitude=104.0216667,latitude=30.6716667,altitude=2075),
+        "APO":dict(longitude=105.82, latitude=32.78, altitude=2798),
+        "LCO":dict(longitude=70.701667, latitude=-29.003333, altitude=2282),
+    }
+
     alt_obs = headers.get("ALT_OBS", headers.get("SITEALT", None))
     lat_obs = headers.get("LAT_OBS", headers.get("SITELAT", None))
     long_obs = headers.get("LONG_OBS", headers.get("SITELONG", None))
 
     if None in (alt_obs, lat_obs, long_obs):
+        # APJ edit
         # Try and determine it from the observatory name, if it exists.
-        origin = headers.get("ORIGIN", None)
+        #origin = headers.get("ORIGIN", None)
+        observat = headers.get("OBSERVAT", None)
 
-        if origin is None:
+        if observat is None:
             raise KeyError("no observatory information available (ALT_OBS, "
                 "LAT_OBS, LONG_OBS) or ORIGIN")
 
-        raise NotImplementedError("no observatory dictionary exists yet")
+        origin = observat
+        #raise NotImplementedError("no observatory dictionary exists yet")
 
-        with resource_stream(__name__, "observatories.yaml") as fp:
-            observatories_dictionary = yaml.load(fp)
+        #with resource_stream(__name__, "observatories.yaml") as fp:
+        #    observatories_dictionary = yaml.load(fp)
 
-        origin = origin.strip().lower()
+        #origin = origin.strip().lower()
         if origin not in observatories_dictionary:
             raise KeyError("could not find {} in the observatory dictionary"\
                 .format(origin))
@@ -417,6 +428,7 @@ def corrections_from_headers(headers):
         observatory = observatories_dictionary[origin]
         alt_obs = observatory["altitude"]
         lat_obs = observatory["latitude"]
+        long_obs = observatory["longitude"]
 
     # Get the RA/DEC.
     ra = headers.get("RA", None) # Assuming degrees
@@ -440,20 +452,28 @@ def corrections_from_headers(headers):
         # Try and calculate it from UT-START/UT-DATE keys
         #raise
 
+        # APJ edit to account for APO dates
         try:
-            utdate_key = [_ for _ in ("UTDATE", "UT-DATE") if _ in headers][0]
-            utstart_key = [_ for _ in ("UTSTART", "UT-START") if _ in headers][0]
-            
+            utdate_key = [_ for _ in ("UTDATE", "UT-DATE", "DATE-OBS") if _ in headers][0]
         except IndexError:
-            raise KeyError("cannot find all time keys: UTSTART/UTDATE")
+            raise KeyError("cannot find all time keys: UTDATE, UT-DATE, DATE-OBS")
 
         try:
-            ut_start = Time("{0}T{1}".format(headers[utdate_key].replace(":", "-"),
-                headers[utstart_key]), format="isot", scale="utc")
-        except:
-            ut_start = Time("{0}T{1}".format(headers[utdate_key].replace("/", "-"),
-                headers[utstart_key]), format="isot", scale="utc")
-            
+            utstart_key = [_ for _ in ("UTSTART", "UT-START", "UT") if _ in headers][0]
+        except IndexError:
+            #raise KeyError("cannot find all time keys: UTSTART, UT-START, UT")
+            try:
+                ut_start = Time(headers[utdate_key], format="isot", scale="utc")
+            except:
+                print("Date:", headers[utdate_key])
+                raise KeyError("cannot find all time keys: UTSTART, UT-START, UT")
+        else:
+            try:
+                ut_start = Time("{0}T{1}".format(headers[utdate_key].replace(":", "-"),
+                    headers[utstart_key]), format="isot", scale="utc")
+            except:
+                ut_start = Time("{0}T{1}".format(headers[utdate_key].replace("/", "-"),
+                    headers[utstart_key]), format="isot", scale="utc")
 
         try:
             utend_key = [_ for _ in ("UTEND", "UT-END") if _ in headers][0]
@@ -474,5 +494,10 @@ def corrections_from_headers(headers):
             mjd = (ut_end - ut_start).jd/2 + ut_start.mjd
 
     # Calculate the correction.
-    return corrections(long_obs, lat_obs, alt_obs, ra, dec, mjd)
+    try:
+        return corrections(long_obs, lat_obs, alt_obs, ra, dec, mjd)
+    except:
+        print(long_obs, lat_obs, alt_obs)
+        print(ra, dec, mjd)
+        raise
 
