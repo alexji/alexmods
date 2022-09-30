@@ -27,4 +27,9 @@ logger.addHandler(handler)
 from . import (specutils, robust_polyfit, plot_spectrum)
 from .specutils import Spectrum1D
 
-from . import smhr
+try:
+    from . import smhr
+except Exception as e:
+    print("ERROR: Problems with importing the smhr subpackage!")
+    print("You will not be able to use model atmospheres or MOOG")
+    print(e)
