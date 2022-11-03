@@ -980,11 +980,8 @@ class PlotCanvas(FigureCanvas):
         self.draw()
     
     def clear_plot(self):
-        ## I don't really understand why I have to call l.remove() so many times
-        ## But it seems needed or plotting errors arise
-        for l in self.ax.lines: l.remove()
-        for l in self.ax.lines: l.remove()
-        for l in self.ax.lines: l.remove()
+        # Fix from Erika for too many lines
+        for l in range(len(self.ax.lines)): self.ax.lines.pop(0)
         try:
             self.ax.legend_.remove()
         except:
