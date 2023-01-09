@@ -219,6 +219,55 @@ class ContinuumModel(object):
             self.apply_radial_velocity_corrections(label_to_rv)
         return
     
+    def load_data_ceres(self, fnames, labels=None, fluxband=1,
+                        label_to_rv=None):
+        """
+        Load data, sort by order number
+        """
+        self.fluxband=fluxband
+        if isinstance(fnames, string_types):
+            fnames = [fnames]
+        if labels is not None:
+            if isinstance(labels, string_types):
+                labels = [labels]
+            assert len(fnames) == len(labels), (fnames, labels)
+        else:
+            labels = [os.path.basename(fname) for fname in fnames]
+        
+        # Create empty structures
+        self._initialize()
+        
+        # Read data and fill skeleton structure
+        for fname, label in zip(fnames, labels):
+            specs = Spectrum1D.read(fname)
+            specs = dict(zip(np.arange(len(specs))[::-1],specs))
+            for iord, spec in specs.items():
+                spec.metadata["filename"] = label
+                if iord not in self.all_specs:
+                    self.all_specs[iord] = OrderedDict()
+                    self.all_continuum_data[iord] = OrderedDict()
+                    self.all_continuum_functions[iord] = OrderedDict()
+                    self.all_y_knots[iord] = OrderedDict()
+                    
+                    self.all_knots[iord] = []
+                    self.all_exclude_regions[iord] = []
+
+                    self.all_sigma_hi[iord] = OrderedDict()
+                    self.all_sigma_lo[iord] = OrderedDict()
+                self.all_specs[iord][label] = spec
+                self.all_continuum_data[iord][label] = None
+                self.all_continuum_functions[iord][label] = None
+                self.all_sigma_hi[iord][label] = self.sigma_hi_default
+                self.all_sigma_lo[iord][label] = self.sigma_lo_default
+        self.all_order_numbers = list(np.sort(list(self.all_specs.keys())))
+        
+        self.fnames = [os.path.abspath(fname) for fname in fnames]
+        self.labels = labels
+        
+        if label_to_rv is not None:
+            self.apply_radial_velocity_corrections(label_to_rv)
+        return
+    
     def apply_radial_velocity_corrections(self, label_to_rv):
         ## Verification that all the RVs exist
         for order, specs in self.all_specs.items():

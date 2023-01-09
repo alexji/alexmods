@@ -119,6 +119,7 @@ class Spectrum1D(object):
             cls.read_fits_spectrum1d,
             cls.read_ascii_spectrum1d,
             cls.read_alex_spectrum,
+            cls.read_ceres,
             cls.read_multispec,
             cls.read_ascii_spectrum1d_noivar
         )
@@ -162,6 +163,70 @@ class Spectrum1D(object):
         data = image[0].data
         waves, fluxs, ivars = data[0], data[1], data[2]
 
+        return (waves, fluxs, ivars, metadata)
+
+    @classmethod
+    def write_alex_spectrum_from_specs(cls, path, specs, overwrite=False):
+        
+        wave = np.array([spec.dispersion for spec in specs])
+        flux = np.array([spec.flux for spec in specs])
+        ivar = np.array([spec.ivar for spec in specs])
+        ### Write a 3 extension fits file: wave, flux, ivar
+        # make the output array: 3 x Norder x Npix
+        outdata = np.array([wave, flux, ivar])
+
+        hdu = fits.PrimaryHDU(outdata)
+        
+        # header: add new BANDID
+        hdu.header["BANDID1"] = "wavelength array"
+        hdu.header["BANDID2"] = "flux array"
+        hdu.header["BANDID3"] = "ivar array"
+        
+        hdu.writeto(path, output_verify="fix", overwrite=overwrite)
+
+    @classmethod
+    def write_alex_spectrum_from_arrays(cls, path, wave, flux, ivar, overwrite=False):
+        
+        ### Write a 3 extension fits file: wave, flux, ivar
+        # make the output array: 3 x Norder x Npix
+        outdata = np.array([wave, flux, ivar])
+
+        hdu = fits.PrimaryHDU(outdata)
+        
+        # header: add new BANDID
+        hdu.header["BANDID1"] = "wavelength array"
+        hdu.header["BANDID2"] = "flux array"
+        hdu.header["BANDID3"] = "ivar array"
+        
+        hdu.writeto(path, output_verify="fix", overwrite=overwrite)
+
+    @classmethod
+    def read_ceres(cls, fname):
+        with fits.open(fname) as hdul:
+            assert len(hdul)==1, len(hdul)
+            header = hdul[0].header
+            assert header["PIPELINE"] == "CERES", header["PIPELINE"]
+            data = hdul[0].data
+            Nband, Norder, Npix = data.shape
+            # https://github.com/rabrahm/ceres
+            # by default it looks sorted from red to blue orders, so we'll flip it in the output
+            waves = data[0,::-1,:]
+            fluxs = data[1,::-1,:]
+            ivars = data[2,::-1,:]
+            # 3, 4 = blaze corrected flux and error
+            # 5, 6 = continuum normalized flux and error
+            # 7 = continuum
+            # 8 = s/n
+            # 9, 10 = Continumm normalized flux multiplied by the derivative of the wavelength with respect to the pixels + err
+
+            # Merge headers into a metadata dictionary.
+            metadata = OrderedDict()
+            for key, value in header.items():
+                if key in metadata:
+                    metadata[key] += value
+                else:
+                    metadata[key] = value
+            metadata["smh_read_path"] = fname
         return (waves, fluxs, ivars, metadata)
 
     @classmethod
@@ -1807,7 +1872,7 @@ def write_fits_linear(fname, wmin, dwave, flux):
     headers = {}
     headers.update({
             'CTYPE1': 'LINEAR  ',
-            'CRVAL1': wmin,
+            'CRVAL1': wmin-2*dwave, # not sure why but this is needed, may be off by 1 in reading?
             'CRPIX1': 1,
             'CDELT1': dwave
     })
