@@ -168,12 +168,27 @@ class Spectrum1D(object):
     @classmethod
     def write_alex_spectrum_from_specs(cls, path, specs, overwrite=False):
         
-        wave = np.array([spec.dispersion for spec in specs])
-        flux = np.array([spec.flux for spec in specs])
-        ivar = np.array([spec.ivar for spec in specs])
+        Nspec = len(specs)
+        Npix = np.array([len(spec.dispersion) for spec in specs])
+        if not np.all(Npix[0] == Npix):
+            print("Not all spectra have the same number of pixels!")
+            print(Npix)
+            print("Padding with last wavelength of each order, zero flux, zero ivar")
+        Npix = np.max(Npix)
+        wave, flux, ivar = np.zeros((Nspec,Npix)), np.zeros((Nspec,Npix)), np.zeros((Nspec,Npix))
+        for i, spec in enumerate(specs):
+            N = len(spec.dispersion)
+            wave[i,0:N] = spec.dispersion
+            flux[i,0:N] = spec.flux
+            ivar[i,0:N] = spec.ivar
+            if N < Npix: wave[i,N:Npix] = spec.dispersion[-1]
+        #wave = np.array([spec.dispersion for spec in specs])
+        #flux = np.array([spec.flux for spec in specs])
+        #ivar = np.array([spec.ivar for spec in specs])
+        
         ### Write a 3 extension fits file: wave, flux, ivar
         # make the output array: 3 x Norder x Npix
-        outdata = np.array([wave, flux, ivar])
+        outdata = np.array([wave, flux, ivar], dtype=float)
 
         hdu = fits.PrimaryHDU(outdata)
         
@@ -189,7 +204,7 @@ class Spectrum1D(object):
         
         ### Write a 3 extension fits file: wave, flux, ivar
         # make the output array: 3 x Norder x Npix
-        outdata = np.array([wave, flux, ivar])
+        outdata = np.array([wave, flux, ivar], dtype=float)
 
         hdu = fits.PrimaryHDU(outdata)
         
