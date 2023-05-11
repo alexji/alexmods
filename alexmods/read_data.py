@@ -867,6 +867,64 @@ def load_nkt13(as_number=True):
     df = pd.DataFrame(alloutput)
     return df
 
+def load_E15(model=4):
+    assert model in [1,2,3,4]
+    model_names = ["P01","KT75","P08","ABLA07"]
+    fname = datapath+"/yield_tables/rproc_yields/Eichler15/yofz_fiss{}.dat".format(model)
+    tab = ascii.read(fname, names=["Z","abundance"])
+    return pd.Series(tab["abundance"], index=tab["Z"], name=model_names[model-1])
+def load_W16(model):
+    assert model in [1,2,3,4,5]
+    #def is fiducial
+    #m0.01, 0.10: disk mass
+    #s10, s6: entropy
+    model_names = ["def","m0.01","m0.10","s10","s6"]
+    model_name = model_names[model-1]
+    fname = datapath+"/yield_tables/rproc_yields/Wu2016/s_{}_tgyr_elemplot_intd".format(model_name)
+    tab = ascii.read(fname, names=["Z","abundance"])
+    return pd.Series(tab["abundance"], index=tab["Z"], name=model_name)
+def load_N17(model,retmass=False):
+    """
+    L=1.0 is h(eating); L=1.25 is h+
+    L=0.6 is i(intermediate); L=0.4/0.75 is i-/+
+    L=0.2 is m(agnetic); L=0.4 is m+
+    all_L = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 1.0, 1.25]
+    model = 1, 2, 3, 4, 5, 6, 7, 8, 9
+    """
+    all_L = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 1.0, 1.25]
+    assert model in range(1, len(all_L)+1)
+    L = all_L[model-1]
+    model_name = "L{:.2f}".format(L)
+    masses = {"L0.10":7.66225e-03,"L0.20":1.34505e-02,"L0.30":2.09197e-02,
+              "L0.40":3.19371e-02,"L0.50":6.17773e-02,"L0.60":1.19465e-01,
+              "L0.75":2.00467e-01,"L1.00":2.38585e-01,"L1.25":2.61565e-01}
+    total_mass = masses[model_name]
+    fname = datapath+"/yield_tables/rproc_yields/Nishimura17/{}.dat".format(model_name)
+    # abundance is Y = X/A, multiply by total mass to get number of atoms of that isotope
+    df = ascii.read(fname, names=["name","Z","N","A","X","abundance"]).to_pandas()
+    # Sum out isotopes
+    if retmass:
+        s = df.groupby("Z").sum()["X"] * total_mass
+    else:
+        s = df.groupby("Z").sum()["abundance"] * total_mass
+    s.name = model_name
+    return s
+def load_N15(model):
+    assert model in [1,2,3,4,5]
+    model_names = ["b11tw0.25","b11tw0.25","b11tw1.00","b12tw0.25","b12tw1.00","b12tw4.00"]
+    model_name = model_names[model-1]
+    masses = {"b11tw0.25":2.68000e-02,"b11tw1.00":2.15000e-02,"b12tw0.25":3.55000e-02,
+              "b12tw1.00":4.37000e-02,"b12tw4.00":8.57000e-02}
+    total_mass = masses[model_name]
+    fname = datapath+"/yield_tables/rproc_yields/Nishimura15/{}.dat".format(model_name)
+    # abundance is Y = X/A, multiply by total mass to get number of atoms of that isotope
+    df = ascii.read(fname, names=["name","Z","N","A","X","abundance"]).to_pandas()
+    # Sum out isotopes
+    s = df.groupby("Z").sum()["abundance"] * total_mass
+    s.name = model_name
+    return s
+
+
 def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt", update_wrong=True):
     galdata = ascii.read(filename,
                          fill_values=[('-9.999','0','DRA'),('-9.999','0','DDEC'),
