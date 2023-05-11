@@ -491,7 +491,7 @@ def load_roed(match_anna_elems=True,load_eps=True,load_ul=True,load_XH=True,load
     errtab = pd.DataFrame(roed_err).transpose()
     ultab  = pd.DataFrame(roed_ul).transpose()
     for col in ultab.columns: # Indexing with NaN is bad
-        ultab[col][pd.isnull(ultab[col])] = False
+        ultab.loc[pd.isnull(ultab[col]), col] = False
     
     all_elems = []
     for col in epstab:
@@ -592,7 +592,7 @@ def load_ufds(load_all=False,load_eps=True,load_ul=True,load_XH=True,load_XFe=Tr
     else:
         for col in ulcols:
             ufds[col] = ufds[col]==1
-            ufds[col][pd.isnull(ufds[col])] = False
+            ufds.loc[pd.isnull(ufds[col]), col] = False
     if load_eps: eps_from_XFe(ufds)
     if load_XH:  XH_from_XFe(ufds)
     if not load_XFe: ufds.drop(XFecols,axis=1,inplace=True)
@@ -888,8 +888,9 @@ def load_simon_galdata(filename=datapath+"/dwarfdata_082918.txt", update_wrong=T
     df["LOGMSTAR"] = (df["M_V"]-4.83)/-2.5 + np.log10(2) # estimating M/L = 2
 
     if update_wrong:
-        print("Updating values that are known to be wrong in literature")
-        df.loc["Gru I", "FEH"] = -2.5
+        print("Updating Gru I to Ani's results")
+        df.loc["Gru I", "FEH"] = -2.62
+        print("Note: removed DESJ0025 (not a UFD)")
     return df
 
 def load_ezzeddine20(filename=datapath+"/abundance_tables/ezzeddine20.txt"):
