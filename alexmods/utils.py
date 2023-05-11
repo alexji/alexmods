@@ -10,6 +10,7 @@ import numpy as np
 from .robust_polyfit import gaussfit
 from scipy import interpolate, signal, stats
 import time
+from astropy.table import Table
 from astropy import units
 from astropy.stats.biweight import biweight_location, biweight_scale
 from astropy import coordinates as coord
@@ -668,3 +669,45 @@ def contour_plot(ax, x, y, xbins, ybins, pct=[68,95], **kwargs):
     XX, YY = np.meshgrid((xe[1:]+xe[:-1])/2, (ye[1:]+ye[:-1])/2)
     cs = ax.contour(XX, YY, H.T, levels=get_levels(H, pct), **kwargs)
     return cs
+
+def query_gaia_from_source_ids(source_ids, asynchronous=False,
+                               credentials_file=None):
+    from astroquery.gaia import Gaia
+    import tempfile, os
+    Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
+    
+    source_ids = np.ravel(source_ids)[:,np.newaxis]
+    
+    if (len(source_ids) > 2000) and (not asynchronous):
+        print(f"Forcing asynchronous query because {len(source_ids)} > 2000")
+        asynchronous = True
+    
+    if asynchronous:
+        raise NotImplementedError("Cannot use async yet")
+
+    if credentials_file is not None:
+        Gaia.login(credentials_file=credentials_file)
+        raise NotImplementedError("Cannot use user yet")
+    
+    query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
+            "g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, "+\
+            "g.radial_velocity, g.ruwe "+\
+            "from gaiadr3.gaia_source_lite as g "+\
+            "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    
+    ## Create temporary table to upload
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, 'ids.xml')
+        print("Creating file at",path)
+        Table(source_ids, names=["source_id"]).write(path, format="votable")
+        
+        print("Launching job")
+        job = Gaia.launch_job(
+            query=query,
+            upload_resource=path, upload_table_name="tmpidtab",
+            verbose=True
+        )
+        print(job)
+        r = job.get_results()
+    
+    return r
