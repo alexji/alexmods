@@ -711,3 +711,17 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
         r = job.get_results()
     
     return r
+
+def deg2hmsdms(ra,dec,sep=':',precision=2,pad=True):
+    """Input RA/Dec in deg, output RA/Dec in hmsdms"""
+    coo = coord.SkyCoord(ra,dec,unit="deg")
+    coostr = coo.to_string('hmsdms',sep=sep,precision=precision,pad=pad)
+    rastr = [x.split()[0] for x in coostr]
+    decstr = [x.split()[1] for x in coostr]
+    return rastr, decstr
+def hmsdms2deg(rastr,decstr):
+    """Input RA/Dec in str, output RA/Dec in deg"""
+    coo = coord.SkyCoord(rastr,decstr,unit=("hourangle","deg"))
+    ra = np.array(coo.ra.deg)
+    dec = np.array(coo.dec.deg)
+    return ra, dec
