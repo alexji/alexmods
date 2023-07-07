@@ -746,7 +746,6 @@ def load_gcdata():
 # Supernova yields
 ##################
 def load_hw10(as_number=True):
-    assert as_number, "Did not download the mass tables"
     hw10 = Table.read(datapath+"/yield_tables/HW10.znuc.S4.star.el.fits").to_pandas()
     hw10.rename(inplace=True, columns={
             "mass":"Mass","energy":"Energy","mixing":"Mixing","remnant":"Remnant"})
@@ -772,7 +771,15 @@ def load_hw10(as_number=True):
     hw10["Energy"] = hw10["Energy"].map(lambda x: round(x, 1))
     hw10["Mixing"] = hw10["Mixing"].map(lambda x: round(x, 5))
     
-    return hw10
+    if as_number:
+        return hw10
+    else:
+        print("Using periodic table to estimate number to mass")
+        #assert as_number, "Did not download the mass tables"
+        for elem in elems:
+            A = PTelement(elem).mass
+            hw10[elem] = hw10[elem] * A
+        return hw10
     
 def load_hw10_old(as_number=False):
     """
