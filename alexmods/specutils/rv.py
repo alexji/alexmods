@@ -512,11 +512,12 @@ def measure_mike_velocities(template, blue_fname, red_fname,
     
     for iter_clip in range(5):
         w = e_all[keep]**-2
+        w[~np.isfinite(w)] = 0.
         v_avg = np.sum(w*v_all[keep])/np.sum(w)
         v_err = (np.sum(w))**-0.5
         v_std = biweight_scale(v_all[keep])
         v_med = np.median(v_all[keep])
-        new_keep = keep & (np.abs(v_all-v_med) < 5*v_std)
+        new_keep = keep & (np.abs(v_all-v_med) < 5*v_std) & np.isfinite(v_all)
         print("===============iter_clip={}, {}->{}".format(iter_clip+1,keep.sum(),new_keep.sum()))
         if keep.sum()==new_keep.sum():
             break
@@ -534,9 +535,12 @@ def measure_mike_velocities(template, blue_fname, red_fname,
         ax.errorbar(wave2, rv_output2[:,1], yerr=rv_output2[:,2], fmt='o', color='r', ecolor='r')
         ax.plot(w_all[keep], v_all[keep], 'ko', mfc='none', mec='k', mew=2, ms=10)
         
-        ax.set_ylim(v_avg - yrange, v_avg + yrange)         
-        ax.yaxis.set_minor_locator(plt.MultipleLocator(0.5))
-        ax.yaxis.set_major_locator(plt.MultipleLocator(2))
+        if np.isfinite(yrange) and np.isfinite(v_avg):
+            ax.set_ylim(v_avg - yrange, v_avg + yrange)
+            ax.yaxis.set_minor_locator(plt.MultipleLocator(0.5))
+            ax.yaxis.set_major_locator(plt.MultipleLocator(2))
+        else:
+            print(f"ERROR: v_avg={v_avg:.1f}, yrange={yrange:.1f}")
         ax.axhline(v_avg, color='k', zorder=-9)
         
         fig.tight_layout()

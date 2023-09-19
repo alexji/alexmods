@@ -531,7 +531,8 @@ def load_yong():
 #########################
 # Load Alex's UFD table #
 #########################
-def parse_dwarf_table(alpha=False,table_path=datapath+'/abundance_tables/dwarf_lit_all.tab'):
+def parse_dwarf_table(alpha=False,table_path=None):
+    if table_path is None: table_path=datapath+'/abundance_tables/dwarf_lit_all.tab'
     def _process_column(d,elem):
         N = len(d)
         if elem not in d.colnames:
@@ -565,8 +566,43 @@ def parse_dwarf_table(alpha=False,table_path=datapath+'/abundance_tables/dwarf_l
         col = table.MaskedColumn(np.zeros(len(d)),name='ul_alpha',dtype=int)
         d.add_column(col)
     return d
-def load_ufds(load_all=False,load_eps=True,load_ul=True,load_XH=True,load_XFe=True,alpha=False):
-    ufds = parse_dwarf_table(alpha=alpha)
+def parse_dwarf_table_coo(alpha=False,table_path=None):
+    if table_path is None: table_path=datapath+'/abundance_tables/dwarf_lit_all_coo.org'
+    def _process_column(d,elem):
+        N = len(d)
+        if elem not in d.colnames:
+            raise ValueError(elem)
+        old_col = d[elem]
+        ul_col = table.MaskedColumn(data=np.zeros(N),name='ul_'+elem,dtype=int)
+        if old_col.dtype==np.float:
+            return old_col,ul_col
+    
+        new_col = table.MaskedColumn(data=np.zeros(N,dtype=np.float),name=elem)
+        for i in range(N):
+            if np.ma.is_masked(old_col[i]):
+                new_col[i]      = np.ma.masked
+                ul_col[i]       = np.ma.masked
+            elif old_col[i][0]=='<':
+                new_col[i] = np.float(old_col[i][1:])
+                ul_col[i] = 1
+            else:
+                new_col[i] = np.float(old_col[i])
+        return new_col,ul_col
+    d = table.Table(ascii.read(table_path))
+    elems = d.colnames[2:-4]
+    for elem in elems:
+        elem_col,ul_col = _process_column(d,elem)
+        d.remove_column(elem)
+        d.add_column(elem_col)
+        d.add_column(ul_col)
+    if alpha:
+        col = table.MaskedColumn(np.nanmean([d['Mg'],d['CaI'],d['TiII']],axis=0),name='alpha')
+        d.add_column(col)
+        col = table.MaskedColumn(np.zeros(len(d)),name='ul_alpha',dtype=int)
+        d.add_column(col)
+    return d
+def load_ufds(load_all=False,load_eps=True,load_ul=True,load_XH=True,load_XFe=True,alpha=False,table_path=None):
+    ufds = parse_dwarf_table(alpha=alpha,table_path=table_path)
     ufds = ufds.to_pandas()
     ufds.index = ufds['Star']
     def column_renamer(x):

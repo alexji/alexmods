@@ -712,6 +712,15 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
     
     return r
 
+def query_simbad_from_source_ids(source_ids, asynchronous=False):
+    from astroquery.simbad import Simbad
+    
+    source_ids = np.ravel(source_ids)
+    ids = [f"Gaia DR3 {x}" for x in source_ids]
+    
+    r = Simbad.query_objects(ids)
+    return r
+
 def deg2hmsdms(ra,dec,sep=':',precision=2,pad=True):
     """Input RA/Dec in deg, output RA/Dec in hmsdms"""
     coo = coord.SkyCoord(ra,dec,unit="deg")
