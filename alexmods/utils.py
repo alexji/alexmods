@@ -699,7 +699,15 @@ def query_gaia_from_coordinates(coords, radius=1*units.arcsec,
     return r
     
 def query_gaia_from_source_ids(source_ids, asynchronous=False,
-                               credentials_file=None):
+                               credentials_file=None, query=None):
+    """
+    Default query:
+    query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
+            "g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, "+\
+            "g.radial_velocity, g.ruwe "+\
+            "from gaiadr3.gaia_source_lite as g "+\
+            "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    """
     from astroquery.gaia import Gaia
     import tempfile, os
     Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
@@ -717,11 +725,12 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
         Gaia.login(credentials_file=credentials_file)
         raise NotImplementedError("Cannot use user yet")
     
-    query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
-            "g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, "+\
-            "g.radial_velocity, g.ruwe "+\
-            "from gaiadr3.gaia_source_lite as g "+\
-            "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    if query is None:
+        query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
+                "g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, "+\
+                "g.radial_velocity, g.ruwe "+\
+                "from gaiadr3.gaia_source_lite as g "+\
+                "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
     
     ## Create temporary table to upload
     with tempfile.TemporaryDirectory() as tmp:
