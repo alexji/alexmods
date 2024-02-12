@@ -670,6 +670,34 @@ def contour_plot(ax, x, y, xbins, ybins, pct=[68,95], **kwargs):
     cs = ax.contour(XX, YY, H.T, levels=get_levels(H, pct), **kwargs)
     return cs
 
+def query_gaia_from_coordinates(coords, radius=1*units.arcsec,
+                                columns="source_id, ra, dec, parallax, pmra, pmdec, "+\
+                                    "phot_g_mean_mag, phot_bp_mean_mag, phot_rp_mean_mag, "+\
+                                    "radial_velocity, ruwe ",
+                                source="gaiadr3.gaia_source_lite",
+                                Nmax=None):
+    from astroquery.gaia import Gaia
+    N = len(coords)
+    if Nmax is None: Nmax = 2*N
+    query = "SELECT TOP {} {} FROM {} WHERE ".format(
+        Nmax, columns, source)
+    def _make_contains_str(c):
+        cstr = "CONTAINS(POINT('ICRS',{0:}.ra,{0:}.dec),CIRCLE('ICRS',{1:},{2:},{3:}))=1".format(
+            source, c.ra.deg, c.dec.deg, radius.to("deg").value)
+        return cstr
+    cstrs = map(_make_contains_str, coords)
+    query += " or ".join(cstrs)
+    
+    print("Launching job")
+    job = Gaia.launch_job(
+        query=query,
+        verbose=True
+    )
+    print(job)
+    r = job.get_results()
+    
+    return r
+    
 def query_gaia_from_source_ids(source_ids, asynchronous=False,
                                credentials_file=None):
     from astroquery.gaia import Gaia
