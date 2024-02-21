@@ -670,22 +670,27 @@ def contour_plot(ax, x, y, xbins, ybins, pct=[68,95], **kwargs):
     cs = ax.contour(XX, YY, H.T, levels=get_levels(H, pct), **kwargs)
     return cs
 
-def query_gaia_from_coordinates(coords, radius=1*units.arcsec,
+def query_gaia_from_coordinates(coo, radius=1*units.arcsec,
                                 columns="source_id, ra, dec, parallax, pmra, pmdec, "+\
                                     "phot_g_mean_mag, phot_bp_mean_mag, phot_rp_mean_mag, "+\
                                     "radial_velocity, ruwe ",
                                 source="gaiadr3.gaia_source_lite",
+                                full_columns=False,
                                 Nmax=None):
     from astroquery.gaia import Gaia
-    N = len(coords)
+    from astropy.coordinates import SkyCoord
+    N = len(coo)
     if Nmax is None: Nmax = 2*N
     query = "SELECT TOP {} {} FROM {} WHERE ".format(
         Nmax, columns, source)
+    if full_columns:
+        query = "SELECT TOP {} {} FROM {} WHERE ".format(
+            Nmax, "*", source)
     def _make_contains_str(c):
         cstr = "CONTAINS(POINT('ICRS',{0:}.ra,{0:}.dec),CIRCLE('ICRS',{1:},{2:},{3:}))=1".format(
             source, c.ra.deg, c.dec.deg, radius.to("deg").value)
         return cstr
-    cstrs = map(_make_contains_str, coords)
+    cstrs = map(_make_contains_str, coo)
     query += " or ".join(cstrs)
     
     print("Launching job")
@@ -696,10 +701,17 @@ def query_gaia_from_coordinates(coords, radius=1*units.arcsec,
     print(job)
     r = job.get_results()
     
-    return r
+    print("Sorting stars")
+    if len(coo) != len(r):
+        print(f"WARNING: len(input) {len(coo)} != len(result) {len(result)}")
+    gcoo = SkyCoord(r["ra"], r["dec"], unit="deg")
+    idx, d2d, _ = coo.match_to_catalog_sky(gcoo)
+
+    return r[idx]
     
 def query_gaia_from_source_ids(source_ids, asynchronous=False,
-                               credentials_file=None, query=None):
+                               credentials_file=None, query=None,
+                               full_lite=False,  full_source=False):
     """
     Default query:
     query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
@@ -731,6 +743,10 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
                 "g.radial_velocity, g.ruwe "+\
                 "from gaiadr3.gaia_source_lite as g "+\
                 "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    if full_lite:
+        query = "select g.* from gaiadr3.gaia_source_lite as g join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    if full_source:
+        query = "select g.* from gaiadr3.gaia_source as g join tap_upload.tmpidtab as x on g.source_id = x.source_id"
     
     ## Create temporary table to upload
     with tempfile.TemporaryDirectory() as tmp:
