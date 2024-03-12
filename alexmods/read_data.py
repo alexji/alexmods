@@ -427,10 +427,11 @@ def load_cldw(add_all=False, **kwargs):
 
     if add_all:
         fnx = load_letarte10_fornax()
+        fnx2 = load_lemasle14_fornax()
         scl = load_hill19_sculptor()
         car = load_lemasle12_carina()
         sgr = load_apogee_sgr()
-        cldw = pd.concat([cldw,fnx,scl,car,sgr],axis=0)
+        cldw = pd.concat([cldw,fnx,fnx2,scl,car,sgr],axis=0)
     return cldw
 
 def load_roed(match_anna_elems=True,load_eps=True,load_ul=True,load_XH=True,load_XFe=True):
@@ -1170,6 +1171,32 @@ def load_letarte10_fornax():
     df["galaxy"] = "Fnx"
     df["Loc"] = "DW"
     df["Reference"] = "LET10"
+    return df
+def load_lemasle14_fornax():
+    tab = Table.read(datapath+"/abundance_tables/lemasle14_fnx.txt",format='ascii.fixed_width')
+    tab["Star"] = tab["Star"].astype(str)
+    tab.rename_column("Star","Name")
+    #tab.remove_columns(["[TiI/H]","e_ti1","fe2_h","e_fe2"])
+    for col in tab.colnames:
+        if col.startswith("N"): tab.remove_column(col)
+    #elemmap = {"NaI":"Na", "MgI":"Mg", "SiI":"Si", "CaI":"Ca", "TiII":"Ti",
+    #           "CrI":"Cr", "NiI":"Ni", "YII":"Y",
+    #           "BaII":"Ba","LaII":"La","NdII":"Nd","EuII":"Eu"}
+    #"FeI":"Fe"
+    #for e1, e2 in elemmap.items():
+    #    tab.rename_column("__{}_Fe_".format(e1), "[{}/Fe]".format(e2))
+    #    tab.rename_column("e__{}_Fe_".format(e1), "e_{}".format(e2.lower()))
+    #    tab[ulcol(e2)] = False
+    elems = ["Na","Mg","Si","Ca","Sc","Ti","Cr","Ni","Y","Ba","La","Nd","Eu"]
+    tab["ulfe"] = False
+    for elem in elems:
+        tab[XFecol(elem)] = tab[XHcol(elem)] - tab["[Fe/H]"]
+        tab[ulcol(elem)] = False
+    df = tab.to_pandas()
+    eps_from_XH(df)
+    df["galaxy"] = "Fnx"
+    df["Loc"] = "DW"
+    df["Reference"] = "LEM14"
     return df
 def load_lemasle12_carina():
     tab = Table.read(datapath+"/abundance_tables/lemasle12_carina.fits")
