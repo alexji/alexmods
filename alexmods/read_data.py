@@ -430,8 +430,9 @@ def load_cldw(add_all=False, **kwargs):
         fnx2 = load_lemasle14_fornax()
         scl = load_hill19_sculptor()
         car = load_lemasle12_carina()
+        sex = load_theler20_sextans()
         sgr = load_apogee_sgr()
-        cldw = pd.concat([cldw,fnx,fnx2,scl,car,sgr],axis=0)
+        cldw = pd.concat([cldw,fnx,fnx2,scl,car,sex,sgr],axis=0)
     return cldw
 
 def load_roed(match_anna_elems=True,load_eps=True,load_ul=True,load_XH=True,load_XFe=True):
@@ -1227,6 +1228,36 @@ def load_lemasle12_carina():
     df["Loc"] = "DW"
     df["Reference"] = "LEM12"
     return df
+def load_theler20_sextans():
+    tab = Table.read(datapath+"/abundance_tables/theler20_sextans.fits")
+    tab["ID"] = tab["ID"].astype(str)
+    tab.rename_column("ID","Name")
+    for col in tab.colnames:
+        if col.startswith("o__"): tab.remove_column(col)
+        if col.startswith("er__"): tab.remove_column(col)
+    elemmap = {"Mg":"Mg", "Ca":"Ca", "Sc":"Sc", "TiII":"Ti",
+               "Cr":"Cr", "Mn":"Mn", "Co":"Co", "NI":"Ni",
+               "Ba":"Ba","Eu":"Eu"}
+    #"FeI":"Fe"
+    for e1, e2 in elemmap.items():
+        tab.rename_column("__{}_Fe_".format(e1), "[{}/Fe]".format(e2))
+        tab.rename_column("e__{}_Fe_".format(e1), "e_{}".format(e2.lower()))
+        tab[ulcol(e2)] = False
+    tab["ulfe"] = False
+    tab.rename_column("__Fe_H_", "[Fe/H]")
+    tab.rename_column("e__Fe_H_", "e_fe")
+    df = tab.to_pandas()
+    XH_from_XFe(df)
+    eps_from_XH(df)
+    df.rename(columns={"__FeII_H_":"[Fe II/H]",
+                       "e__FeII_H_":"e_fe2",
+                       "__TiI_Fe_":"[Ti I/Fe]",
+                       "e__TiI_Fe_":"e_ti1"},
+              inplace=True)
+    df["galaxy"] = "Sex"
+    df["Loc"] = "DW"
+    df["Reference"] = "THE20"
+    return df
 
 def load_battaglia17():
     df = Table.read(datapath+"/abundance_tables/battaglia17.txt", format="ascii.fixed_width_two_line").to_pandas()
@@ -1258,8 +1289,9 @@ def load_apogee_sgr():
     """
     tab = Table.read(datapath+"/abundance_tables/apogee_sgr.fits")
     tab.rename_column("APOGEE_ID","Name")
-    cols_to_keep = ["Name","RA","DEC","M_H","M_H_ERR","ALPHA_M","ALPHA_M_ERR","TEFF","TEFF_ERR","LOGG","LOGG_ERR",
-                    "VMICRO",]
+    cols_to_keep = ["Name","RA","DEC","M_H_ERR","ALPHA_M","ALPHA_M_ERR","TEFF_ERR","LOGG_ERR"]
+    tab.rename_columns(["TEFF","LOGG","VMICRO","M_H"], ["Teff","logg","vturb","Z"])
+    cols_to_keep.extend(["Teff","logg","vturb","Z"])
     tab.rename_column("FE_H","[Fe/H]"); cols_to_keep.append("[Fe/H]")
     tab.rename_column("FE_H_ERR","e_fe"); cols_to_keep.append("e_fe")
     tab["ulfe"] = False; cols_to_keep.append("ulfe")
