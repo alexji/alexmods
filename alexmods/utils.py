@@ -730,8 +730,8 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
         print(f"Forcing asynchronous query because {len(source_ids)} > 2000")
         asynchronous = True
     
-    if asynchronous:
-        raise NotImplementedError("Cannot use async yet")
+    #if asynchronous:
+    #    raise NotImplementedError("Cannot use async yet")
 
     if credentials_file is not None:
         Gaia.login(credentials_file=credentials_file)
@@ -754,14 +754,24 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
         print("Creating file at",path)
         Table(source_ids, names=["source_id"]).write(path, format="votable")
         
-        print("Launching job")
-        job = Gaia.launch_job(
-            query=query,
-            upload_resource=path, upload_table_name="tmpidtab",
-            verbose=True
-        )
-        print(job)
-        r = job.get_results()
+        if asynchronous:
+            print("Launching job (async)")
+            job = Gaia.launch_job_async(
+                query=query,
+                upload_resource=path, upload_table_name="tmpidtab",
+                verbose=True
+            )
+            print(job)
+            r = job.get_results()
+        else:
+            print("Launching job")
+            job = Gaia.launch_job(
+                query=query,
+                upload_resource=path, upload_table_name="tmpidtab",
+                verbose=True
+            )
+            print(job)
+            r = job.get_results()
     
     return r
 
