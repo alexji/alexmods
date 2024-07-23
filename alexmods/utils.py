@@ -670,8 +670,56 @@ def contour_plot(ax, x, y, xbins, ybins, pct=[68,95], **kwargs):
     cs = ax.contour(XX, YY, H.T, levels=get_levels(H, pct), **kwargs)
     return cs
 
+def query_gaia_from_coordinates(coo, radius=1*units.arcsec,
+                                columns="source_id, ra, dec, parallax, pmra, pmdec, "+\
+                                    "phot_g_mean_mag, phot_bp_mean_mag, phot_rp_mean_mag, "+\
+                                    "radial_velocity, ruwe ",
+                                source="gaiadr3.gaia_source_lite",
+                                full_columns=False,
+                                Nmax=None):
+    from astroquery.gaia import Gaia
+    from astropy.coordinates import SkyCoord
+    N = len(coo)
+    if Nmax is None: Nmax = 2*N
+    query = "SELECT TOP {} {} FROM {} WHERE ".format(
+        Nmax, columns, source)
+    if full_columns:
+        query = "SELECT TOP {} {} FROM {} WHERE ".format(
+            Nmax, "*", source)
+    def _make_contains_str(c):
+        cstr = "CONTAINS(POINT('ICRS',{0:}.ra,{0:}.dec),CIRCLE('ICRS',{1:},{2:},{3:}))=1".format(
+            source, c.ra.deg, c.dec.deg, radius.to("deg").value)
+        return cstr
+    cstrs = map(_make_contains_str, coo)
+    query += " or ".join(cstrs)
+    
+    print("Launching job")
+    job = Gaia.launch_job(
+        query=query,
+        verbose=True
+    )
+    print(job)
+    r = job.get_results()
+    
+    print("Sorting stars")
+    if len(coo) != len(r):
+        print(f"WARNING: len(input) {len(coo)} != len(result) {len(result)}")
+    gcoo = SkyCoord(r["ra"], r["dec"], unit="deg")
+    idx, d2d, _ = coo.match_to_catalog_sky(gcoo)
+
+    return r[idx]
+    
 def query_gaia_from_source_ids(source_ids, asynchronous=False,
-                               credentials_file=None):
+                               credentials_file=None, query=None,
+                               full_lite=False,  full_source=False):
+    """
+    Default query:
+    query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
+            "g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, "+\
+            "g.radial_velocity, g.ruwe "+\
+            "from gaiadr3.gaia_source_lite as g "+\
+            "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    """
     from astroquery.gaia import Gaia
     import tempfile, os
     Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
@@ -682,18 +730,23 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
         print(f"Forcing asynchronous query because {len(source_ids)} > 2000")
         asynchronous = True
     
-    if asynchronous:
-        raise NotImplementedError("Cannot use async yet")
+    #if asynchronous:
+    #    raise NotImplementedError("Cannot use async yet")
 
     if credentials_file is not None:
         Gaia.login(credentials_file=credentials_file)
         raise NotImplementedError("Cannot use user yet")
     
-    query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
-            "g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, "+\
-            "g.radial_velocity, g.ruwe "+\
-            "from gaiadr3.gaia_source_lite as g "+\
-            "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    if query is None:
+        query = "select g.source_id, g.ra, g.dec, g.parallax, g.pmra, g.pmdec, "+\
+                "g.phot_g_mean_mag, g.phot_bp_mean_mag, g.phot_rp_mean_mag, "+\
+                "g.radial_velocity, g.ruwe "+\
+                "from gaiadr3.gaia_source_lite as g "+\
+                "join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    if full_lite:
+        query = "select g.* from gaiadr3.gaia_source_lite as g join tap_upload.tmpidtab as x on g.source_id = x.source_id"
+    if full_source:
+        query = "select g.* from gaiadr3.gaia_source as g join tap_upload.tmpidtab as x on g.source_id = x.source_id"
     
     ## Create temporary table to upload
     with tempfile.TemporaryDirectory() as tmp:
@@ -701,15 +754,34 @@ def query_gaia_from_source_ids(source_ids, asynchronous=False,
         print("Creating file at",path)
         Table(source_ids, names=["source_id"]).write(path, format="votable")
         
-        print("Launching job")
-        job = Gaia.launch_job(
-            query=query,
-            upload_resource=path, upload_table_name="tmpidtab",
-            verbose=True
-        )
-        print(job)
-        r = job.get_results()
+        if asynchronous:
+            print("Launching job (async)")
+            job = Gaia.launch_job_async(
+                query=query,
+                upload_resource=path, upload_table_name="tmpidtab",
+                verbose=True
+            )
+            print(job)
+            r = job.get_results()
+        else:
+            print("Launching job")
+            job = Gaia.launch_job(
+                query=query,
+                upload_resource=path, upload_table_name="tmpidtab",
+                verbose=True
+            )
+            print(job)
+            r = job.get_results()
     
+    return r
+
+def query_simbad_from_source_ids(source_ids, asynchronous=False):
+    from astroquery.simbad import Simbad
+    
+    source_ids = np.ravel(source_ids)
+    ids = [f"Gaia DR3 {x}" for x in source_ids]
+    
+    r = Simbad.query_objects(ids)
     return r
 
 def deg2hmsdms(ra,dec,sep=':',precision=2,pad=True):

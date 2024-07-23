@@ -19,7 +19,7 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
     Return pd.Series(epsvals, index=Z), pd.Series(epserr, index=Z), pd.Series(epslim, index=Z)
     
     drop_Z = [24] by default.
-    This is a list of elements to remove from the data (not yet implemented)
+    This is a list of elements to remove from the data
     """
     # Check for errors
     assert errs is not None, "Must specify errors for chi2!"
@@ -28,6 +28,7 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
     checkinput = [XH is not None, logeps is not None, XFe is not None]
     assert np.sum(checkinput) == 1, np.where(checkinput)[0]
     if XFe is not None: raise NotImplementedError("Specify XH or logeps for now")
+    
     # Check array lengths
     assert len(elems) == len(errs)
     if XH is not None:
@@ -39,6 +40,7 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
     if XFe is not None:
         assert len(XFe)==len(elems)
         XFe = np.array(XFe)
+    
     # Check elems format, convert to Z
     if np.all([isinstance(elem, (int, np.integer, float, np.float)) for elem in elems]):
         elems = np.array(elems).astype(int)
@@ -47,6 +49,19 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
         elems = np.array([element_to_atomic_number(elem) for elem in elems]).astype(int)
     else:
         raise ValueError("Elems must be all numeric or all strings: type(elems)={}, {}".format(type(elems),elems))
+
+    ## Removing drop_Z
+    ii_remove = np.array([np.isin(Z, drop_Z) for Z in elems])
+    elems = elems[~ii_remove]
+    try: XH = XH[~ii_remove]
+    except: pass
+    try: logeps = logeps[~ii_remove]
+    except: pass
+    try: XFe = XFe[~ii_remove]
+    except: pass
+    try: errs = errs[~ii_remove]
+    except: pass
+
     # TODO convert XFe to XH
     if XFe is not None:
         iiFe = elems==26
@@ -226,14 +241,17 @@ def plot_many_abund_fits(nrow, ncol,
 
 def plot_model_parameters(best_models, best_logN, 
                           scattermin=1, scattermax=250,
+                          maxchi2 = None,
                           sigma=2.0, minlogMdil=2.0, **kwargs):
     chi2 = best_models["chi2"].values
     minchi2 = np.min(chi2)
-    maxchi2 = minchi2 + stats.chi2.ppf(stats.norm.cdf(sigma)-stats.norm.cdf(-sigma),4) # 4 params
+    if maxchi2 is None:
+        maxchi2 = minchi2 + stats.chi2.ppf(stats.norm.cdf(sigma)-stats.norm.cdf(-sigma),4) # 4 params
     chi2sf = stats.chi2.sf(chi2-minchi2, 4)
     scattersize = scattermin + (scattermax-scattermin)*chi2sf
     
     valid_for_plot = np.logical_and(chi2 < maxchi2, best_models["Dilution"] > minlogMdil)
+    print(f"{valid_for_plot.sum()} models are good for plotting (chi2<{maxchi2:.0f}, dilution > {minlogMdil:.1f})")
     cols = ["Mass","Energy","Mixing","Dilution"]
     limits = [[np.min(best_models[col]), np.max(best_models[col])] for col in cols]
     limits[cols.index("Dilution")][0] = minlogMdil

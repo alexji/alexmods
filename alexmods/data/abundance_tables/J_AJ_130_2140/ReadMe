@@ -1,0 +1,134 @@
+J/AJ/130/2140    Abundances and velocities in globular clusters  (Pritzl+, 2005)
+================================================================================
+A comparison of elemental abundance ratios in globular clusters, field stars,
+and dwarf spheroidal galaxies.
+    Pritzl B.J., Venn K.A., Irwin M.
+   <Astron. J., 130, 2140-2165 (2005)>
+   =2005AJ....130.2140P
+================================================================================
+ADC_Keywords: Clusters, globular ; Abundances
+Keywords: globular clusters: general - stars: abundances
+
+Abstract:
+    We have compiled a sample of globular clusters with high-quality
+    stellar abundances from the literature to compare to the chemistries
+    of stars in the Galaxy and in dwarf spheroidal galaxies. Of the 45
+    globular clusters examined, 29 also have kinematic information. Most
+    of the globular clusters belong to the Galactic halo; however, a
+    significant number have disk kinematics or belong to the bulge.
+
+File Summary:
+--------------------------------------------------------------------------------
+ FileName   Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe         80        .   This file
+table2.dat    270      106   Globular cluster mean abundance ratios
+table3.dat     71       45   Globular cluster velocity and positional vector
+                              components
+--------------------------------------------------------------------------------
+
+See also:
+  VII/202        : Globular Clusters in the Milky Way (Harris, 1997)
+  J/A+A/503/545  : Equivalent widths of Li, Na, Fe, Ca in NGC 6397 (Lind+, 2009)
+  J/A+A/450/105  : Properties of 153 Galactic globular clusters (Bica+, 2006)
+  J/AJ/120/1364  : Abundances in M3 and M13 (Cavallo+, 2000)
+  J/A+A/326/1069 : Abundances in globular clusters (Russell 1997)
+
+Byte-by-byte Description of file: table2.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units     Label      Explanations
+--------------------------------------------------------------------------------
+   1-  8  A8    ---       Cluster    Globular cluster name
+  10- 14  F5.2  [Sun]     [Fe/H]     Log of the Fe-to-H ratio
+      16  A1    ---     f_[Fe/H]     [ib] Flag on [Fe/H] (1)
+  18- 22  F5.2  [Sun]     [Mg/Fe]    ? Log of the Mg-to-Fe ratio
+  24- 27  F4.2  [Sun]   e_[Mg/Fe]    ? Standard error of the mean for [Mg/Fe]
+      29  A1    ---     f_[Mg/Fe]    [ib] Flag on [Mg/Fe] (1)
+  31- 35  F5.2  [Sun]     [Si/Fe]    ? Log of the Si-to-Fe ratio
+  37- 40  F4.2  [Sun]   e_[Si/Fe]    ? Standard error of the mean for [Si/Fe]
+      42  A1    ---     f_[Si/Fe]    [ib] Flag on [Si/Fe] (1)
+  44- 48  F5.2  [Sun]     [Ca/Fe]    ? Log of the Ca-to-Fe ratio
+  50- 53  F4.2  [Sun]   e_[Ca/Fe]    ? Standard error of the mean for [Ca/Fe]
+      55  A1    ---     f_[Ca/Fe]    [ib] Flag on [Ca/Fe] (1)
+  57- 61  F5.2  [Sun]     [TiI/Fe]   ? Log of the TiI-to-Fe ratio
+  63- 66  F4.2  [Sun]   e_[TiI/Fe]   ? Standard error of the mean for [TiI/Fe]
+      68  A1    ---     f_[TiI/Fe]   [ib] Flag on [TiI/Fe] (1)
+  70- 74  F5.2  [Sun]     [TiII/Fe]  ? Log of the TiII-to-Fe ratio
+  76- 79  F4.2  [Sun]   e_[TiII/Fe]  ? Standard error of the mean for [TiII/Fe]
+      81  A1    ---     f_[TiII/Fe]  [ib] Flag on [TiII/Fe] (1)
+  83- 87  F5.2  [Sun]     [Y/Fe]     ? Log of the Y-to-Fe ratio
+  89- 92  F4.2  [Sun]   e_[Y/Fe]     ? Standard error of the mean for [Y/Fe]
+      94  A1    ---     f_[Y/Fe]     [ib] Flag on [Y/Fe] (1)
+  96-100  F5.2  [Sun]     [Ba/Fe]    ? Log of the Ba-to-Fe ratio
+ 102-105  F4.2  [Sun]   e_[Ba/Fe]    ? Standard error of the mean for [Ba/Fe]
+     107  A1    ---     f_[Ba/Fe]    [ib] Flag on [Ba/Fe] (1)
+ 109-113  F5.2  [Sun]     [La/Fe]    ? Log of the La-to-Fe ratio
+ 115-118  F4.2  [Sun]   e_[La/Fe]    ? Standard error of the mean for [La/Fe]
+     120  A1    ---     f_[La/Fe]    [ib] Flag on [La/Fe] (1)
+ 122-126  F5.2  [Sun]     [Eu/Fe]    ? Log of the Eu-to-Fe ratio
+ 128-131  F4.2  [Sun]   e_[Eu/Fe]    ? Standard error of the mean for [Eu/Fe]
+     133  A1    ---     f_[Eu/Fe]    [ib] Flag on [Eu/Fe] (1)
+ 135-139  F5.2  [Sun]     [Ti/Fe]    ? Log of the Ti-to-Fe ratio
+ 141-144  F4.2  [Sun]   e_[Ti/Fe]    ? Standard error of the mean for [Ti/Fe]
+     146  A1    ---     f_[Ti/Fe]    [ib] Flag on [Ti/Fe] (1)
+ 148-152  F5.2  [Sun]     [a/Fe]     ? [{alpha}/Fe] ratio ({alpha} elements)
+     154  A1    ---     f_[a/Fe]     [ib] Flag on [alpha/Fe] (1)
+ 156-160  F5.2  [Sun]     [Ba/Y]     ? Log of the Ba-to-Y ratio
+     162  A1    ---     f_[Ba/Y]     [ib] Flag on [Ba/Y] (1)
+ 164-168  F5.2  [Sun]     [Y/Eu]     ? Log of the Y-to-Eu ratio
+     170  A1    ---     f_[Y/Eu]     [ib] Flag on [Y/Eu] (1)
+ 172-176  F5.2  [Sun]     [Ba/Eu]    ? Log of the Ba-to-Eu ratio
+     178  A1    ---     f_[Ba/Eu]    [ib] Flag on [Ba/Eu] (1)
+ 180-184  F5.2  [Sun]     [La/Eu]    ? Log of the La-to-Eu ratio
+     186  A1    ---     f_[La/Eu]    [ib] Flag on [La/Eu] (1)
+ 188-270  A83   ---       Ref        Reference
+--------------------------------------------------------------------------------
+Note (1): Flag defined as follows:
+    i = ratio was not used in calculating the final weighted mean
+        abundance ratios;
+    b = final individual abundance ratio.
+--------------------------------------------------------------------------------
+
+Byte-by-byte Description of file: table3.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units   Label     Explanations
+--------------------------------------------------------------------------------
+   1-  8  A8    ---     Cluster   Cluster name
+  10- 15  F6.2  kpc     Xgal      X component of the galactocentric
+                                   positional vector
+  17- 22  F6.2  kpc     Ygal      Y component of the galactocentric
+                                   positional vector
+  24- 29  F6.2  kpc     Zgal      Z component of the galactocentric
+                                   positional vector
+  31- 36  F6.1  km/s    Pi        ? {Pi} component of the galactocentric
+                                   velocity vector
+  38- 41  F4.1  km/s  e_Pi        ? Error in Pi
+  43- 48  F6.1  km/s    Theta     ? {Theta} component of the galactocentric
+                                   velocity vector
+  50- 53  F4.1  km/s  e_Theta     ? Error in Theta
+  55- 60  F6.1  km/s    W         ? W component of the galactocentric
+                                   velocity vector
+  62- 65  F4.1  km/s  e_W         ? Error in W
+  67- 68  A2    ---     Cl1       Galactic component the globular cluster
+                                   belongs to, according to our calculations (1)
+  70- 71  A2    ---     Cl2       Galactic component the globular cluster
+                                   belongs to, taken from Mackey & Gilmore
+                                   (2004MNRAS.355..504M) (2)
+--------------------------------------------------------------------------------
+Note (1): Class Cl1 is defined as follows:
+    B  = bulge
+    H  = halo
+    TK = thick disk
+    TN = thin disk
+Note (2): Class Cl2 is defined as follows:
+    YH = young halo
+    OH = old halo
+    BD = bulge/disk
+    SG = Sgr cluster
+--------------------------------------------------------------------------------
+
+History:
+    From electronic version of the journal
+
+================================================================================
+(End)                   Greg Schwarz [AAS], Marianne Brouty [CDS]    19-Apr-2006

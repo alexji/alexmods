@@ -102,7 +102,7 @@ class Spectrum1D(object):
 
 
     @classmethod
-    def read(cls, path, **kwargs):
+    def read(cls, path, debug=False, **kwargs):
         """
         Create a Spectrum1D class from a path on disk.
 
@@ -115,21 +115,25 @@ class Spectrum1D(object):
 
         # Try multi-spec first since this is currently the most common use case.
         methods = (
-            cls.read_fits_multispec,
-            cls.read_fits_spectrum1d,
-            cls.read_ascii_spectrum1d,
-            cls.read_alex_spectrum,
-            cls.read_ceres,
-            cls.read_multispec,
-            cls.read_ascii_spectrum1d_noivar,
-            #cls.read_multispec_rpacomb,
+            (cls.read_fits_multispec,"read_fits_multispec"),
+            (cls.read_fits_spectrum1d,"read_fits_spectrum1d"),
+            (cls.read_ascii_spectrum1d,"read_ascii_spectrum1d"),
+            (cls.read_alex_spectrum,"read_alex_spectrum"),
+            (cls.read_ceres,"read_ceres"),
+            (cls.read_multispec,"read_multispec"),
+            (cls.read_ascii_spectrum1d_noivar,"read_ascii_spectrum1d_noivar"),
+            (cls.read_multispec_rpacomb,"read_multispec_rpacomb"),
         )
 
-        for method in methods:
+        for method, name in methods:
             try:
                 dispersion, flux, ivar, metadata = method(path, **kwargs)
 
-            except:
+            except Exception as e:
+                if debug:
+                    print(name,"failed to load")
+                    print(e)
+                    print()
                 continue
 
             else:
@@ -251,7 +255,7 @@ class Spectrum1D(object):
         There are some files that are not reduced with Dan Kelson's pipeline.
         So we have to read those manually and define ivar
         """
-        print("READ MULTISPEC DWARF CANNON")
+        print("READ MULTISPEC OLD VERSION")
         # Hardcoded file with old CarPy format: 5 bands instead of 7
         if "hd13979red_multi_200311ibt" in fname:
             WAT_LENGTH=67
@@ -409,7 +413,10 @@ class Spectrum1D(object):
             #       that issue returns.
 
             if key in metadata:
-                metadata[key] += value
+                try:
+                    metadata[key] += value
+                except:
+                    metadata[key] += str(value)
             else:
                 metadata[key] = value
 
@@ -453,6 +460,7 @@ class Spectrum1D(object):
         is_iraf_3band_product = (md5_hash == "a4d8f6f51a7260fce1642f7b42012969")
         is_apo_product = (image[0].header.get("OBSERVAT", None) == "APO")
         is_dupont_product = (md5_hash == "2ab648afed96dcff5ccd10e5b45730c1")
+        is_mcdonald_product = (image[0].header.get("OBSERVAT", "").strip() == "MCDONALD")
         
         if is_carpy_mike_product or is_carpy_mage_product or is_carpy_mike_product_old or is_dupont_product:
             # CarPy gives a 'noise' spectrum, which we must convert to an
@@ -488,14 +496,26 @@ class Spectrum1D(object):
             flux = image[0].data[flux_ext]
             ivar = image[0].data[noise_ext]**(-2)
 
-        elif is_apo_product:
+        elif is_apo_product or is_mcdonald_product:
             flux_ext = flux_ext or 0
-            default_ivar_ext = 3 if (md5_hash == "9d008ba2c3dc15549fd8ffe8a605ec15") else -1
+            if md5_hash == "9d008ba2c3dc15549fd8ffe8a605ec15":
+                default_ivar_ext = 3
+            elif md5_hash == "a4d8f6f51a7260fce1642f7b42012969":
+                default_ivar_ext = 2
+            else:
+                default_ivar_ext = -1
+            #default_ivar_ext = 3 if (md5_hash == "9d008ba2c3dc15549fd8ffe8a605ec15") else -1
             noise_ext = ivar_ext or default_ivar_ext
 
-            logger.info(
-                "Recognized APO product. Using zero-indexed flux/noise "
-                "extensions (bands) {}/{}".format(flux_ext, noise_ext))
+            if md5_hash == "9d008ba2c3dc15549fd8ffe8a605ec15":
+                logger.info(
+                    "Recognized APO product. Using zero-indexed flux/noise "
+                    "extensions (bands) {}/{}".format(flux_ext, noise_ext))
+            elif md5_hash == "a4d8f6f51a7260fce1642f7b42012969":
+                logger.info(
+                    "Recognized McDonald product. Using zero-indexed flux/noise "
+                    "extensions (bands) {}/{}".format(flux_ext, noise_ext))
+
             logger.info(
                 image[0].header["BANDID{}".format(flux_ext+1)]
             )

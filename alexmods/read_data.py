@@ -427,10 +427,12 @@ def load_cldw(add_all=False, **kwargs):
 
     if add_all:
         fnx = load_letarte10_fornax()
+        fnx2 = load_lemasle14_fornax()
         scl = load_hill19_sculptor()
         car = load_lemasle12_carina()
+        sex = load_theler20_sextans()
         sgr = load_apogee_sgr()
-        cldw = pd.concat([cldw,fnx,scl,car,sgr],axis=0)
+        cldw = pd.concat([cldw,fnx,fnx2,scl,car,sex,sgr],axis=0)
     return cldw
 
 def load_roed(match_anna_elems=True,load_eps=True,load_ul=True,load_XH=True,load_XFe=True):
@@ -531,7 +533,8 @@ def load_yong():
 #########################
 # Load Alex's UFD table #
 #########################
-def parse_dwarf_table(alpha=False,table_path=datapath+'/abundance_tables/dwarf_lit_all.tab'):
+def parse_dwarf_table(alpha=False,table_path=None):
+    if table_path is None: table_path=datapath+'/abundance_tables/dwarf_lit_all.tab'
     def _process_column(d,elem):
         N = len(d)
         if elem not in d.colnames:
@@ -565,8 +568,43 @@ def parse_dwarf_table(alpha=False,table_path=datapath+'/abundance_tables/dwarf_l
         col = table.MaskedColumn(np.zeros(len(d)),name='ul_alpha',dtype=int)
         d.add_column(col)
     return d
-def load_ufds(load_all=False,load_eps=True,load_ul=True,load_XH=True,load_XFe=True,alpha=False):
-    ufds = parse_dwarf_table(alpha=alpha)
+def parse_dwarf_table_coo(alpha=False,table_path=None):
+    if table_path is None: table_path=datapath+'/abundance_tables/dwarf_lit_all_coo.org'
+    def _process_column(d,elem):
+        N = len(d)
+        if elem not in d.colnames:
+            raise ValueError(elem)
+        old_col = d[elem]
+        ul_col = table.MaskedColumn(data=np.zeros(N),name='ul_'+elem,dtype=int)
+        if old_col.dtype==np.float:
+            return old_col,ul_col
+    
+        new_col = table.MaskedColumn(data=np.zeros(N,dtype=np.float),name=elem)
+        for i in range(N):
+            if np.ma.is_masked(old_col[i]):
+                new_col[i]      = np.ma.masked
+                ul_col[i]       = np.ma.masked
+            elif old_col[i][0]=='<':
+                new_col[i] = np.float(old_col[i][1:])
+                ul_col[i] = 1
+            else:
+                new_col[i] = np.float(old_col[i])
+        return new_col,ul_col
+    d = table.Table(ascii.read(table_path))
+    elems = d.colnames[2:-4]
+    for elem in elems:
+        elem_col,ul_col = _process_column(d,elem)
+        d.remove_column(elem)
+        d.add_column(elem_col)
+        d.add_column(ul_col)
+    if alpha:
+        col = table.MaskedColumn(np.nanmean([d['Mg'],d['CaI'],d['TiII']],axis=0),name='alpha')
+        d.add_column(col)
+        col = table.MaskedColumn(np.zeros(len(d)),name='ul_alpha',dtype=int)
+        d.add_column(col)
+    return d
+def load_ufds(load_all=False,load_eps=True,load_ul=True,load_XH=True,load_XFe=True,alpha=False,table_path=None):
+    ufds = parse_dwarf_table(alpha=alpha,table_path=table_path)
     ufds = ufds.to_pandas()
     ufds.index = ufds['Star']
     def column_renamer(x):
@@ -746,7 +784,6 @@ def load_gcdata():
 # Supernova yields
 ##################
 def load_hw10(as_number=True):
-    assert as_number, "Did not download the mass tables"
     hw10 = Table.read(datapath+"/yield_tables/HW10.znuc.S4.star.el.fits").to_pandas()
     hw10.rename(inplace=True, columns={
             "mass":"Mass","energy":"Energy","mixing":"Mixing","remnant":"Remnant"})
@@ -772,7 +809,15 @@ def load_hw10(as_number=True):
     hw10["Energy"] = hw10["Energy"].map(lambda x: round(x, 1))
     hw10["Mixing"] = hw10["Mixing"].map(lambda x: round(x, 5))
     
-    return hw10
+    if as_number:
+        return hw10
+    else:
+        print("Using periodic table to estimate number to mass")
+        #assert as_number, "Did not download the mass tables"
+        for elem in elems:
+            A = PTelement(elem).mass
+            hw10[elem] = hw10[elem] * A
+        return hw10
     
 def load_hw10_old(as_number=False):
     """
@@ -1128,6 +1173,32 @@ def load_letarte10_fornax():
     df["Loc"] = "DW"
     df["Reference"] = "LET10"
     return df
+def load_lemasle14_fornax():
+    tab = Table.read(datapath+"/abundance_tables/lemasle14_fnx.txt",format='ascii.fixed_width')
+    tab["Star"] = tab["Star"].astype(str)
+    tab.rename_column("Star","Name")
+    #tab.remove_columns(["[TiI/H]","e_ti1","fe2_h","e_fe2"])
+    for col in tab.colnames:
+        if col.startswith("N"): tab.remove_column(col)
+    #elemmap = {"NaI":"Na", "MgI":"Mg", "SiI":"Si", "CaI":"Ca", "TiII":"Ti",
+    #           "CrI":"Cr", "NiI":"Ni", "YII":"Y",
+    #           "BaII":"Ba","LaII":"La","NdII":"Nd","EuII":"Eu"}
+    #"FeI":"Fe"
+    #for e1, e2 in elemmap.items():
+    #    tab.rename_column("__{}_Fe_".format(e1), "[{}/Fe]".format(e2))
+    #    tab.rename_column("e__{}_Fe_".format(e1), "e_{}".format(e2.lower()))
+    #    tab[ulcol(e2)] = False
+    elems = ["Na","Mg","Si","Ca","Sc","Ti","Cr","Ni","Y","Ba","La","Nd","Eu"]
+    tab["ulfe"] = False
+    for elem in elems:
+        tab[XFecol(elem)] = tab[XHcol(elem)] - tab["[Fe/H]"]
+        tab[ulcol(elem)] = False
+    df = tab.to_pandas()
+    eps_from_XH(df)
+    df["galaxy"] = "Fnx"
+    df["Loc"] = "DW"
+    df["Reference"] = "LEM14"
+    return df
 def load_lemasle12_carina():
     tab = Table.read(datapath+"/abundance_tables/lemasle12_carina.fits")
     tab["Name"] = tab["Name"].astype(str)
@@ -1156,6 +1227,36 @@ def load_lemasle12_carina():
     df["galaxy"] = "Car"
     df["Loc"] = "DW"
     df["Reference"] = "LEM12"
+    return df
+def load_theler20_sextans():
+    tab = Table.read(datapath+"/abundance_tables/theler20_sextans.fits")
+    tab["ID"] = tab["ID"].astype(str)
+    tab.rename_column("ID","Name")
+    for col in tab.colnames:
+        if col.startswith("o__"): tab.remove_column(col)
+        if col.startswith("er__"): tab.remove_column(col)
+    elemmap = {"Mg":"Mg", "Ca":"Ca", "Sc":"Sc", "TiII":"Ti",
+               "Cr":"Cr", "Mn":"Mn", "Co":"Co", "NI":"Ni",
+               "Ba":"Ba","Eu":"Eu"}
+    #"FeI":"Fe"
+    for e1, e2 in elemmap.items():
+        tab.rename_column("__{}_Fe_".format(e1), "[{}/Fe]".format(e2))
+        tab.rename_column("e__{}_Fe_".format(e1), "e_{}".format(e2.lower()))
+        tab[ulcol(e2)] = False
+    tab["ulfe"] = False
+    tab.rename_column("__Fe_H_", "[Fe/H]")
+    tab.rename_column("e__Fe_H_", "e_fe")
+    df = tab.to_pandas()
+    XH_from_XFe(df)
+    eps_from_XH(df)
+    df.rename(columns={"__FeII_H_":"[Fe II/H]",
+                       "e__FeII_H_":"e_fe2",
+                       "__TiI_Fe_":"[Ti I/Fe]",
+                       "e__TiI_Fe_":"e_ti1"},
+              inplace=True)
+    df["galaxy"] = "Sex"
+    df["Loc"] = "DW"
+    df["Reference"] = "THE20"
     return df
 
 def load_battaglia17():
@@ -1188,8 +1289,9 @@ def load_apogee_sgr():
     """
     tab = Table.read(datapath+"/abundance_tables/apogee_sgr.fits")
     tab.rename_column("APOGEE_ID","Name")
-    cols_to_keep = ["Name","RA","DEC","M_H","M_H_ERR","ALPHA_M","ALPHA_M_ERR","TEFF","TEFF_ERR","LOGG","LOGG_ERR",
-                    "VMICRO",]
+    cols_to_keep = ["Name","RA","DEC","M_H_ERR","ALPHA_M","ALPHA_M_ERR","TEFF_ERR","LOGG_ERR"]
+    tab.rename_columns(["TEFF","LOGG","VMICRO","M_H"], ["Teff","logg","vturb","Z"])
+    cols_to_keep.extend(["Teff","logg","vturb","Z"])
     tab.rename_column("FE_H","[Fe/H]"); cols_to_keep.append("[Fe/H]")
     tab.rename_column("FE_H_ERR","e_fe"); cols_to_keep.append("e_fe")
     tab["ulfe"] = False; cols_to_keep.append("ulfe")
