@@ -121,7 +121,8 @@ class Spectrum1D(object):
             cls.read_alex_spectrum,
             cls.read_ceres,
             cls.read_multispec,
-            cls.read_ascii_spectrum1d_noivar
+            cls.read_ascii_spectrum1d_noivar,
+            #cls.read_multispec_rpacomb,
         )
 
         for method in methods:
@@ -307,6 +308,66 @@ class Spectrum1D(object):
             
             ## Compute ivar assuming Poisson noise
             ivar = 1./flux
+            
+        return (dispersion, flux, ivar, metadata)
+
+    @classmethod
+    def read_multispec_rpacomb(cls, fname, full_output=False):
+        """
+        The RPA has made some coadded spectra that have only two bands
+        but the spectrum header is broken.
+        So we add this as a last case for reading.
+        The first band is flux, the second band is flux error.
+        
+        TODO FIX THIS IT DOES NOT WORK YET
+        """
+        WAT_LENGTH=68
+        
+        with fits.open(fname) as hdulist:
+            assert len(hdulist)==1, len(hdulist)
+            header = hdulist[0].header
+            data = hdulist[0].data
+            # orders x pixels
+            assert len(data.shape)==3, data.shape
+            assert data.shape[0] == 2, data.shape
+                
+            metadata = OrderedDict()
+            for k, v in header.items():
+                if k in metadata:
+                    metadata[k] += v
+                else:
+                    metadata[k] = v
+            
+            ## Compute dispersion
+            assert metadata["CTYPE1"].upper().startswith("MULTISPE") \
+                or metadata["WAT0_001"].lower() == "system=multispec"
+
+            # Join the WAT keywords for dispersion mapping.
+            i, concatenated_wat, key_fmt = (1, str(""), "WAT2_{0:03d}")
+            while key_fmt.format(i) in metadata:
+                value = metadata[key_fmt.format(i)]
+                concatenated_wat += value + (" "  * (WAT_LENGTH - len(value)))
+                i += 1
+
+            # Split the concatenated header into individual orders.
+            order_mapping = np.array([list(map(float, each.rstrip('" ').split())) \
+                for each in re.split('spec[0-9]+ ?= ?"', concatenated_wat)[1:]])
+            print(order_mapping)
+            if len(order_mapping)==0:
+                NAXIS1 = metadata["NAXIS1"]
+                NAXIS2 = metadata["NAXIS2"]
+                dispersion = np.array([np.arange(NAXIS1) for _ in range(NAXIS2)])
+            else:
+                dispersion = np.array(
+                    [compute_dispersion(*mapping) for 
+                     mapping in order_mapping])
+            
+            ## Compute flux
+            flux = data[0]
+            #flux[0 > flux] = np.nan
+            
+            ## Compute ivar from error
+            ivar = data[1]**-2
             
         return (dispersion, flux, ivar, metadata)
 
