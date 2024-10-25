@@ -797,3 +797,6 @@ def hmsdms2deg(rastr,decstr):
     ra = np.array(coo.ra.deg)
     dec = np.array(coo.dec.deg)
     return ra, dec
+
+def check_bit(bit_j, bitmask_array):
+    return (bitmask_array & 2**bit_j) != 0
