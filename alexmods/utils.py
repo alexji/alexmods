@@ -800,3 +800,50 @@ def hmsdms2deg(rastr,decstr):
 
 def check_bit(bit_j, bitmask_array):
     return (bitmask_array & 2**bit_j) != 0
+
+def _lnprob_fit_gaussian_emcee(theta, x, ex, logexmin, logexmax):
+    mu, lsig = theta
+    if lsig < logexmin or lsig > logexmax: return -1e10
+    return np.sum(stats.norm.logpdf(x, loc=mu, scale=np.sqrt(ex**2 + (10**lsig)**2)))
+def fit_gaussian_emcee(x, ex, 
+                       logexmin=-2, logexmax=2,
+                       p0=None, ep0=None,
+                       nwalkers=64, nproc=4, nstep=2000):
+    """
+    Basic gaussian MCMC fit
+    """
+    import emcee
+    from schwimmbad import MultiPool
+
+    if p0 is None:
+        muguess = np.mean(x)
+        sigguess = np.std(x) - np.median(ex)**2
+        if sigguess < 0: logsigguess = (logexmin + logexmax)/2.
+        else: logsigguess = np.log10(sigguess)
+        p0 = np.array([muguess, logsigguess])
+        print(f"Guessing p0 = {p0}")
+    if ep0 is None:
+        ep0 = np.array([10**p0[1], 0.2])
+        print(f"Guessing ep0 = {ep0}")
+    assert len(p0) == len(ep0) == 2, (len(p0), len(ep0))
+    p0s = np.random.multivariate_normal(p0, np.diag(ep0)**2, size=nwalkers)
+    lkhds = [_lnprob_fit_gaussian_emcee(p0s[j], x, ex, logexmin, logexmax) for j in range(nwalkers)]
+    assert np.all(np.array(lkhds) > -9e9), np.sum(np.array(lkhds) < -9e9)
+
+    with MultiPool(nproc) as pool:
+        print("Running burnin with {} iterations".format(nstep))
+        start = time.time()
+        es = emcee.EnsembleSampler(
+            nwalkers, len(p0), _lnprob_fit_gaussian_emcee, args=(x, ex, logexmin, logexmax), pool=pool)
+        PP = es.run_mcmc(p0s, nstep)
+        print("Took {:.1f} seconds".format(time.time()-start))
+        
+        print(f"Now running the actual thing")
+        es.reset()
+        start = time.time()
+        es.run_mcmc(PP.coords, nstep)
+        print("Took {:.1f} seconds".format(time.time()-start))
+        
+        chain = es.chain
+        # Can save this output with np.save
+    return chain
