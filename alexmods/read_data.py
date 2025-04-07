@@ -203,7 +203,7 @@ def getelem(elem,lower=False,keep_species=False):
             species = element_to_species(elem)
             elem = species_to_element(species)
             elem = elem.split()[0]
-    elif isinstance(elem, (int, np.integer)):
+    elif isinstance(elem, (int)):
         elem = int(elem)
         elem = PTelement(elem)
         ## TODO common molecules
@@ -541,19 +541,19 @@ def parse_dwarf_table(alpha=False,table_path=None):
             raise ValueError(elem)
         old_col = d[elem]
         ul_col = table.MaskedColumn(data=np.zeros(N),name='ul_'+elem,dtype=int)
-        if old_col.dtype==np.float:
+        if old_col.dtype==float:
             return old_col,ul_col
     
-        new_col = table.MaskedColumn(data=np.zeros(N,dtype=np.float),name=elem)
+        new_col = table.MaskedColumn(data=np.zeros(N,dtype=float),name=elem)
         for i in range(N):
             if np.ma.is_masked(old_col[i]):
                 new_col[i]      = np.ma.masked
                 ul_col[i]       = np.ma.masked
             elif old_col[i][0]=='<':
-                new_col[i] = np.float(old_col[i][1:])
+                new_col[i] = float(old_col[i][1:])
                 ul_col[i] = 1
             else:
-                new_col[i] = np.float(old_col[i])
+                new_col[i] = float(old_col[i])
         return new_col,ul_col
     d = table.Table(ascii.read(table_path))
     elems = d.colnames[2:-4]
@@ -576,19 +576,19 @@ def parse_dwarf_table_coo(alpha=False,table_path=None):
             raise ValueError(elem)
         old_col = d[elem]
         ul_col = table.MaskedColumn(data=np.zeros(N),name='ul_'+elem,dtype=int)
-        if old_col.dtype==np.float:
+        if old_col.dtype==float:
             return old_col,ul_col
     
-        new_col = table.MaskedColumn(data=np.zeros(N,dtype=np.float),name=elem)
+        new_col = table.MaskedColumn(data=np.zeros(N,dtype=float),name=elem)
         for i in range(N):
             if np.ma.is_masked(old_col[i]):
                 new_col[i]      = np.ma.masked
                 ul_col[i]       = np.ma.masked
             elif old_col[i][0]=='<':
-                new_col[i] = np.float(old_col[i][1:])
+                new_col[i] = float(old_col[i][1:])
                 ul_col[i] = 1
             else:
-                new_col[i] = np.float(old_col[i])
+                new_col[i] = float(old_col[i])
         return new_col,ul_col
     d = table.Table(ascii.read(table_path))
     elems = d.colnames[2:-4]

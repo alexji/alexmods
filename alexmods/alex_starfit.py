@@ -42,7 +42,7 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
         XFe = np.array(XFe)
     
     # Check elems format, convert to Z
-    if np.all([isinstance(elem, (int, np.integer, float, np.float)) for elem in elems]):
+    if np.all([isinstance(elem, (int, float)) for elem in elems]):
         elems = np.array(elems).astype(int)
     elif np.all([isinstance(elem, string_types) for elem in elems]):
         print("Elements are strings, converting to Z (this is untested)")
