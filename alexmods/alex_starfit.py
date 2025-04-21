@@ -42,7 +42,7 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
         XFe = np.array(XFe)
     
     # Check elems format, convert to Z
-    if np.all([isinstance(elem, (int, np.integer, float, np.float)) for elem in elems]):
+    if np.all([isinstance(elem, (int, int, float, float)) for elem in elems]):
         elems = np.array(elems).astype(int)
     elif np.all([isinstance(elem, string_types) for elem in elems]):
         print("Elements are strings, converting to Z (this is untested)")
@@ -89,7 +89,7 @@ def load_hw10_starfit():
     Set up data for fitting
     """
     hw10 = rd.load_hw10(as_number=True)
-    columns_to_use = np.array([isinstance(col, (int, np.integer)) for col in hw10.columns])
+    columns_to_use = np.array([isinstance(col, (int, int)) for col in hw10.columns])
     hw10logN = np.log10(hw10[hw10.columns[columns_to_use]])
     return hw10, hw10logN
 
