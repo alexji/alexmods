@@ -203,7 +203,7 @@ def getelem(elem,lower=False,keep_species=False):
             species = element_to_species(elem)
             elem = species_to_element(species)
             elem = elem.split()[0]
-    elif isinstance(elem, (int, np.integer)):
+    elif isinstance(elem, (int)):
         elem = int(elem)
         elem = PTelement(elem)
         ## TODO common molecules

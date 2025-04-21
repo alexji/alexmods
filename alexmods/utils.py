@@ -798,6 +798,9 @@ def hmsdms2deg(rastr,decstr):
     dec = np.array(coo.dec.deg)
     return ra, dec
 
+def check_bit(bit_j, bitmask_array):
+    return (bitmask_array & 2**bit_j) != 0
+
 def _lnprob_fit_gaussian_emcee(theta, x, ex, logexmin, logexmax):
     mu, lsig = theta
     if lsig < logexmin or lsig > logexmax: return -1e10
@@ -844,3 +847,15 @@ def fit_gaussian_emcee(x, ex,
         chain = es.chain
         # Can save this output with np.save
     return chain
+
+def make_jskycalc_file(outfname, names, radegs, decdegs, equinox="2000"):
+    from astropy.coordinates import SkyCoord
+    coos = SkyCoord(ra=radegs, dec=decdegs, unit="deg")
+    assert len(coos) == len(names)
+    
+    coostrs = coos.to_string("hmsdms",pad=True,sep=":",precision=2)
+    rastrs = [x.split()[0] for x in coostrs]
+    decstrs = [x.split()[1] for x in coostrs]
+    with open(outfname, "w") as fp:
+        for name, rastr, decstr in zip(names, rastrs, decstrs):
+            fp.write("{:20} {:12} {:12} {}\n".format(name,rastr.replace(':',' '),decstr.replace(':',' '), equinox))
