@@ -548,6 +548,6 @@ def measure_mike_velocities(template, blue_fname, red_fname,
         plt.close(fig)
 
     if outfname_data is not None:
-        np.save(outfname_data, [(v_avg, v_med, v_err, v_std, v_blue, v_red, vhelcorr), (o_all, v_all, e_all, w_all, keep), rv_output1, rv_output2])
+        np.savez(outfname_data, vdata=(v_avg, v_med, v_err, v_std, v_blue, v_red, vhelcorr), orderdata=(o_all, v_all, e_all, w_all, keep), rv_output1=rv_output1, rv_output2=rv_output2)
     
     return v_avg, v_med, v_err, v_std, v_blue, v_red, vhelcorr

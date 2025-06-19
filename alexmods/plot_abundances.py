@@ -20,7 +20,8 @@ sns.set_style({"xtick.direction":"in","ytick.direction":"in"})
 ######################
 _galaxies = ['Bootes I', 'Bootes II', 'CVn II', 'ComBer', 'Hercules', 'Leo IV',
              'Ret II', 'Segue 1', 'Segue 2', 'Tri II', 'Tuc II', 'UMa II',
-             'Tuc III', 'Hor I', 'Gru I', 'Psc II', 'Car II', 'Car III', 'Gru II']
+             'Tuc III', 'Hor I', 'Gru I', 'Psc II', 'Car II', 'Car III', 'Gru II',
+             'Tuc V', 'Cet II', 'UMa I']
 _colors = ['#ad8150', #light brown
            (0.86, 0.71786666666666665, 0.33999999999999997),
            (0.65546666666666642, 0.86, 0.33999999999999997),
@@ -39,12 +40,19 @@ _colors = ['#ad8150', #light brown
            '#8e82fe', #periwinkle
            'blue',
            'orange',
-           'black' # TODO change this and the marker for Gru II, arbitrary for now to not crash things
+            '#00bfff',  # deep sky blue
+            '#a184a3',  # muted purple
+            '#228b22',  # forest green
+            '#c97a93',  # muted rose
+           #'black' # TODO change this and the marker for Gru II, arbitrary for now to not crash things
           ]
-_markers = ['D', '^', '*', 'o', 'H', 's', '*', 'p', '*', '^', 'v', 'h',
-            'v', 's', 's','^','o','s','o']
-assert len(_galaxies) == len(_colors)
-assert len(_galaxies) == len(_markers)
+_markers = [
+    'D', '^', '*', 'o', 'H', 's', '*', 'p', '*', '^', 'v', 'h',
+    'v', 's', 's', '^', 'o', 's', 'o',
+    'X','P','p',
+]
+assert len(_galaxies) == len(_colors), (len(_galaxies), len(_colors))
+assert len(_galaxies) == len(_markers), (len(_galaxies), len(_markers))
 ufd_color = dict(zip(_galaxies, _colors))
 ufd_marker= dict(zip(_galaxies, _markers))
 
