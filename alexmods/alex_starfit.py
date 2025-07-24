@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 from scipy import stats
+import numbers
 
 from . import read_data as rd
 from .smhutils import element_to_atomic_number
@@ -42,7 +43,8 @@ def prepare_data(elems, XH=None, logeps=None, XFe=None, errs=None,
         XFe = np.array(XFe)
     
     # Check elems format, convert to Z
-    if np.all([isinstance(elem, (int, float)) for elem in elems]):
+    if np.all([isinstance(elem, (int, float)) for elem in elems]) or \
+       np.all([isinstance(elem, (numbers.Integral, numbers.Real)) for elem in elems]):
         elems = np.array(elems).astype(int)
     elif np.all([isinstance(elem, string_types) for elem in elems]):
         print("Elements are strings, converting to Z (this is untested)")
